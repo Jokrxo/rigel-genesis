@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +21,21 @@ interface LocalDocument {
   status: string;
   notes: string;
   created_at: string;
+  terms_and_conditions?: string;
+  valid_until?: string;
+  [key: string]: unknown;
+}
+
+interface Document {
+  id: string;
+  customer_id: string;
+  issue_date: string;
+  due_date?: string;
+  valid_until?: string;
+  terms_and_conditions?: string;
+  notes?: string;
+  document_number: string;
+  [key: string]: unknown;
 }
 
 const DocumentManagement = () => {

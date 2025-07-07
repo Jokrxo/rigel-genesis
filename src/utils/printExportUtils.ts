@@ -1,3 +1,4 @@
+
 export const printTable = (tableId: string, title: string) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
@@ -38,7 +39,7 @@ export const printTable = (tableId: string, title: string) => {
   printWindow.close();
 };
 
-export const exportToCSV = (data: Record<string, unknown>[], filename: string, headers: string[]) => {
+export const exportToCSV = <T extends Record<string, any>>(data: T[], filename: string, headers: string[]) => {
   const csvContent = [
     headers.join(','),
     ...data.map(row => 
@@ -60,7 +61,7 @@ export const exportToCSV = (data: Record<string, unknown>[], filename: string, h
   document.body.removeChild(link);
 };
 
-export const exportToJSON = (data: Record<string, unknown>[], filename: string) => {
+export const exportToJSON = <T extends Record<string, any>>(data: T[], filename: string) => {
   const jsonContent = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
   const link = document.createElement('a');
