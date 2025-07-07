@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,12 +41,24 @@ interface LineItem {
   line_total: number;
 }
 
+interface Document {
+  id: string;
+  customer_id: string;
+  issue_date: string;
+  due_date?: string;
+  valid_until?: string;
+  terms_and_conditions?: string;
+  notes?: string;
+  document_number: string;
+  [key: string]: unknown;
+}
+
 interface DocumentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   documentType: "invoice" | "quotation";
   onSuccess: () => void;
-  editingDocument?: unknown;
+  editingDocument?: Document | null;
 }
 
 export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, editingDocument }: DocumentFormProps) => {

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -360,6 +361,21 @@ function isBalanceSheetData(data: StatementData): data is BalanceSheetData {
   );
 }
 
+function isIncomeStatementData(data: StatementData): data is IncomeStatementData {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "revenue" in data &&
+    "costOfSales" in data &&
+    "grossProfit" in data &&
+    "operatingExpenses" in data &&
+    "operatingIncome" in data &&
+    "interestExpense" in data &&
+    "incomeTax" in data &&
+    "netIncome" in data
+  );
+}
+
 const renderStatementContent = (statement: GeneratedStatement) => {
   const { type, data } = statement;
 
@@ -483,6 +499,9 @@ const renderStatementContent = (statement: GeneratedStatement) => {
         </div>
       );
     case 'income-statement':
+      if (!isIncomeStatementData(data)) {
+        return <div>Invalid income statement data.</div>;
+      }
       return (
         <div className="space-y-4 max-w-md mx-auto">
           <div className="space-y-2">
