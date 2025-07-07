@@ -1,0 +1,206 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 19% 27%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 223 30% 20%;
+    --sidebar-ring: 221 83% 53%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 19% 27%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 19% 27%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 19% 27%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 19% 27%;
+    --input: 217 19% 27%;
+    --ring: 221 83% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Add justified text as a base style */
+  p {
+    @apply text-justify;
+  }
+
+  /* Ensure text is fully visible with proper contrast */
+  .text-contrast {
+    color: #1a202c;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* High contrast text for accessibility */
+  .text-high-contrast {
+    color: #000000;
+    font-weight: 500;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Custom classes with updated blue theme */
+.financial-card {
+  @apply bg-white rounded-lg shadow-md border border-border p-5 transition-all hover:shadow-lg;
+}
+
+.financial-input {
+  @apply rounded-md border border-input px-4 py-2 text-sm transition-colors 
+  focus:outline-none focus:ring-2 focus:ring-ring focus:border-input w-full;
+}
+
+.financial-label {
+  @apply text-sm font-medium mb-1.5 text-foreground;
+}
+
+.auth-container {
+  @apply flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8;
+}
+
+.auth-card {
+  @apply w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg border border-border;
+}
+
+/* Enhanced button visibility */
+.btn-high-contrast {
+  background-color: #ffffff;
+  color: #1a202c;
+  border: 2px solid #1a202c;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.btn-high-contrast:hover {
+  background-color: #f7fafc;
+  color: #1a202c;
+}
+
+/* Form improvements */
+.form-section {
+  @apply space-y-6 p-6 bg-white rounded-lg shadow-sm border border-border;
+}
+
+.form-tabs {
+  @apply mb-6 border-b border-border;
+}
+
+.form-tab-button {
+  @apply px-4 py-2 font-medium text-sm border-b-2 border-transparent hover:border-blue-300 hover:text-blue-600 transition-colors;
+}
+
+.form-tab-button.active {
+  @apply border-blue-600 text-blue-600;
+}
+
+/* Improved responsive design */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .table-responsive {
+    min-width: 600px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-full-width {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

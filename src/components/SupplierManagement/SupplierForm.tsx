@@ -1,0 +1,201 @@
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { SupplierFormFields } from "./SupplierFormFields";
+
+interface SupplierFormData {
+  name: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  vat_number?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
+  country?: string;
+  payment_terms?: number;
+  credit_limit?: number;
+  status: string;
+  notes?: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  vat_number?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
+  country?: string;
+  payment_terms?: number;
+  credit_limit?: number;
+  status: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SupplierFormProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  editingSupplier?: Supplier | null;
+}
+
+export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: SupplierFormProps) => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const form = useForm<SupplierFormData>({
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      vat_number: "",
+      address_line1: "",
+      address_line2: "",
+      city: "",
+      province: "",
+      postal_code: "",
+      country: "South Africa",
+      payment_terms: 30,
+      credit_limit: 0,
+      status: "active",
+      notes: "",
+    },
+  });
+
+  useEffect(() => {
+    if (editingSupplier) {
+      form.reset({
+        name: editingSupplier.name,
+        email: editingSupplier.email || "",
+        phone: editingSupplier.phone || "",
+        company: editingSupplier.company || "",
+        vat_number: editingSupplier.vat_number || "",
+        address_line1: editingSupplier.address_line1 || "",
+        address_line2: editingSupplier.address_line2 || "",
+        city: editingSupplier.city || "",
+        province: editingSupplier.province || "",
+        postal_code: editingSupplier.postal_code || "",
+        country: editingSupplier.country || "South Africa",
+        payment_terms: editingSupplier.payment_terms || 30,
+        credit_limit: editingSupplier.credit_limit || 0,
+        status: editingSupplier.status,
+        notes: editingSupplier.notes || "",
+      });
+    } else {
+      form.reset({
+        name: "",
+        email: "",
+        phone: "",
+        company: "",
+        vat_number: "",
+        address_line1: "",
+        address_line2: "",
+        city: "",
+        province: "",
+        postal_code: "",
+        country: "South Africa",
+        payment_terms: 30,
+        credit_limit: 0,
+        status: "active",
+        notes: "",
+      });
+    }
+  }, [editingSupplier, form]);
+
+  const onSubmit = async (data: SupplierFormData) => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      if (editingSupplier) {
+        const { error } = await supabase
+          .from<Database["public"]["Tables"]["suppliers"]>("suppliers")
+          .update({
+            ...data,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingSupplier.id);
+
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Supplier updated successfully",
+        });
+      } else {
+        const { error } = await supabase
+          .from<Database["public"]["Tables"]["suppliers"]>("suppliers")
+          .insert([{
+            ...data,
+            user_id: user.id,
+          }]);
+
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Supplier created successfully",
+        });
+      }
+
+      onSuccess();
+    } catch (error) {
+      console.error('Error saving supplier:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save supplier",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
+          </DialogTitle>
+          <DialogDescription>
+            {editingSupplier 
+              ? "Update supplier information" 
+              : "Enter supplier details to add them to your database"
+            }
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <SupplierFormFields control={form.control} />
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Saving..." : editingSupplier ? "Update Supplier" : "Create Supplier"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
