@@ -8,6 +8,7 @@ import { TransactionSummaryCards } from "@/components/TransactionProcessing/Tran
 import { TransactionsTable } from "@/components/TransactionProcessing/TransactionsTable";
 import { TransactionForm } from "@/components/TransactionProcessing/TransactionForm";
 import { TransactionSearchBar } from "@/components/TransactionProcessing/TransactionSearchBar";
+import { TransactionProcessingErrorBoundary } from "@/components/TransactionProcessing/TransactionProcessingErrorBoundary";
 import { Chatbot } from "@/components/Shared/Chatbot";
 
 interface Transaction {
@@ -41,7 +42,10 @@ const TransactionProcessing = () => {
         .order('date', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Fetch transactions error:', error);
+        throw error;
+      }
       setTransactions(data || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -78,36 +82,38 @@ const TransactionProcessing = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Transaction Processing</h1>
-            <p className="text-muted-foreground">Record and manage all financial transactions</p>
+      <TransactionProcessingErrorBoundary>
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">Transaction Processing</h1>
+              <p className="text-muted-foreground">Record and manage all financial transactions</p>
+            </div>
+            <Button onClick={() => setIsFormOpen(true)}>
+              New Transaction
+            </Button>
           </div>
-          <Button onClick={() => setIsFormOpen(true)}>
-            New Transaction
-          </Button>
+
+          <TransactionSummaryCards
+            totalIncome={totalIncome}
+            totalExpenses={totalExpenses}
+            netPosition={netPosition}
+            totalCount={transactions.length}
+          />
+
+          <div className="flex items-center gap-4">
+            <TransactionSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          </div>
+
+          <TransactionsTable transactions={filteredTransactions} loading={loading} />
+
+          <TransactionForm
+            open={isFormOpen}
+            onClose={() => setIsFormOpen(false)}
+            onSuccess={handleFormSuccess}
+          />
         </div>
-
-        <TransactionSummaryCards
-          totalIncome={totalIncome}
-          totalExpenses={totalExpenses}
-          netPosition={netPosition}
-          totalCount={transactions.length}
-        />
-
-        <div className="flex items-center gap-4">
-          <TransactionSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-        </div>
-
-        <TransactionsTable transactions={filteredTransactions} loading={loading} />
-
-        <TransactionForm
-          open={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          onSuccess={handleFormSuccess}
-        />
-      </div>
+      </TransactionProcessingErrorBoundary>
       <Chatbot />
     </MainLayout>
   );

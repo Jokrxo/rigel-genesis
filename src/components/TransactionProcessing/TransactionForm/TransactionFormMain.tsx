@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,6 +37,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const companyProfile = useCompanyProfile(open);
   const [lockedTransactionTypes, setLockedTransactionTypes] = useState(false);
+  
   const form = useForm<TransactionFormData>({
     defaultValues: {
       date: new Date(),
@@ -57,18 +59,23 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
       fetchSuppliers();
       setLockedTransactionTypes(true);
       if (companyProfile) {
-        // Get transaction types per ownership type and set default type
-        const types = getTransactionTypesForOwnership(companyProfile);
-        form.setValue("type", types[0]?.value || "income");
+        try {
+          const types = getTransactionTypesForOwnership(companyProfile);
+          form.setValue("type", types[0]?.value || "income");
+        } catch (error) {
+          console.error("Error setting transaction types:", error);
+        }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, companyProfile]);
 
   const fetchCustomers = async () => {
     try {
       const { data, error } = await supabase.from("customers").select("id, name, company").order("name");
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching customers:", error);
+        return;
+      }
       setCustomers(data || []);
     } catch (error) {
       console.error("Error fetching customers:", error);
@@ -76,10 +83,15 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
   };
 
   const fetchSuppliers = async () => {
-    setSuppliers([
-      { id: "1", name: "ABC Office Supplies", company: "ABC Office Supplies" },
-      { id: "2", name: "Tech Solutions Ltd", company: "Tech Solutions Ltd" },
-    ]);
+    try {
+      // Mock data for now - replace with actual Supabase query when ready
+      setSuppliers([
+        { id: "1", name: "ABC Office Supplies", company: "ABC Office Supplies" },
+        { id: "2", name: "Tech Solutions Ltd", company: "Tech Solutions Ltd" },
+      ]);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+    }
   };
 
   const onSubmit = async (data: TransactionFormData) => {
@@ -88,7 +100,10 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      
+      if (!user) {
+        throw new Error("Not authenticated");
+      }
 
       // Create a mock statement first
       const { data: statement, error: statementError } = await supabase
@@ -105,7 +120,11 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
         ])
         .select()
         .single();
-      if (statementError) throw statementError;
+        
+      if (statementError) {
+        console.error("Statement creation error:", statementError);
+        throw statementError;
+      }
 
       const { error } = await supabase.from("transactions").insert([
         {
@@ -124,14 +143,23 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
           },
         },
       ]);
-      if (error) throw error;
-      toast({ title: "Success", description: "Transaction recorded successfully" });
+      
+      if (error) {
+        console.error("Transaction creation error:", error);
+        throw error;
+      }
+      
+      toast({ 
+        title: "Success", 
+        description: "Transaction recorded successfully" 
+      });
+      form.reset();
       onSuccess();
     } catch (error) {
       console.error("Error saving transaction:", error);
       toast({
         title: "Error",
-        description: "Failed to record transaction",
+        description: error instanceof Error ? error.message : "Failed to record transaction",
         variant: "destructive",
       });
     } finally {
@@ -141,7 +169,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Record New Transaction</DialogTitle>
           <DialogDescription>
