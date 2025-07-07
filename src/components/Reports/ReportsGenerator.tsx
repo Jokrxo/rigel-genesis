@@ -1,12 +1,12 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, FileText, Download } from "lucide-react";
+import { CalendarIcon, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ExportControls } from "@/components/Dashboard/ExportControls";
@@ -250,32 +250,34 @@ const ReportsGenerator = () => {
 
 const renderReportContent = (report: GeneratedReport) => {
   if (!report) return null;
+  
   switch (report.reportType) {
     case 'financial-overview':
+      const financialReport = report as FinancialOverviewReport;
       return (
         <div className="space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-6 border rounded-lg bg-gradient-to-br from-green-50 to-green-100">
-              <div className="text-2xl font-bold text-green-700">R {report.totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-green-700">R {financialReport.totalRevenue.toLocaleString()}</div>
               <div className="text-sm text-green-600 mt-1">Total Revenue</div>
             </div>
             <div className="p-6 border rounded-lg bg-gradient-to-br from-red-50 to-red-100">
-              <div className="text-2xl font-bold text-red-700">R {report.totalExpenses.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-red-700">R {financialReport.totalExpenses.toLocaleString()}</div>
               <div className="text-sm text-red-600 mt-1">Total Expenses</div>
             </div>
             <div className="p-6 border rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
-              <div className="text-2xl font-bold text-blue-700">R {report.netProfit.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-blue-700">R {financialReport.netProfit.toLocaleString()}</div>
               <div className="text-sm text-blue-600 mt-1">Net Profit</div>
             </div>
             <div className="p-6 border rounded-lg bg-gradient-to-br from-purple-50 to-purple-100">
-              <div className="text-2xl font-bold text-purple-700">{report.grossProfitMargin}%</div>
+              <div className="text-2xl font-bold text-purple-700">{financialReport.grossProfitMargin}%</div>
               <div className="text-sm text-purple-600 mt-1">Profit Margin</div>
             </div>
           </div>
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Category Breakdown</h3>
             <div className="space-y-3">
-              {report.categories.map((category, index) => (
+              {financialReport.categories.map((category, index) => (
                 <div key={index} className="flex justify-between items-center p-4 border rounded-lg bg-gray-50">
                   <span className="font-medium">{category.name}</span>
                   <span className="font-bold text-lg">R {category.amount.toLocaleString()}</span>
@@ -286,15 +288,16 @@ const renderReportContent = (report: GeneratedReport) => {
         </div>
       );
     case 'tax-summary':
+      const taxReport = report as TaxSummaryReport;
       return (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               {Object.entries({
-                'VAT Collected': report.totalVAT,
-                'Income Tax': report.incomeTax,
-                'Provisional Tax': report.provisionalTax,
-                'PAYE Deducted': report.payeDeducted
+                'VAT Collected': taxReport.totalVAT,
+                'Income Tax': taxReport.incomeTax,
+                'Provisional Tax': taxReport.provisionalTax,
+                'PAYE Deducted': taxReport.payeDeducted
               }).map(([label, value], index) => (
                 <div key={index} className="flex justify-between p-4 border rounded-lg">
                   <span className="font-medium">{label}:</span>
@@ -303,13 +306,14 @@ const renderReportContent = (report: GeneratedReport) => {
               ))}
               <div className="flex justify-between p-4 border-2 border-red-200 rounded-lg bg-red-50">
                 <span className="font-bold text-red-700">Total Tax Liability:</span>
-                <span className="font-bold text-xl text-red-700">R {report.totalTaxLiability.toLocaleString()}</span>
+                <span className="font-bold text-xl text-red-700">R {taxReport.totalTaxLiability.toLocaleString()}</span>
               </div>
             </div>
           </div>
         </div>
       );
     case 'asset-register':
+      const assetReport = report as AssetRegisterReport;
       return (
         <div className="space-y-6">
           <div className="overflow-x-auto">
@@ -323,7 +327,7 @@ const renderReportContent = (report: GeneratedReport) => {
                 </tr>
               </thead>
               <tbody>
-                {report.assets.map((asset, index) => (
+                {assetReport.assets.map((asset, index) => (
                   <tr key={index} className="border-b hover:bg-gray-50">
                     <td className="p-4 font-medium">{asset.name}</td>
                     <td className="p-4 text-right">R {asset.cost.toLocaleString()}</td>
@@ -337,9 +341,10 @@ const renderReportContent = (report: GeneratedReport) => {
         </div>
       );
     default:
+      const defaultReport = report as DefaultReport;
       return (
         <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">{report.message}</p>
+          <p className="text-muted-foreground text-lg">{defaultReport.message}</p>
           <p className="text-sm text-muted-foreground mt-3">
             This report type is being developed. More detailed content will be available soon.
           </p>

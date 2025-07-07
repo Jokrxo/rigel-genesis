@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -5,7 +6,6 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 import { SupplierFormFields } from "./SupplierFormFields";
 
 interface SupplierFormData {
@@ -126,7 +126,7 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
 
       if (editingSupplier) {
         const { error } = await supabase
-          .from<Database["public"]["Tables"]["suppliers"]>("suppliers")
+          .from("suppliers")
           .update({
             ...data,
             updated_at: new Date().toISOString(),
@@ -140,7 +140,7 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
         });
       } else {
         const { error } = await supabase
-          .from<Database["public"]["Tables"]["suppliers"]>("suppliers")
+          .from("suppliers")
           .insert([{
             ...data,
             user_id: user.id,

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, FileSpreadsheet, Printer } from "lucide-react";
@@ -27,8 +28,14 @@ export const ExportControls = ({ data, filename, csvData, elementId }: ExportCon
         exportToCSV(csvData);
       } else if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0] !== null) {
         // Fallback: convert data to CSV format
-        const headers = Object.keys(data[0]);
-        const rows = data.map((item) => headers.map(header => (item as Record<string, unknown>)[header] || ''));
+        const headers = Object.keys(data[0] as Record<string, unknown>);
+        const rows = data.map((item) => {
+          const record = item as Record<string, unknown>;
+          return headers.map(header => {
+            const value = record[header];
+            return typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+          });
+        });
         exportToCSV({
           headers,
           rows,
