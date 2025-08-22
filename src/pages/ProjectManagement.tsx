@@ -9,8 +9,10 @@ import { FolderOpen, Plus, Search, Edit, Trash2, Printer, Download, BarChart, Ca
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Chatbot } from "@/components/Shared/Chatbot";
-import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
-import { ProjectForm } from "@/components/ProjectManagement/ProjectForm";
+import { ProjectActions } from "@/components/ProjectManagement/ProjectActions";
+import { ProjectsList } from "@/components/ProjectManagement/ProjectsList";
+import { SimpleProjectForm } from "@/components/ProjectManagement/SimpleProjectForm";
+import { EnhancedProjectForm } from "@/components/ProjectManagement/EnhancedProjectForm";
 import { ProjectGanttChart } from "@/components/ProjectManagement/ProjectGanttChart";
 import { TaskManagement } from "@/components/ProjectManagement/TaskManagement";
 import { useToast } from "@/hooks/use-toast";
@@ -30,8 +32,8 @@ interface Project {
 
 const ProjectManagement = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showProjectForm, setShowProjectForm] = useState(false);
+  const [useEnhancedForm, setUseEnhancedForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -40,23 +42,7 @@ const ProjectManagement = () => {
     setProjects([]);
   }, []);
 
-  const filteredProjects = projects.filter(project =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.client.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handlePrint = () => {
-    printTable('projects-table', 'Project List');
-  };
-
-  const handleExportCSV = () => {
-    const headers = ['Name', 'Client', 'Status', 'Budget', 'Spent', 'Manager'];
-    exportToCSV(filteredProjects, 'projects', headers);
-  };
-
-  const handleExportJSON = () => {
-    exportToJSON(filteredProjects, 'projects');
-  };
+  const filteredProjects = projects;
 
   const handleCreateProject = (projectData: Omit<Project, 'id'>) => {
     const newProject: Project = {
@@ -65,6 +51,7 @@ const ProjectManagement = () => {
     };
     setProjects([...projects, newProject]);
     setShowProjectForm(false);
+    setEditingProject(null);
     toast({
       title: "Success",
       description: "Project created successfully",
@@ -73,6 +60,7 @@ const ProjectManagement = () => {
 
   const handleEditProject = (project: Project) => {
     setEditingProject(project);
+    setUseEnhancedForm(true);
     setShowProjectForm(true);
   };
 
@@ -102,6 +90,19 @@ const ProjectManagement = () => {
   const handleFormCancel = () => {
     setShowProjectForm(false);
     setEditingProject(null);
+    setUseEnhancedForm(false);
+  };
+
+  const handleCreateNew = () => {
+    setEditingProject(null);
+    setUseEnhancedForm(false);
+    setShowProjectForm(true);
+  };
+
+  const handleCreateAdvanced = () => {
+    setEditingProject(null);
+    setUseEnhancedForm(true);
+    setShowProjectForm(true);
   };
 
   return (
@@ -113,25 +114,19 @@ const ProjectManagement = () => {
             <p className="text-muted-foreground">Track and manage your business projects</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={handlePrint}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print
-            </Button>
-            <Button variant="outline" onClick={handleExportCSV}>
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button variant="outline" onClick={handleExportJSON}>
-              <Download className="mr-2 h-4 w-4" />
-              Export JSON
-            </Button>
-            <Button onClick={() => setShowProjectForm(true)}>
+            <ProjectActions 
+              projects={filteredProjects}
+              onCreateNew={handleCreateNew}
+              type="bulk"
+            />
+            <Button variant="outline" onClick={handleCreateAdvanced}>
               <Plus className="mr-2 h-4 w-4" />
-              New Project
+              Advanced Project
             </Button>
           </div>
         </div>
 
+        {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -186,90 +181,29 @@ const ProjectManagement = () => {
           </TabsList>
 
           <TabsContent value="projects" className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search projects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
             {showProjectForm && (
-              <ProjectForm
-                onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
-                onCancel={handleFormCancel}
-                initialData={editingProject || undefined}
-              />
+              <>
+                {useEnhancedForm || editingProject ? (
+                  <EnhancedProjectForm
+                    onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
+                    onCancel={handleFormCancel}
+                    initialData={editingProject || undefined}
+                  />
+                ) : (
+                  <SimpleProjectForm
+                    onSubmit={handleCreateProject}
+                    onCancel={handleFormCancel}
+                  />
+                )}
+              </>
             )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5" />
-                  Projects ({filteredProjects.length})
-                </CardTitle>
-                <CardDescription>
-                  Manage your business projects and track their progress
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table id="projects-table">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Project Name</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>End Date</TableHead>
-                        <TableHead>Budget</TableHead>
-                        <TableHead>Spent</TableHead>
-                        <TableHead>Progress</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProjects.map((project) => (
-                        <TableRow key={project.id}>
-                          <TableCell className="font-medium">{project.name}</TableCell>
-                          <TableCell>{project.client}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              project.status === 'active' ? 'default' :
-                              project.status === 'completed' ? 'secondary' :
-                              project.status === 'planning' ? 'outline' : 'destructive'
-                            }>
-                              {project.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
-                          <TableCell>{new Date(project.endDate).toLocaleDateString()}</TableCell>
-                          <TableCell>R{project.budget.toLocaleString()}</TableCell>
-                          <TableCell>R{project.spent.toLocaleString()}</TableCell>
-                          <TableCell>
-                            {Math.round((project.spent / project.budget) * 100)}%
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handleEditProject(project)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleDeleteProject(project.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            <ProjectsList
+              projects={filteredProjects}
+              onEdit={handleEditProject}
+              onDelete={handleDeleteProject}
+              onCreateNew={handleCreateNew}
+            />
           </TabsContent>
 
           <TabsContent value="gantt" className="space-y-4">

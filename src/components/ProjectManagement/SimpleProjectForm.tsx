@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,23 +19,20 @@ interface Project {
   manager: string;
 }
 
-interface ProjectFormProps {
+interface SimpleProjectFormProps {
   onSubmit: (project: Omit<Project, 'id'>) => void;
   onCancel: () => void;
-  initialData?: Project;
 }
 
-export const ProjectForm = ({ onSubmit, onCancel, initialData }: ProjectFormProps) => {
+export const SimpleProjectForm = ({ onSubmit, onCancel }: SimpleProjectFormProps) => {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    client: initialData?.client || '',
-    startDate: initialData?.startDate || '',
-    endDate: initialData?.endDate || '',
-    budget: initialData?.budget?.toString() || '',
-    spent: initialData?.spent?.toString() || '0',
-    status: initialData?.status || 'planning' as const,
-    manager: initialData?.manager || '',
+    name: '',
+    client: '',
+    manager: '',
+    startDate: '',
+    endDate: '',
+    budget: '',
+    status: 'planning' as const,
   });
   const { toast } = useToast();
 
@@ -54,12 +50,12 @@ export const ProjectForm = ({ onSubmit, onCancel, initialData }: ProjectFormProp
 
     const project: Omit<Project, 'id'> = {
       name: formData.name,
-      description: formData.description,
+      description: `Project for ${formData.client}`,
       client: formData.client,
       startDate: formData.startDate,
       endDate: formData.endDate,
       budget: parseFloat(formData.budget),
-      spent: parseFloat(formData.spent),
+      spent: 0,
       status: formData.status,
       manager: formData.manager,
     };
@@ -70,7 +66,7 @@ export const ProjectForm = ({ onSubmit, onCancel, initialData }: ProjectFormProp
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{initialData ? 'Edit Project' : 'Create New Project'}</CardTitle>
+        <CardTitle>Quick Project Creation</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -136,7 +132,7 @@ export const ProjectForm = ({ onSubmit, onCancel, initialData }: ProjectFormProp
                 required
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="budget">Budget (R)</Label>
               <Input
                 id="budget"
@@ -147,29 +143,9 @@ export const ProjectForm = ({ onSubmit, onCancel, initialData }: ProjectFormProp
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="spent">Amount Spent (R)</Label>
-              <Input
-                id="spent"
-                type="number"
-                step="0.01"
-                value={formData.spent}
-                onChange={(e) => setFormData({ ...formData, spent: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              required
-            />
           </div>
           <div className="flex gap-2">
-            <Button type="submit">{initialData ? 'Update Project' : 'Create Project'}</Button>
+            <Button type="submit">Create Project</Button>
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
