@@ -25,55 +25,20 @@ export const RecentActivity = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulating API fetch
-    const timeout = setTimeout(() => {
-      const mockData: Activity[] = [
-        {
-          id: "1",
-          type: "import",
-          title: "Statement Imported",
-          description: "FNB Business Account statement was imported",
-          date: "2025-05-07T15:32:00",
-        },
-        {
-          id: "2",
-          type: "invoice",
-          title: "Invoice Created",
-          description: "Invoice #INV-2025-042 to Client XYZ",
-          amount: 13500,
-          date: "2025-05-06T11:15:00",
-        },
-        {
-          id: "3",
-          type: "tax",
-          title: "VAT Calculated",
-          description: "VAT liability for Q1 2025",
-          amount: -4500,
-          date: "2025-05-05T09:45:00",
-        },
-        {
-          id: "4",
-          type: "asset",
-          title: "Asset Added",
-          description: "New laptop added to fixed assets",
-          amount: -12000,
-          date: "2025-05-03T14:20:00",
-        },
-        {
-          id: "5",
-          type: "invoice",
-          title: "Invoice Paid",
-          description: "Client ABC paid Invoice #INV-2025-039",
-          amount: 8750,
-          date: "2025-05-02T10:05:00",
-        },
-      ];
-      
-      setActivities(mockData);
-      setLoading(false);
-    }, 1000);
+    // Replace with actual API call to fetch activities
+    const fetchActivities = async () => {
+      try {
+        // TODO: Implement actual API call
+        setActivities([]);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+        setActivities([]);
+        setLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timeout);
+    fetchActivities();
   }, []);
 
   const formatDate = (dateString: string) => {

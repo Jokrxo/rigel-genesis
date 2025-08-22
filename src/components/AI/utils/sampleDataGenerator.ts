@@ -7,62 +7,62 @@ export const generateSampleStatement = (type: string): BalanceSheetData | Income
       return {
         assets: {
           current: {
-            cash: 250000,
-            accountsReceivable: 180000,
-            inventory: 95000,
-            prepaidExpenses: 12000,
-            total: 537000
+            cash: 0,
+            accountsReceivable: 0,
+            inventory: 0,
+            prepaidExpenses: 0,
+            total: 0
           },
           nonCurrent: {
-            propertyPlantEquipment: 850000,
-            intangibleAssets: 45000,
-            investments: 120000,
-            total: 1015000
+            propertyPlantEquipment: 0,
+            intangibleAssets: 0,
+            investments: 0,
+            total: 0
           },
-          totalAssets: 1552000
+          totalAssets: 0
         },
         liabilities: {
           current: {
-            accountsPayable: 95000,
-            shortTermDebt: 75000,
-            accruedExpenses: 35000,
-            total: 205000
+            accountsPayable: 0,
+            shortTermDebt: 0,
+            accruedExpenses: 0,
+            total: 0
           },
           nonCurrent: {
-            longTermDebt: 400000,
-            deferredTax: 28000,
-            total: 428000
+            longTermDebt: 0,
+            deferredTax: 0,
+            total: 0
           },
-          totalLiabilities: 633000
+          totalLiabilities: 0
         },
         equity: {
-          shareCapital: 500000,
-          retainedEarnings: 419000,
-          totalEquity: 919000
+          shareCapital: 0,
+          retainedEarnings: 0,
+          totalEquity: 0
         }
       };
     case 'income-statement':
       return {
-        revenue: 1850000,
-        costOfSales: 925000,
-        grossProfit: 925000,
+        revenue: 0,
+        costOfSales: 0,
+        grossProfit: 0,
         operatingExpenses: {
-          salaries: 320000,
-          rent: 96000,
-          marketing: 85000,
-          utilities: 24000,
-          depreciation: 65000,
-          other: 45000,
-          total: 635000
+          salaries: 0,
+          rent: 0,
+          marketing: 0,
+          utilities: 0,
+          depreciation: 0,
+          other: 0,
+          total: 0
         },
-        operatingIncome: 290000,
-        otherIncome: 15000,
-        interestExpense: 35000,
-        netIncomeBeforeTax: 270000,
-        incomeTax: 81000,
-        netIncome: 189000
+        operatingIncome: 0,
+        otherIncome: 0,
+        interestExpense: 0,
+        netIncomeBeforeTax: 0,
+        incomeTax: 0,
+        netIncome: 0
       };
     default:
-      return { message: 'Statement type not yet implemented in sample data' };
+      return { message: 'No data available. Please import financial data first.' };
   }
 };

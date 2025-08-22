@@ -70,84 +70,13 @@ const Investments = () => {
   }, []);
 
   const fetchInvestments = () => {
-    const mockInvestments: Investment[] = [
-      {
-        id: "1",
-        investmentNumber: "INV-001",
-        name: "Satrix Top 40 ETF",
-        type: "ETF",
-        provider: "Satrix",
-        purchaseDate: "2023-01-15",
-        purchasePrice: 85000,
-        currentValue: 92500,
-        units: 1500,
-        status: "active",
-      },
-      {
-        id: "2",
-        investmentNumber: "INV-002",
-        name: "Allan Gray Equity Fund",
-        type: "Unit Trust",
-        provider: "Allan Gray",
-        purchaseDate: "2022-06-01",
-        purchasePrice: 150000,
-        currentValue: 165000,
-        units: 12000,
-        status: "active",
-      },
-      {
-        id: "3",
-        investmentNumber: "INV-003",
-        name: "Shoprite Holdings",
-        type: "Shares",
-        provider: "JSE",
-        purchaseDate: "2023-03-10",
-        purchasePrice: 45000,
-        currentValue: 48000,
-        units: 2500,
-        status: "active",
-      },
-    ];
-    setInvestments(mockInvestments);
+    // TODO: Replace with actual API call
+    setInvestments([]);
   };
 
   const fetchTransactions = () => {
-    const mockTransactions: InvestmentTransaction[] = [
-      {
-        id: "1",
-        investmentId: "1",
-        date: "2023-01-15",
-        type: "buy",
-        units: 1500,
-        pricePerUnit: 56.67,
-        totalAmount: 85000,
-        fees: 150,
-        description: "Initial purchase",
-      },
-      {
-        id: "2",
-        investmentId: "2",
-        date: "2022-06-01",
-        type: "buy",
-        units: 12000,
-        pricePerUnit: 12.50,
-        totalAmount: 150000,
-        fees: 200,
-        description: "Initial purchase",
-      },
-      {
-        id: "3",
-        investmentId: "3",
-        date: "2023-03-10",
-        type: "buy",
-        units: 2500,
-        pricePerUnit: 18.00,
-        totalAmount: 45000,
-        fees: 125,
-        description: "Initial purchase",
-      },
-    ];
-    setTransactions(mockTransactions);
+    // TODO: Replace with actual API call
+    setTransactions([]);
   };
 
   const handleInvestmentSubmit = (e: React.FormEvent) => {

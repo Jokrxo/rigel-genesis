@@ -74,12 +74,12 @@ const ReportsGenerator = () => {
       return;
     }
 
-    // Generate sample data based on report type
-    const sampleData = generateSampleData(reportType);
-    setGeneratedReport(sampleData);
+    // TODO: Generate actual report from real data
+    const reportData = generateEmptyReport(reportType);
+    setGeneratedReport(reportData);
   };
 
-  const generateSampleData = (type: string): GeneratedReport => {
+  const generateEmptyReport = (type: string): GeneratedReport => {
     const baseData: BaseReport = {
       reportType: type,
       generatedDate: new Date().toISOString(),
@@ -92,42 +92,32 @@ const ReportsGenerator = () => {
         return {
           ...baseData,
           reportType: 'financial-overview',
-          totalRevenue: 1250000,
-          totalExpenses: 890000,
-          netProfit: 360000,
-          grossProfitMargin: 28.8,
-          categories: [
-            { name: 'Sales Revenue', amount: 1250000 },
-            { name: 'Cost of Sales', amount: 890000 },
-            { name: 'Operating Expenses', amount: 180000 },
-            { name: 'Administrative Expenses', amount: 120000 },
-          ]
+          totalRevenue: 0,
+          totalExpenses: 0,
+          netProfit: 0,
+          grossProfitMargin: 0,
+          categories: []
         };
       case 'tax-summary':
         return {
           ...baseData,
           reportType: 'tax-summary',
-          totalVAT: 187500,
-          incomeTax: 144000,
-          provisionalTax: 72000,
-          payeDeducted: 84000,
-          totalTaxLiability: 243500,
+          totalVAT: 0,
+          incomeTax: 0,
+          provisionalTax: 0,
+          payeDeducted: 0,
+          totalTaxLiability: 0,
         };
       case 'asset-register':
         return {
           ...baseData,
           reportType: 'asset-register',
-          assets: [
-            { name: 'Office Building', cost: 2500000, depreciation: 125000, bookValue: 2375000 },
-            { name: 'Vehicle Fleet', cost: 850000, depreciation: 170000, bookValue: 680000 },
-            { name: 'IT Equipment', cost: 120000, depreciation: 60000, bookValue: 60000 },
-            { name: 'Office Furniture', cost: 85000, depreciation: 25500, bookValue: 59500 },
-          ]
+          assets: []
         };
       default:
         return {
           ...baseData,
-          message: 'Report generated successfully',
+          message: 'No data available for this report type. Please ensure data is imported.',
           data: []
         };
     }

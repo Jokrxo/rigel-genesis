@@ -49,55 +49,9 @@ const DirectorTransactions = () => {
   });
 
   useEffect(() => {
-    // Mock data
-    const mockDirectors: Director[] = [
-      {
-        id: "1",
-        name: "John Smith",
-        idNumber: "8001015009088",
-        email: "john@company.co.za",
-        phone: "+27 82 123 4567",
-        appointmentDate: "2023-01-01",
-        shareholding: 60,
-        isActive: true
-      },
-      {
-        id: "2",
-        name: "Sarah Johnson",
-        idNumber: "8505234567012",
-        email: "sarah@company.co.za",
-        phone: "+27 83 987 6543",
-        appointmentDate: "2023-01-01",
-        shareholding: 40,
-        isActive: true
-      }
-    ];
-
-    const mockTransactions: DirectorTransaction[] = [
-      {
-        id: "1",
-        directorId: "1",
-        directorName: "John Smith",
-        date: "2024-01-15",
-        type: "loan_to_director",
-        amount: 50000,
-        description: "Director loan for personal use",
-        reference: "DL001"
-      },
-      {
-        id: "2",
-        directorId: "2",
-        directorName: "Sarah Johnson",
-        date: "2024-01-10",
-        type: "dividend",
-        amount: 25000,
-        description: "Quarterly dividend payment",
-        reference: "DIV001"
-      }
-    ];
-
-    setDirectors(mockDirectors);
-    setTransactions(mockTransactions);
+    // TODO: Replace with actual API calls
+    setDirectors([]);
+    setTransactions([]);
   }, []);
 
   const filteredDirectors = directors.filter(director =>
