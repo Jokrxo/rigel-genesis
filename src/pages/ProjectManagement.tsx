@@ -4,11 +4,16 @@ import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FolderOpen, Plus, Search, Edit, Trash2, Printer, Download } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FolderOpen, Plus, Search, Edit, Trash2, Printer, Download, BarChart, Calendar } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
+import { ProjectForm } from "@/components/ProjectManagement/ProjectForm";
+import { ProjectGanttChart } from "@/components/ProjectManagement/ProjectGanttChart";
+import { TaskManagement } from "@/components/ProjectManagement/TaskManagement";
+import { useToast } from "@/hooks/use-toast";
 
 interface Project {
   id: string;
@@ -26,36 +31,13 @@ interface Project {
 const ProjectManagement = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Mock data
-    const mockProjects: Project[] = [
-      {
-        id: "1",
-        name: "Website Redesign",
-        description: "Complete website overhaul for corporate client",
-        client: "ABC Corporation",
-        startDate: "2024-01-15",
-        endDate: "2024-06-30",
-        budget: 250000,
-        spent: 125000,
-        status: "active",
-        manager: "John Doe"
-      },
-      {
-        id: "2",
-        name: "Mobile App Development",
-        description: "Custom mobile application for inventory management",
-        client: "XYZ Retail",
-        startDate: "2024-02-01",
-        endDate: "2024-08-15",
-        budget: 400000,
-        spent: 80000,
-        status: "planning",
-        manager: "Sarah Smith"
-      }
-    ];
-    setProjects(mockProjects);
+    setProjects([]);
   }, []);
 
   const filteredProjects = projects.filter(project =>
@@ -74,6 +56,52 @@ const ProjectManagement = () => {
 
   const handleExportJSON = () => {
     exportToJSON(filteredProjects, 'projects');
+  };
+
+  const handleCreateProject = (projectData: Omit<Project, 'id'>) => {
+    const newProject: Project = {
+      id: Date.now().toString(),
+      ...projectData,
+    };
+    setProjects([...projects, newProject]);
+    setShowProjectForm(false);
+    toast({
+      title: "Success",
+      description: "Project created successfully",
+    });
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setShowProjectForm(true);
+  };
+
+  const handleUpdateProject = (projectData: Omit<Project, 'id'>) => {
+    if (!editingProject) return;
+    const updatedProject: Project = {
+      ...editingProject,
+      ...projectData,
+    };
+    setProjects(projects.map(p => p.id === editingProject.id ? updatedProject : p));
+    setEditingProject(null);
+    setShowProjectForm(false);
+    toast({
+      title: "Success",
+      description: "Project updated successfully",
+    });
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects(projects.filter(p => p.id !== projectId));
+    toast({
+      title: "Success",
+      description: "Project deleted successfully",
+    });
+  };
+
+  const handleFormCancel = () => {
+    setShowProjectForm(false);
+    setEditingProject(null);
   };
 
   return (
@@ -97,7 +125,7 @@ const ProjectManagement = () => {
               <Download className="mr-2 h-4 w-4" />
               Export JSON
             </Button>
-            <Button>
+            <Button onClick={() => setShowProjectForm(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Project
             </Button>
@@ -149,82 +177,174 @@ const ProjectManagement = () => {
           </Card>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search projects..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+        <Tabs defaultValue="projects" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="gantt">Gantt Chart</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5" />
-              Projects ({filteredProjects.length})
-            </CardTitle>
-            <CardDescription>
-              Manage your business projects and track their progress
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table id="projects-table">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Project Name</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Budget</TableHead>
-                    <TableHead>Spent</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProjects.map((project) => (
-                    <TableRow key={project.id}>
-                      <TableCell className="font-medium">{project.name}</TableCell>
-                      <TableCell>{project.client}</TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          project.status === 'active' ? 'default' :
-                          project.status === 'completed' ? 'secondary' :
-                          project.status === 'planning' ? 'outline' : 'destructive'
-                        }>
-                          {project.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(project.endDate).toLocaleDateString()}</TableCell>
-                      <TableCell>R{project.budget.toLocaleString()}</TableCell>
-                      <TableCell>R{project.spent.toLocaleString()}</TableCell>
-                      <TableCell>
-                        {Math.round((project.spent / project.budget) * 100)}%
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <TabsContent value="projects" className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search projects..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {showProjectForm && (
+              <ProjectForm
+                onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
+                onCancel={handleFormCancel}
+                initialData={editingProject || undefined}
+              />
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" />
+                  Projects ({filteredProjects.length})
+                </CardTitle>
+                <CardDescription>
+                  Manage your business projects and track their progress
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table id="projects-table">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Project Name</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>End Date</TableHead>
+                        <TableHead>Budget</TableHead>
+                        <TableHead>Spent</TableHead>
+                        <TableHead>Progress</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredProjects.map((project) => (
+                        <TableRow key={project.id}>
+                          <TableCell className="font-medium">{project.name}</TableCell>
+                          <TableCell>{project.client}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              project.status === 'active' ? 'default' :
+                              project.status === 'completed' ? 'secondary' :
+                              project.status === 'planning' ? 'outline' : 'destructive'
+                            }>
+                              {project.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{new Date(project.endDate).toLocaleDateString()}</TableCell>
+                          <TableCell>R{project.budget.toLocaleString()}</TableCell>
+                          <TableCell>R{project.spent.toLocaleString()}</TableCell>
+                          <TableCell>
+                            {Math.round((project.spent / project.budget) * 100)}%
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="sm" onClick={() => handleEditProject(project)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDeleteProject(project.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="gantt" className="space-y-4">
+            <ProjectGanttChart projects={filteredProjects} />
+          </TabsContent>
+
+          <TabsContent value="tasks" className="space-y-4">
+            {selectedProjectId ? (
+              <TaskManagement 
+                projectId={selectedProjectId}
+                projectName={projects.find(p => p.id === selectedProjectId)?.name || 'Unknown Project'}
+              />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Task Management</CardTitle>
+                  <CardDescription>Select a project to manage its tasks</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {projects.map((project) => (
+                        <Card key={project.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedProjectId(project.id)}>
+                          <CardHeader>
+                            <CardTitle className="text-base">{project.name}</CardTitle>
+                            <CardDescription>{project.client}</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <Badge variant={
+                              project.status === 'active' ? 'default' :
+                              project.status === 'completed' ? 'secondary' :
+                              project.status === 'planning' ? 'outline' : 'destructive'
+                            }>
+                              {project.status}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    {projects.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No projects available. Create a project first.
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {selectedProjectId && (
+              <Button variant="outline" onClick={() => setSelectedProjectId(null)}>
+                ← Back to Project Selection
+              </Button>
+            )}
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart className="h-5 w-5" />
+                  Project Reports
+                </CardTitle>
+                <CardDescription>
+                  Generate comprehensive project reports and analytics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Project reporting features will be implemented here</p>
+                  <p className="text-sm text-muted-foreground mt-2">Including budget analysis, time tracking, and performance metrics</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
       <Chatbot />
     </MainLayout>

@@ -40,6 +40,7 @@ import LoanManagement from "./pages/LoanManagement";
 import EmployeeManagement from "./pages/EmployeeManagement";
 import Investments from "./pages/Investments";
 import TransactionProcessing from "./pages/TransactionProcessing";
+import PayrollManagement from "./pages/PayrollManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +86,7 @@ const App = () => (
                 <Route path="/director-transactions" element={<ProtectedRoute><DirectorTransactions /></ProtectedRoute>} />
                 <Route path="/loan-management" element={<ProtectedRoute><LoanManagement /></ProtectedRoute>} />
                 <Route path="/employee-management" element={<ProtectedRoute><EmployeeManagement /></ProtectedRoute>} />
+                <Route path="/payroll-management" element={<ProtectedRoute><PayrollManagement /></ProtectedRoute>} />
                 <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
                 <Route path="/transaction-processing" element={<ProtectedRoute><TransactionProcessing /></ProtectedRoute>} />
                 <Route path="/company-profile" element={<ProtectedRoute><CompanyProfile /></ProtectedRoute>} />

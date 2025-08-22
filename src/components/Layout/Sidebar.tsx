@@ -117,6 +117,11 @@ const navItems: NavItem[] = [
     icon: Briefcase,
   },
   {
+    title: "Payroll Management",
+    href: "/payroll-management",
+    icon: Calculator,
+  },
+  {
     title: "Asset Management",
     href: "/asset-management",
     icon: Building2,

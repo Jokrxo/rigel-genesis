@@ -80,60 +80,11 @@ const EmployeeManagement = () => {
   }, []);
 
   const fetchEmployees = () => {
-    const mockEmployees: Employee[] = [
-      {
-        id: "1",
-        employeeNumber: "EMP-001",
-        firstName: "John",
-        lastName: "Smith",
-        email: "john.smith@company.com",
-        phone: "+27 11 123 4567",
-        position: "Software Developer",
-        department: "IT",
-        hireDate: "2023-01-15",
-        grossSalary: 45000,
-        taxNumber: "9001015800087",
-        bankAccount: "FNB-12345678",
-        status: "active",
-      },
-      {
-        id: "2",
-        employeeNumber: "EMP-002",
-        firstName: "Sarah",
-        lastName: "Johnson",
-        email: "sarah.johnson@company.com",
-        phone: "+27 21 987 6543",
-        position: "Accountant",
-        department: "Finance",
-        hireDate: "2022-08-01",
-        grossSalary: 38000,
-        taxNumber: "8505125900053",
-        bankAccount: "ABSA-87654321",
-        status: "active",
-      },
-    ];
-    setEmployees(mockEmployees);
+    setEmployees([]);
   };
 
   const fetchPayrollEntries = () => {
-    const mockPayroll: PayrollEntry[] = [
-      {
-        id: "1",
-        employeeId: "1",
-        payPeriod: "2024-01",
-        grossSalary: 45000,
-        basicSalary: 40000,
-        allowances: 5000,
-        overtimePay: 0,
-        payeTax: 8550,
-        uif: 112.5,
-        medicalAid: 1200,
-        pensionFund: 3600,
-        netSalary: 31537.5,
-        processedDate: "2024-01-31",
-      },
-    ];
-    setPayrollEntries(mockPayroll);
+    setPayrollEntries([]);
   };
 
   const calculateSouthAfricanTax = (grossSalary: number) => {
