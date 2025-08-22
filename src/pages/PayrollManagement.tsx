@@ -68,7 +68,7 @@ const PayrollManagement = () => {
   const [payrollEntries, setPayrollEntries] = useState<PayrollEntry[]>([]);
   const [payslips, setPayslips] = useState<PayslipData[]>([]);
   const [showPayrollForm, setShowPayrollForm] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<string>("");
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
   const [payrollForm, setPayrollForm] = useState({
     employeeId: "",
     payPeriod: "",
@@ -205,7 +205,7 @@ const PayrollManagement = () => {
   };
 
   const getFilteredPayroll = () => {
-    if (!selectedEmployee) return payrollEntries;
+    if (!selectedEmployee || selectedEmployee === "all") return payrollEntries;
     return payrollEntries.filter(entry => entry.employeeId === selectedEmployee);
   };
 
@@ -324,7 +324,7 @@ const PayrollManagement = () => {
                     <SelectValue placeholder="All employees" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All employees</SelectItem>
+                    <SelectItem value="all">All employees</SelectItem>
                     {employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         {employee.firstName} {employee.lastName}
