@@ -100,7 +100,7 @@ export const HelpResources = () => {
                 href={resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full btn btn-primary flex items-center justify-center border rounded px-2 py-1 hover:bg-blue-50"
+                className="w-full btn btn-primary flex items-center justify-center border rounded px-2 py-1 hover:bg-accent"
                 style={{ textDecoration: 'none' }}
               >
                 View

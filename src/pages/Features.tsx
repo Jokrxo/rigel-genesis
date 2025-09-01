@@ -148,7 +148,7 @@ const Features = () => {
                   <ul className="space-y-2">
                     {feature.benefits.map((benefit) => (
                       <li key={benefit} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-success" />
                         <span>{benefit}</span>
                       </li>
                     ))}
@@ -171,8 +171,8 @@ const Features = () => {
               <Card key={feature.title} className="h-full">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900">
-                      <feature.icon className="h-6 w-6 text-orange-600" />
+                    <div className="p-2 rounded-lg bg-warning/10">
+                      <feature.icon className="h-6 w-6 text-warning" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">{feature.title}</CardTitle>
@@ -185,7 +185,7 @@ const Features = () => {
                   <ul className="space-y-2">
                     {feature.benefits.map((benefit) => (
                       <li key={benefit} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-success" />
                         <span>{benefit}</span>
                       </li>
                     ))}
@@ -208,12 +208,12 @@ const Features = () => {
               <Card key={feature.title} className="h-full border-primary/20">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900">
-                      <feature.icon className="h-6 w-6 text-purple-600" />
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-secondary/30 to-accent/30">
+                      <feature.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">{feature.title}</CardTitle>
-                      <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">{feature.category}</Badge>
+                      <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">{feature.category}</Badge>
                     </div>
                   </div>
                 </CardHeader>
@@ -222,7 +222,7 @@ const Features = () => {
                   <ul className="space-y-2">
                     {feature.benefits.map((benefit) => (
                       <li key={benefit} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-success" />
                         <span>{benefit}</span>
                       </li>
                     ))}

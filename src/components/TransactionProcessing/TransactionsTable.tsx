@@ -27,24 +27,24 @@ interface Transaction {
 function getTransactionIcon(type: string) {
   switch (type) {
     case "income":
-      return <ArrowUpRight className="h-4 w-4 text-green-600" />;
+      return <ArrowUpRight className="h-4 w-4 text-success" />;
     case "expense":
-      return <ArrowDownRight className="h-4 w-4 text-red-600" />;
+      return <ArrowDownRight className="h-4 w-4 text-destructive" />;
     case "transfer":
-      return <ArrowLeftRight className="h-4 w-4 text-blue-600" />;
+      return <ArrowLeftRight className="h-4 w-4 text-info" />;
     default:
-      return <CreditCard className="h-4 w-4" />;
+      return <CreditCard className="h-4 w-4 text-muted-foreground" />;
   }
 }
 
 function getTransactionBadge(type: string) {
   switch (type) {
     case "income":
-      return <Badge className="bg-green-100 text-green-800">Income</Badge>;
+      return <Badge className="bg-success/10 text-success border-success/20">Income</Badge>;
     case "expense":
-      return <Badge className="bg-red-100 text-red-800">Expense</Badge>;
+      return <Badge className="bg-destructive/10 text-destructive border-destructive/20">Expense</Badge>;
     case "transfer":
-      return <Badge className="bg-blue-100 text-blue-800">Transfer</Badge>;
+      return <Badge className="bg-info/10 text-info border-info/20">Transfer</Badge>;
     default:
       return <Badge variant="outline">{type}</Badge>;
   }
@@ -108,7 +108,7 @@ export function TransactionsTable({
                 </TableCell>
                 <TableCell
                   className={`font-medium ${
-                    (transaction.amount || 0) >= 0 ? "text-green-600" : "text-red-600"
+                    (transaction.amount || 0) >= 0 ? "text-success" : "text-destructive"
                   }`}
                 >
                   R{Math.abs(transaction.amount || 0).toLocaleString()}

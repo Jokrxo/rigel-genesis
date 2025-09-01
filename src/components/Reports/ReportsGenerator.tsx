@@ -285,7 +285,7 @@ const renderReportContent = (report: GeneratedReport) => {
             <h3 className="text-lg font-semibold">Category Breakdown</h3>
             <div className="space-y-3">
               {financialReport.categories.map((category, index) => (
-                <div key={index} className="flex justify-between items-center p-4 border rounded-lg bg-gray-50">
+                <div key={index} className="flex justify-between items-center p-4 border rounded-lg bg-muted/50">
                   <span className="font-medium">{category.name}</span>
                   <span className="font-bold text-lg">R {category.amount.toLocaleString()}</span>
                 </div>
@@ -311,7 +311,7 @@ const renderReportContent = (report: GeneratedReport) => {
                   <span className="font-bold">R {(value as number).toLocaleString()}</span>
                 </div>
               ))}
-              <div className="flex justify-between p-4 border-2 border-red-200 rounded-lg bg-red-50">
+              <div className="flex justify-between p-4 border-2 border-destructive/30 rounded-lg bg-destructive/5">
                 <span className="font-bold text-red-700">Total Tax Liability:</span>
                 <span className="font-bold text-xl text-red-700">R {taxReport.totalTaxLiability.toLocaleString()}</span>
               </div>
@@ -326,7 +326,7 @@ const renderReportContent = (report: GeneratedReport) => {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-100 border-b-2">
+                <tr className="bg-muted/30 border-b-2">
                   <th className="text-left p-4 font-semibold">Asset Name</th>
                   <th className="text-right p-4 font-semibold">Cost</th>
                   <th className="text-right p-4 font-semibold">Depreciation</th>
@@ -335,7 +335,7 @@ const renderReportContent = (report: GeneratedReport) => {
               </thead>
               <tbody>
                 {assetReport.assets.map((asset, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
+                  <tr key={index} className="border-b hover:bg-accent">
                     <td className="p-4 font-medium">{asset.name}</td>
                     <td className="p-4 text-right">R {asset.cost.toLocaleString()}</td>
                     <td className="p-4 text-right text-red-600">R {asset.depreciation.toLocaleString()}</td>

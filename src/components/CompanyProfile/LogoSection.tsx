@@ -29,7 +29,7 @@ export const LogoSection = ({ previewLogo, onLogoChange, onRemoveLogo }: LogoSec
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="w-32 h-32 rounded-md border border-border flex items-center justify-center overflow-hidden bg-gray-50">
+          <div className="w-32 h-32 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted/30">
             {previewLogo ? (
               <img
                 src={previewLogo}
@@ -53,7 +53,7 @@ export const LogoSection = ({ previewLogo, onLogoChange, onRemoveLogo }: LogoSec
                 />
                 <Label
                   htmlFor="logo"
-                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-gray-100"
+                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-accent"
                 >
                   <FileUp className="h-4 w-4" />
                   Choose File

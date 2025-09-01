@@ -140,7 +140,7 @@ export const IntelligentStatementProcessor = () => {
                     </span>
                     <div className="flex items-center gap-2">
                       {transaction.suggestedDeduction && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-success/10 text-success border border-success/20">
                           Tax Deductible
                         </span>
                       )}

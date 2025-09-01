@@ -12,7 +12,7 @@ const Privacy = () => {
         <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
         
         <div className="prose prose-sm max-w-none text-justify">
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+          <div className="bg-info/5 border-l-4 border-info p-4 mb-6">
             <p className="font-semibold">POPIA Compliance Statement</p>
             <p>
               Creative Commerce (Pty) Ltd is fully committed to compliance with the Protection of Personal Information Act (POPIA) of South Africa. 

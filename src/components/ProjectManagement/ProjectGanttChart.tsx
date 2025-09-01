@@ -42,11 +42,11 @@ export const ProjectGanttChart = ({ projects }: ProjectGanttChartProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500';
-      case 'completed': return 'bg-blue-500';
-      case 'planning': return 'bg-yellow-500';
-      case 'on-hold': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'active': return 'bg-success';
+      case 'completed': return 'bg-info';
+      case 'planning': return 'bg-warning';
+      case 'on-hold': return 'bg-destructive';
+      default: return 'bg-muted-foreground';
     }
   };
 
@@ -138,7 +138,7 @@ export const ProjectGanttChart = ({ projects }: ProjectGanttChartProps) => {
                       </div>
                     </div>
                     
-                    <div className="flex-1 relative h-8 bg-gray-100 rounded">
+                    <div className="flex-1 relative h-8 bg-muted rounded">
                       <div
                         className={`absolute top-1 bottom-1 rounded ${getStatusColor(task.status)} opacity-80`}
                         style={{
@@ -148,7 +148,7 @@ export const ProjectGanttChart = ({ projects }: ProjectGanttChartProps) => {
                       >
                         {/* Progress indicator */}
                         <div
-                          className="h-full bg-white bg-opacity-30 rounded-r"
+                          className="h-full bg-background/50 rounded-r"
                           style={{ width: `${task.progress}%` }}
                         />
                       </div>
@@ -164,21 +164,21 @@ export const ProjectGanttChart = ({ projects }: ProjectGanttChartProps) => {
             </div>
 
             {/* Legend */}
-            <div className="flex gap-4 text-xs text-muted-foreground mt-6 pt-4 border-t">
+             <div className="flex gap-4 text-xs text-muted-foreground mt-6 pt-4 border-t">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                <div className="w-3 h-3 bg-warning rounded"></div>
                 <span>Planning</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-green-500 rounded"></div>
+                <div className="w-3 h-3 bg-success rounded"></div>
                 <span>Active</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                <div className="w-3 h-3 bg-info rounded"></div>
                 <span>Completed</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-red-500 rounded"></div>
+                <div className="w-3 h-3 bg-destructive rounded"></div>
                 <span>On Hold</span>
               </div>
             </div>

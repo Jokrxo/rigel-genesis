@@ -118,7 +118,7 @@ const DeferredTaxCalculator = () => {
               </div>
             )}
             {differenceType === 'permanent' && (
-              <div className="text-sm text-muted-foreground p-2 bg-yellow-50 rounded">
+              <div className="text-sm text-muted-foreground p-2 bg-warning/10 rounded border border-warning/20">
                 <strong>Note:</strong> Permanent differences do not create deferred tax assets or liabilities.
               </div>
             )}

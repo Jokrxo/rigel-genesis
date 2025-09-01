@@ -6,7 +6,7 @@ import { Info } from "lucide-react";
 
 const SKUExplanation = () => {
   return (
-    <Card className="border-blue-200 bg-blue-50">
+    <Card className="border-info/30 bg-info/5">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Info className="h-5 w-5 text-blue-600" />

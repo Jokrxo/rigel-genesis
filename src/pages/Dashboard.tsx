@@ -33,70 +33,70 @@ const Dashboard = () => {
       description: "Upload and process bank statements",
       icon: Upload,
       href: "/import-statement",
-      color: "bg-blue-500"
+      color: "bg-info"
     },
     {
       title: "Generate Documents",
       description: "Create invoices, quotes, and reports",
       icon: FileText,
       href: "/documents",
-      color: "bg-green-500"
+      color: "bg-success"
     },
     {
       title: "Manage Customers",
       description: "Add and manage customer information",
       icon: Users,
       href: "/customers",
-      color: "bg-purple-500"
+      color: "bg-secondary"
     },
     {
       title: "Manage Suppliers",
       description: "Add and manage supplier information",
       icon: Truck,
       href: "/suppliers",
-      color: "bg-yellow-500"
+      color: "bg-warning"
     },
     {
       title: "Inventory Control",
       description: "Track products and stock levels",
       icon: Package,
       href: "/inventory",
-      color: "bg-orange-500"
+      color: "bg-accent"
     },
     {
       title: "Director Transactions",
       description: "Manage director loans and transactions",
       icon: UserCheck,
       href: "/director-transactions",
-      color: "bg-emerald-500"
+      color: "bg-primary"
     },
     {
       title: "Asset Management",
       description: "Monitor business assets and depreciation",
       icon: Building,
       href: "/asset-management",
-      color: "bg-teal-500"
+      color: "bg-muted"
     },
     {
       title: "Tax Calculators",
       description: "Calculate VAT, income tax, and deferred tax",
       icon: Calculator,
       href: "/tax-calculators",
-      color: "bg-red-500"
+      color: "bg-destructive"
     },
     {
       title: "Financial Reports",
       description: "Generate comprehensive business reports",
       icon: FileBarChart,
       href: "/reports",
-      color: "bg-indigo-500"
+      color: "bg-primary"
     },
     {
       title: "AI Features",
       description: "Leverage AI for financial insights",
       icon: Building2,
       href: "/ai-features",
-      color: "bg-pink-500"
+      color: "bg-secondary"
     },
   ];
 
@@ -106,14 +106,14 @@ const Dashboard = () => {
       description: "Track and manage business projects",
       icon: FolderOpen,
       href: "/projects",
-      color: "bg-slate-500"
+      color: "bg-muted"
     },
     {
       title: "Bank Movements",
       description: "Monitor bank balance movements",
       icon: DollarSign,
       href: "/bank-movements",
-      color: "bg-cyan-500"
+      color: "bg-info"
     },
   ];
 
@@ -123,21 +123,21 @@ const Dashboard = () => {
       description: "Manage loans and repayment schedules",
       icon: ScrollText,
       href: "/loan-management",
-      color: "bg-violet-500"
+      color: "bg-secondary"
     },
     {
       title: "Employee Management",
       description: "Manage payroll and employee records",
       icon: UserCog,
       href: "/employee-management",
-      color: "bg-rose-500"
+      color: "bg-accent"
     },
     {
       title: "Investments",
       description: "Track investment portfolios and returns",
       icon: TrendingUp,
       href: "/investments",
-      color: "bg-amber-500"
+      color: "bg-warning"
     },
   ];
 

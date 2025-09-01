@@ -63,10 +63,10 @@ export const ProjectsList = ({
   };
 
   const getProgressColor = (progress: number) => {
-    if (progress < 30) return 'text-green-600';
-    if (progress < 70) return 'text-yellow-600';
-    if (progress < 90) return 'text-orange-600';
-    return 'text-red-600';
+    if (progress < 30) return 'text-success';
+    if (progress < 70) return 'text-warning';
+    if (progress < 90) return 'text-accent';
+    return 'text-destructive';
   };
 
   const uniqueManagers = Array.from(new Set(projects.map(p => p.manager))).sort();
@@ -217,9 +217,9 @@ export const ProjectsList = ({
                             <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
                               <div 
                                 className={`h-full transition-all ${
-                                  progress < 30 ? 'bg-green-500' :
-                                  progress < 70 ? 'bg-yellow-500' :
-                                  progress < 90 ? 'bg-orange-500' : 'bg-red-500'
+                                  progress < 30 ? 'bg-success' :
+                                  progress < 70 ? 'bg-warning' :
+                                  progress < 90 ? 'bg-accent' : 'bg-destructive'
                                 }`}
                                 style={{ width: `${Math.min(progress, 100)}%` }}
                               />

@@ -261,7 +261,7 @@ export const LaunchChecklistExport: React.FC = () => {
     <div className="flex flex-col items-center my-10 p-6 bg-financial-50">
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-financial-700 mb-2">Launch Readiness Checklist</h1>
-        <p className="text-gray-600">Comprehensive checklist for Rigel Financial Application launch</p>
+        <p className="text-muted-foreground">Comprehensive checklist for Rigel Financial Application launch</p>
       </div>
       
       <Button
@@ -271,7 +271,7 @@ export const LaunchChecklistExport: React.FC = () => {
         📄 Download Complete Checklist (Word)
       </Button>
       
-      <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full">
+      <div className="bg-background shadow-lg rounded-lg p-8 max-w-4xl w-full">
         <div dangerouslySetInnerHTML={{ __html: allContent }} />
       </div>
     </div>

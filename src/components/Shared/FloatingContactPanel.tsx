@@ -14,7 +14,7 @@ export const FloatingContactPanel: React.FC = () => {
       {/* Minimized: only Get In Touch */}
       {!expanded && (
         <Button
-          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 shadow-lg min-w-[50px] rounded-lg"
+          className="flex items-center gap-1 bg-primary hover:bg-primary/90 shadow-lg min-w-[50px] rounded-lg"
           onClick={() => setExpanded(true)}
           aria-label="Expand contact panel"
         >
@@ -29,7 +29,7 @@ export const FloatingContactPanel: React.FC = () => {
         <div className="flex flex-col gap-2 animate-fade-in">
           <Button
             size="sm"
-            className="flex items-center gap-2 shadow-lg bg-blue-600 hover:bg-blue-700 min-w-[120px] justify-center font-semibold"
+            className="flex items-center gap-2 shadow-lg bg-primary hover:bg-primary/90 min-w-[120px] justify-center font-semibold"
             onClick={() => window.open("tel:0739882190")}
             aria-label="Call Luthando at 073 988 2190"
           >
@@ -38,7 +38,7 @@ export const FloatingContactPanel: React.FC = () => {
           </Button>
           <Button
             size="sm"
-            className="flex items-center gap-2 shadow-lg bg-green-600 hover:bg-green-700 min-w-[120px] justify-center font-semibold"
+            className="flex items-center gap-2 shadow-lg bg-success hover:bg-success/90 min-w-[120px] justify-center font-semibold"
             onClick={() => window.open("https://wa.me/27739882190")}
             aria-label="Open WhatsApp chat with Luthando"
           >
@@ -47,7 +47,7 @@ export const FloatingContactPanel: React.FC = () => {
           </Button>
           <Button
             size="sm"
-            className="flex items-center gap-2 shadow-lg bg-blue-600 hover:bg-blue-700 min-w-[120px] justify-center font-semibold"
+            className="flex items-center gap-2 shadow-lg bg-primary hover:bg-primary/90 min-w-[120px] justify-center font-semibold"
             onClick={() => window.open("mailto:luthando@stella-lumen.com")}
             aria-label="Send email to luthando@stella-lumen.com"
           >

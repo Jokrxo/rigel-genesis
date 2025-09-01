@@ -134,16 +134,16 @@ export const LaunchReadinessChecklist = () => {
       case "warning":
         return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
       default:
-        return <Circle className="h-4 w-4 text-gray-400" />;
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge variant="default" className="bg-green-100 text-green-800">Complete</Badge>;
+        return <Badge variant="default" className="bg-success/10 text-success border-success/20">Complete</Badge>;
       case "warning":
-        return <Badge variant="destructive" className="bg-yellow-100 text-yellow-800">Attention</Badge>;
+        return <Badge variant="destructive" className="bg-warning/10 text-warning border-warning/20">Attention</Badge>;
       default:
         return <Badge variant="secondary">Pending</Badge>;
     }
@@ -173,7 +173,7 @@ export const LaunchReadinessChecklist = () => {
         </div>
         
         <div className="flex items-center gap-4 pt-4">
-          <div className="flex-1 bg-gray-200 rounded-full h-2">
+          <div className="flex-1 bg-muted rounded-full h-2">
             <div 
               className="bg-financial-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -185,7 +185,7 @@ export const LaunchReadinessChecklist = () => {
         <div className="flex gap-4 text-sm">
           <span className="text-green-600">{completedCount} Completed</span>
           <span className="text-yellow-600">{warningCount} Need Attention</span>
-          <span className="text-gray-600">{checklistItems.length - completedCount - warningCount} Pending</span>
+          <span className="text-muted-foreground">{checklistItems.length - completedCount - warningCount} Pending</span>
         </div>
       </CardHeader>
       
@@ -194,7 +194,7 @@ export const LaunchReadinessChecklist = () => {
           {checklistItems.map((item) => (
             <div
               key={item.id}
-              className="flex items-start gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+              className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent transition-colors"
             >
               <button
                 onClick={() => handleItemToggle(item.id)}
@@ -203,7 +203,7 @@ export const LaunchReadinessChecklist = () => {
                 {checkedItems.has(item.id) ? (
                   <CheckCircle className="h-5 w-5 text-financial-600" />
                 ) : (
-                  <Circle className="h-5 w-5 text-gray-400" />
+                  <Circle className="h-5 w-5 text-muted-foreground" />
                 )}
               </button>
               
