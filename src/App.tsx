@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/Layout/ProtectedRoute";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "./hooks/useTheme";
 
 // Import pages
 import Index from "./pages/Index";
@@ -58,12 +58,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange={false}
-      >
+      <ThemeProvider defaultTheme="system">
         <TooltipProvider>
           <BrowserRouter>
             <AuthProvider>

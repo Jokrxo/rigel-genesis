@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings as SettingsIcon, Bell, Shield, Palette, Globe } from "lucide-react";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { ThemeSelector } from "@/components/ui/theme-selector";
 
 const Settings = () => {
   return (
@@ -193,20 +194,8 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="theme">Theme</Label>
-                    <Select defaultValue="light">
-                      <SelectTrigger id="theme">
-                        <SelectValue placeholder="Select theme" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <ThemeSelector />
+                <div className="space-y-4 pt-6 border-t">
                   <div className="grid gap-2">
                     <Label htmlFor="sidebar">Sidebar Layout</Label>
                     <Select defaultValue="expanded">
