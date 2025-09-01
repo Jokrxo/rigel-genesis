@@ -15,6 +15,9 @@ import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import VerifyEmail from "./pages/Auth/VerifyEmail";
 import VerificationSuccess from "./pages/Auth/VerificationSuccess";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
+import Features from "./pages/Features";
 import ImportStatement from "./pages/ImportStatement";
 import AssetManagement from "./pages/AssetManagement";
 import DocumentManagement from "./pages/DocumentManagement";
@@ -74,6 +77,9 @@ const App = () => (
                   <Route path="/register" element={<Register />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/verification-success" element={<VerificationSuccess />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/features" element={<Features />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />

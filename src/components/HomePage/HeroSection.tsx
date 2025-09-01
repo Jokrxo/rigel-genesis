@@ -1,5 +1,5 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
@@ -12,16 +12,16 @@ const HeroSection = () => {
           Take control of your financial future. Automate tasks, gain insights, and grow your business.
         </p>
         <div className="flex items-center gap-4">
-          <a href="/register">
+          <Link to="/register">
             <Button size="lg" className="bg-background text-foreground hover:bg-background/90 transition-colors duration-300 font-semibold">
               Get Started Free
             </Button>
-          </a>
-          <a href="/ai-features">
+          </Link>
+          <Link to="/ai-features">
             <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary transition-colors duration-300 font-semibold">
               Explore AI Features
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </section>
