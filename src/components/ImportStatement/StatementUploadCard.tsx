@@ -48,17 +48,17 @@ const StatementUploadCard: React.FC<StatementUploadCardProps> = ({
         <div className="flex items-center justify-center w-full">
           <label
             htmlFor={`${tab}-upload`}
-            className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300"
+            className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80 border-border"
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <FileUp className="w-12 h-12 text-gray-400" />
-              <p className="mb-2 text-sm text-gray-500 mt-2">
+              <FileUp className="w-12 h-12 text-muted-foreground" />
+              <p className="mb-2 text-sm text-muted-foreground mt-2">
                 <span className="font-semibold">Click to upload</span> or drag and drop
               </p>
-              <p className="text-xs text-gray-500">{toast}</p>
+              <p className="text-xs text-muted-foreground">{toast}</p>
               {file && (
                 <div className="mt-4 text-center">
-                  <div className="flex items-center gap-2 mt-2 text-financial-600">
+                  <div className="flex items-center gap-2 mt-2 text-primary">
                     <File className="w-4 h-4" />
                     <span className="text-sm font-medium">{file.name}</span>
                   </div>

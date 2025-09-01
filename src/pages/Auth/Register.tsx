@@ -57,15 +57,15 @@ const Register = () => {
           <img 
             src="/lovable-uploads/3b7b3f31-f5d5-4f5c-b75b-6e7f54d5bf88.png" 
             alt="Financial technology" 
-            className="h-24 w-auto mb-4 object-cover rounded-lg border border-financial-200 bg-white"
+            className="h-24 w-auto mb-4 object-cover rounded-lg border border-border bg-background"
             onError={(e) => {
               console.log("Register page image failed to load");
               (e.target as HTMLImageElement).src = "/lovable-uploads/globe.png";
             }}
             onLoad={() => console.log("Register page image loaded successfully")}
           />
-          <h2 className="text-2xl font-bold text-gray-900">Create an account</h2>
-          <p className="mt-2 text-sm text-gray-600 text-justify max-w-sm mx-auto">
+          <h2 className="text-2xl font-bold text-foreground">Create an account</h2>
+          <p className="mt-2 text-sm text-muted-foreground text-justify max-w-sm mx-auto">
             Join Rigel to manage your finances with our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
@@ -74,7 +74,7 @@ const Register = () => {
           <Button
             onClick={handleGoogleLogin}
             variant="outline"
-            className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50"
+            className="w-full justify-center gap-2 py-6 border-border hover:bg-accent"
           >
             <img 
               src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
@@ -87,7 +87,7 @@ const Register = () => {
           <Button
             onClick={handleFacebookLogin}
             variant="outline"
-            className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50"
+            className="w-full justify-center gap-2 py-6 border-border hover:bg-accent"
           >
             <div className="h-5 w-5 mr-2 bg-[#1877F3] rounded-full flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
@@ -148,11 +148,11 @@ const Register = () => {
               <Input type="checkbox" className="mt-0.5 h-4 w-4" required />
               <span className="text-justify">
                 I agree to the{" "}
-                <Link to="/terms" className="text-financial-600 hover:underline">
+                <Link to="/terms" className="text-primary hover:underline">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link to="/privacy" className="text-financial-600 hover:underline">
+                <Link to="/privacy" className="text-primary hover:underline">
                   Privacy Policy
                 </Link>
               </span>
@@ -160,7 +160,7 @@ const Register = () => {
           </div>
           <Button
             type="submit"
-            className="w-full bg-financial-600 hover:bg-financial-700 text-white py-6 text-lg"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg"
             disabled={isLoading}
           >
             {isLoading ? "Creating account..." : "Create account"}
@@ -169,7 +169,7 @@ const Register = () => {
 
         <div className="mt-6 text-center text-sm">
           Already have an account?{" "}
-          <Link to="/login" className="text-financial-600 hover:underline font-medium">
+          <Link to="/login" className="text-primary hover:underline font-medium">
             Log in
           </Link>
         </div>

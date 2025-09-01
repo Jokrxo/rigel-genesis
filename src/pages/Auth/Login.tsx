@@ -51,15 +51,15 @@ const Login = () => {
           <img 
             src="/lovable-uploads/3b7b3f31-f5d5-4f5c-b75b-6e7f54d5bf88.png"
             alt="Financial workspace" 
-            className="h-24 w-auto mb-4 object-cover rounded-lg border border-financial-200"
+            className="h-24 w-auto mb-4 object-cover rounded-lg border border-border"
             onError={(e) => {
               console.log("Login page image failed to load");
               (e.target as HTMLImageElement).src = "/lovable-uploads/globe.png";
             }}
             onLoad={() => console.log("Login page image loaded successfully")}
           />
-          <h2 className="text-2xl font-bold text-gray-900">Welcome to Rigel</h2>
-          <p className="mt-2 text-sm text-gray-600 text-justify max-w-sm mx-auto">
+          <h2 className="text-2xl font-bold text-foreground">Welcome to Rigel</h2>
+          <p className="mt-2 text-sm text-muted-foreground text-justify max-w-sm mx-auto">
             Log in to your account to continue using our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
@@ -68,7 +68,7 @@ const Login = () => {
           <Button
             onClick={handleGoogleLogin}
             variant="outline"
-            className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50"
+            className="w-full justify-center gap-2 py-6 border-border hover:bg-accent"
           >
             <img 
               src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
@@ -81,7 +81,7 @@ const Login = () => {
           <Button
             onClick={handleFacebookLogin}
             variant="outline"
-            className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50"
+            className="w-full justify-center gap-2 py-6 border-border hover:bg-accent"
           >
             <div className="h-5 w-5 mr-2 bg-[#1877F3] rounded-full flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
@@ -116,7 +116,7 @@ const Login = () => {
               <Label htmlFor="password">Password</Label>
               <Link
                 to="/forgot-password"
-                className="text-xs text-financial-600 hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 Forgot password?
               </Link>
@@ -133,7 +133,7 @@ const Login = () => {
           </div>
           <Button
             type="submit"
-            className="w-full bg-financial-600 hover:bg-financial-700 text-white py-6 text-lg"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg"
             disabled={isLoading}
           >
             {isLoading ? "Logging in..." : "Log in"}
@@ -142,7 +142,7 @@ const Login = () => {
 
         <div className="mt-6 text-center text-sm">
           Don't have an account?{" "}
-          <Link to="/register" className="text-financial-600 hover:underline font-medium">
+          <Link to="/register" className="text-primary hover:underline font-medium">
             Create an account
           </Link>
         </div>

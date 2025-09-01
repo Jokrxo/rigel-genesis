@@ -51,12 +51,12 @@ export class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="text-center space-y-4">
               {process.env.NODE_ENV === 'development' && this.state.error && (
-                <div className="text-sm text-left bg-gray-100 p-2 rounded border overflow-auto max-h-32">
+                <div className="text-sm text-left bg-muted p-2 rounded border overflow-auto max-h-32">
                   <pre className="text-xs">{this.state.error.message}</pre>
                 </div>
               )}
               <div className="flex gap-2 justify-center">
-                <Button onClick={this.handleReset} className="bg-financial-600 hover:bg-financial-700">
+                <Button onClick={this.handleReset} className="bg-primary hover:bg-primary/90">
                   Try Again
                 </Button>
                 <Button 

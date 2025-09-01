@@ -191,7 +191,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
               variant="ghost"
               className={cn(
                 "w-full justify-start gap-2 px-3 py-2.5 text-left font-normal",
-                "hover:bg-blue-50 hover:text-blue-900",
+                "hover:bg-accent hover:text-accent-foreground",
                 "transition-colors duration-200",
                 depth > 0 && "ml-4"
               )}
@@ -218,9 +218,9 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
         variant="ghost"
         className={cn(
           "w-full justify-start gap-2 px-3 py-2.5 text-left font-normal",
-          "hover:bg-blue-50 hover:text-blue-900",
+          "hover:bg-accent hover:text-accent-foreground",
           "transition-colors duration-200",
-          isActive && "bg-blue-100 text-blue-900 font-medium",
+          isActive && "bg-accent text-accent-foreground font-medium",
           depth > 0 && "ml-4"
         )}
         asChild
@@ -237,17 +237,17 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
     <>
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out md:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 ease-in-out md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-full flex-col">
           {/* Logo Section */}
-          <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">R</span>
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-sidebar-border">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">R</span>
             </div>
-            <span className="font-bold text-xl text-gray-900">Rigel</span>
+            <span className="font-bold text-xl text-sidebar-foreground">Rigel</span>
           </div>
 
           {/* Navigation */}
@@ -258,7 +258,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
           </ScrollArea>
 
           {/* Bottom Navigation */}
-          <div className="border-t border-gray-200 p-3">
+          <div className="border-t border-sidebar-border p-3">
             <div className="space-y-1">
               {bottomNavItems.map(item => renderNavItem(item))}
             </div>

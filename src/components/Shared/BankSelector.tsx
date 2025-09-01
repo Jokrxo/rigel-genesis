@@ -50,7 +50,7 @@ export const BankSelector = ({ onSelect, selectedBankId }: BankSelectorProps) =>
 
   // Helper to check logo
   const renderLogoBox = (bank: Bank) => (
-    <div className="h-8 w-12 flex items-center justify-center bg-white rounded border border-gray-200">
+    <div className="h-8 w-12 flex items-center justify-center bg-background rounded border border-border">
       {!brokenLogos[bank.id] ? (
         <img
           src={bank.logo}
@@ -83,7 +83,7 @@ export const BankSelector = ({ onSelect, selectedBankId }: BankSelectorProps) =>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="h-8 w-12 flex items-center justify-center bg-white rounded border border-gray-200" />
+              <div className="h-8 w-12 flex items-center justify-center bg-background rounded border border-border" />
               <span>Select your bank...</span>
             </div>
           )}

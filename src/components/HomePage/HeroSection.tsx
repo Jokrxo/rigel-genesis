@@ -1,8 +1,9 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
   return (
-    <section className="relative flex flex-col items-center justify-center min-h-[400px] md:min-h-[600px] bg-gradient-to-br from-blue-800 to-blue-600 text-white px-4 pt-10 pb-24">
+    <section className="relative flex flex-col items-center justify-center min-h-[400px] md:min-h-[600px] bg-gradient-to-br from-primary to-primary/80 text-primary-foreground px-4 pt-10 pb-24">
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center gap-6">
         <h1 className="text-4xl md:text-6xl font-bold text-center">
           Streamline Your Business Finances with Rigel
@@ -12,14 +13,14 @@ const HeroSection = () => {
         </p>
         <div className="flex items-center gap-4">
           <a href="/register">
-            <button className="bg-white text-blue-700 font-bold py-3 px-8 rounded-md hover:bg-blue-50 transition-colors duration-300">
+            <Button size="lg" className="bg-background text-foreground hover:bg-background/90 transition-colors duration-300 font-semibold">
               Get Started Free
-            </button>
+            </Button>
           </a>
           <a href="/ai-features">
-            <button className="bg-transparent border border-white text-white font-bold py-3 px-8 rounded-md hover:bg-blue-500 hover:border-blue-500 transition-colors duration-300">
+            <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary transition-colors duration-300 font-semibold">
               Explore AI Features
-            </button>
+            </Button>
           </a>
         </div>
       </div>

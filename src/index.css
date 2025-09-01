@@ -111,7 +111,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border transition-colors;
   }
 
   body {
@@ -203,11 +203,11 @@
 }
 
 .form-tab-button {
-  @apply px-4 py-2 font-medium text-sm border-b-2 border-transparent hover:border-blue-300 hover:text-blue-600 transition-colors;
+  @apply px-4 py-2 font-medium text-sm border-b-2 border-transparent hover:border-accent hover:text-accent-foreground transition-colors;
 }
 
 .form-tab-button.active {
-  @apply border-blue-600 text-blue-600;
+  @apply border-primary text-primary;
 }
 
 /* Improved responsive design */
