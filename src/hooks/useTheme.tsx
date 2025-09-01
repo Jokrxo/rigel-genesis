@@ -201,20 +201,34 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
   useEffect(() => {
     const root = document.documentElement;
     
-    // Remove all theme classes
+    // Remove all existing theme classes
     Object.keys(THEMES).forEach(themeName => {
       root.classList.remove(`theme-${themeName}`);
     });
     
+    // Remove default dark class
+    root.classList.remove('dark');
+    
     // Apply current theme
+    let appliedTheme = theme;
     if (theme === 'system') {
-      root.classList.add(`theme-${systemTheme}`);
+      appliedTheme = systemTheme;
+    }
+    
+    // For light and dark themes, use the standard classes
+    if (appliedTheme === 'light') {
+      // Light theme is the default, no class needed
+    } else if (appliedTheme === 'dark') {
+      root.classList.add('dark');
     } else {
-      root.classList.add(`theme-${theme}`);
+      // For color themes, add the theme class
+      root.classList.add(`theme-${appliedTheme}`);
     }
     
     // Save to localStorage
     localStorage.setItem('financial-theme', theme);
+    
+    console.log('Theme applied:', appliedTheme, 'Classes:', root.className);
   }, [theme, systemTheme]);
 
   const setTheme = (newTheme: ThemeName) => {
