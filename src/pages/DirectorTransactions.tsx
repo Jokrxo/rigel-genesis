@@ -11,6 +11,7 @@ import { Chatbot } from "@/components/Shared/Chatbot";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface Director {
   id: string;
@@ -39,6 +40,7 @@ const DirectorTransactions = () => {
   const [transactions, setTransactions] = useState<DirectorTransaction[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDirector, setShowAddDirector] = useState(false);
+  const [activeTab, setActiveTab] = useState("directors");
   const [directorForm, setDirectorForm] = useState({
     name: "",
     idNumber: "",
@@ -47,9 +49,10 @@ const DirectorTransactions = () => {
     appointmentDate: "",
     shareholding: "",
   });
+  const { toast } = useToast();
 
   useEffect(() => {
-    // TODO: Replace with actual API calls
+    // Initialize with empty data - will be populated with real data in future
     setDirectors([]);
     setTransactions([]);
   }, []);
@@ -118,7 +121,7 @@ const DirectorTransactions = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="directors" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="directors">Directors</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
@@ -235,10 +238,29 @@ const DirectorTransactions = () => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="sm">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    toast({
+                                      title: "Edit Director", 
+                                      description: "Edit functionality will be available in a future update"
+                                    });
+                                  }}
+                                >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    toast({
+                                      title: "Delete Director",
+                                      description: "Delete functionality will be available in a future update",
+                                      variant: "destructive",
+                                    });
+                                  }}
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -276,7 +298,14 @@ const DirectorTransactions = () => {
                     <Download className="mr-2 h-4 w-4" />
                     Export CSV
                   </Button>
-                  <Button>
+                  <Button 
+                    onClick={() => {
+                      toast({
+                        title: "New Transaction",
+                        description: "Transaction creation form will be available in a future update",
+                      });
+                    }}
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     New Transaction
                   </Button>
@@ -362,10 +391,29 @@ const DirectorTransactions = () => {
                             <TableCell className="text-right">R{transaction.amount.toLocaleString()}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="sm">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    toast({
+                                      title: "Edit Transaction",
+                                      description: "Transaction editing will be available in a future update",
+                                    });
+                                  }}
+                                >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    toast({
+                                      title: "Delete Transaction",
+                                      description: "Transaction deletion will be available in a future update",
+                                      variant: "destructive",
+                                    });
+                                  }}
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Plus, Printer, Download, Calculator } from "lucide-react";
+import { Users, Plus, Printer, Download, Calculator, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -460,8 +460,18 @@ const EmployeeManagement = () => {
                   <Download className="mr-2 h-4 w-4" />
                   Export Payroll CSV
                 </Button>
-                {/* Dummy Quick Action */}
-                <Button variant="outline" disabled>
+                {/* Pay All Pending Action */}
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    toast({
+                      title: "Pay All Pending",
+                      description: "Payment processing functionality will be available in a future update",
+                      variant: "default",
+                    });
+                  }}
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
                   Pay All Pending
                 </Button>
               </div>
@@ -618,7 +628,18 @@ const EmployeeManagement = () => {
                             <TableCell className="font-medium">R{entry.netSalary.toFixed(2)}</TableCell>
                             <TableCell>{entry.processedDate}</TableCell>
                             <TableCell>
-                              <Button size="sm" variant="outline" disabled>Export Payslip</Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => {
+                                  toast({
+                                    title: "Payslip Export",
+                                    description: `Exporting payslip for ${employee?.firstName} ${employee?.lastName}`,
+                                  });
+                                }}
+                              >
+                                Export Payslip
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );

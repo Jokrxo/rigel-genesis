@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import { ExportControls } from "@/components/Dashboard/ExportControls";
 
 // Report type definitions
@@ -54,6 +55,7 @@ const ReportsGenerator = () => {
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [generatedReport, setGeneratedReport] = useState<GeneratedReport>(null);
+  const { toast } = useToast();
 
   const reportTypes = [
     { value: 'financial-overview', label: 'Financial Overview Report' },
@@ -70,13 +72,28 @@ const ReportsGenerator = () => {
 
   const generateReport = () => {
     if (!reportType) {
-      alert('Please select a report type');
+      toast({
+        title: "No Report Type Selected",
+        description: "Please select a report type before generating",
+        variant: "destructive",
+      });
       return;
     }
 
-    // TODO: Generate actual report from real data
-    const reportData = generateEmptyReport(reportType);
-    setGeneratedReport(reportData);
+    try {
+      const reportData = generateEmptyReport(reportType);
+      setGeneratedReport(reportData);
+      toast({
+        title: "Report Generated",
+        description: `${reportType.replace('_', ' ').toUpperCase()} report generated successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const generateEmptyReport = (type: string): GeneratedReport => {

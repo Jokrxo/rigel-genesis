@@ -25,10 +25,9 @@ export const RecentActivity = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Replace with actual API call to fetch activities
     const fetchActivities = async () => {
       try {
-        // TODO: Implement actual API call
+        // Set empty activities for now - will be populated with real data in future
         setActivities([]);
         setLoading(false);
       } catch (error) {

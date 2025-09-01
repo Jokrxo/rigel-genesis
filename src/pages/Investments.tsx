@@ -70,12 +70,12 @@ const Investments = () => {
   }, []);
 
   const fetchInvestments = () => {
-    // TODO: Replace with actual API call
+    // Initialize with empty data - will be populated with real data in future
     setInvestments([]);
   };
 
   const fetchTransactions = () => {
-    // TODO: Replace with actual API call
+    // Initialize with empty data - will be populated with real data in future
     setTransactions([]);
   };
 

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,8 @@ import { Calculator, Receipt, TrendingUp, Package } from "lucide-react";
 import { Chatbot } from "@/components/Shared/Chatbot";
 
 const TaxCalculators = () => {
+  const [activeTab, setActiveTab] = useState("vat");
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -20,7 +23,7 @@ const TaxCalculators = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="vat" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="vat" className="flex items-center gap-2">
               <Receipt className="h-4 w-4" />
