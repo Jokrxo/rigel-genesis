@@ -4,10 +4,15 @@ import { Toaster as Sonner, toast } from "sonner"
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme, systemTheme } = useTheme()
+  const { theme } = useTheme()
   
-  // Get the actual theme to display
-  const actualTheme = theme === 'system' ? systemTheme : (theme === 'light' || theme === 'dark' ? theme : 'light')
+  // Get the actual theme to display - default to light for color themes
+  let actualTheme = theme;
+  if (theme === 'system') {
+    actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } else if (theme !== 'light' && theme !== 'dark') {
+    actualTheme = 'light'; // Use light theme for color themes
+  }
 
   return (
     <Sonner

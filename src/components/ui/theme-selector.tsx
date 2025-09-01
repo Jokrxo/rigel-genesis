@@ -1,199 +1,14 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import { useTheme, THEMES, ThemeName } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
-
-// Helper function to get theme colors for preview
-const getThemeColor = (themeName: ThemeName, colorType: string, opacity = 1) => {
-  const themeMap: Record<ThemeName, Record<string, string>> = {
-    light: {
-      background: '#ffffff',
-      foreground: '#0f0f0f',
-      primary: '#171717',
-      'muted-foreground': '#737373',
-      border: '#e4e4e7'
-    },
-    dark: {
-      background: '#0a0a0a',
-      foreground: '#fafafa',
-      primary: '#fafafa',
-      'muted-foreground': '#a3a3a3',
-      border: '#262626'
-    },
-    system: {
-      background: '#ffffff',
-      foreground: '#0f0f0f',
-      primary: '#171717',
-      'muted-foreground': '#737373',
-      border: '#e4e4e7'
-    },
-    blue: {
-      background: '#f0f8ff',
-      foreground: '#1e293b',
-      primary: '#3b82f6',
-      'muted-foreground': '#64748b',
-      border: '#cbd5e1'
-    },
-    green: {
-      background: '#f0fdfa',
-      foreground: '#1e293b',
-      primary: '#10b981',
-      'muted-foreground': '#64748b',
-      border: '#d1fae5'
-    },
-    purple: {
-      background: '#faf5ff',
-      foreground: '#1e293b',
-      primary: '#a855f7',
-      'muted-foreground': '#64748b',
-      border: '#e9d5ff'
-    },
-    orange: {
-      background: '#fff7ed',
-      foreground: '#1e293b',
-      primary: '#f97316',
-      'muted-foreground': '#64748b',
-      border: '#fed7aa'
-    },
-    red: {
-      background: '#fef2f2',
-      foreground: '#1e293b',
-      primary: '#ef4444',
-      'muted-foreground': '#64748b',
-      border: '#fecaca'
-    },
-    pink: {
-      background: '#fdf2f8',
-      foreground: '#1e293b',
-      primary: '#ec4899',
-      'muted-foreground': '#64748b',
-      border: '#fbcfe8'
-    },
-    yellow: {
-      background: '#fefce8',
-      foreground: '#1e293b',
-      primary: '#eab308',
-      'muted-foreground': '#64748b',
-      border: '#fef3c7'
-    },
-    cyan: {
-      background: '#ecfeff',
-      foreground: '#1e293b',
-      primary: '#06b6d4',
-      'muted-foreground': '#64748b',
-      border: '#a5f3fc'
-    },
-    lime: {
-      background: '#f7fee7',
-      foreground: '#1e293b',
-      primary: '#84cc16',
-      'muted-foreground': '#64748b',
-      border: '#d9f99d'
-    },
-    slate: {
-      background: '#f8fafc',
-      foreground: '#1e293b',
-      primary: '#334155',
-      'muted-foreground': '#64748b',
-      border: '#cbd5e1'
-    },
-    zinc: {
-      background: '#fafafa',
-      foreground: '#18181b',
-      primary: '#27272a',
-      'muted-foreground': '#71717a',
-      border: '#d4d4d8'
-    },
-    neutral: {
-      background: '#fafafa',
-      foreground: '#171717',
-      primary: '#404040',
-      'muted-foreground': '#737373',
-      border: '#d4d4d4'
-    },
-    stone: {
-      background: '#fafaf9',
-      foreground: '#1c1917',
-      primary: '#44403c',
-      'muted-foreground': '#78716c',
-      border: '#d6d3d1'
-    },
-    emerald: {
-      background: '#ecfdf5',
-      foreground: '#1e293b',
-      primary: '#059669',
-      'muted-foreground': '#64748b',
-      border: '#a7f3d0'
-    },
-    teal: {
-      background: '#f0fdfa',
-      foreground: '#1e293b',
-      primary: '#0d9488',
-      'muted-foreground': '#64748b',
-      border: '#99f6e4'
-    },
-    sky: {
-      background: '#f0f9ff',
-      foreground: '#1e293b',
-      primary: '#0ea5e9',
-      'muted-foreground': '#64748b',
-      border: '#bae6fd'
-    },
-    indigo: {
-      background: '#f0f4ff',
-      foreground: '#1e293b',
-      primary: '#6366f1',
-      'muted-foreground': '#64748b',
-      border: '#c7d2fe'
-    },
-    violet: {
-      background: '#f5f3ff',
-      foreground: '#1e293b',
-      primary: '#8b5cf6',
-      'muted-foreground': '#64748b',
-      border: '#ddd6fe'
-    },
-    fuchsia: {
-      background: '#fdf4ff',
-      foreground: '#1e293b',
-      primary: '#d946ef',
-      'muted-foreground': '#64748b',
-      border: '#f5d0fe'
-    },
-    rose: {
-      background: '#fff1f2',
-      foreground: '#1e293b',
-      primary: '#f43f5e',
-      'muted-foreground': '#64748b',
-      border: '#fecdd3'
-    },
-    amber: {
-      background: '#fffbeb',
-      foreground: '#1e293b',
-      primary: '#f59e0b',
-      'muted-foreground': '#64748b',
-      border: '#fde68a'
-    }
-  };
-
-  const color = themeMap[themeName]?.[colorType] || themeMap.light[colorType] || '#000000';
-  
-  if (opacity === 1) return color;
-  
-  // Convert hex to rgba for opacity
-  const hex = color.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-};
+import { useToast } from '@/hooks/use-toast';
 
 export function ThemeSelector() {
   const { theme, setTheme, themes } = useTheme();
+  const { toast } = useToast();
 
   // Group themes by category
   const themeGroups = Object.entries(themes).reduce((acc, [key, themeData]) => {
@@ -204,6 +19,14 @@ export function ThemeSelector() {
     acc[category].push([key as ThemeName, themeData]);
     return acc;
   }, {} as Record<string, Array<[ThemeName, typeof themes[ThemeName]]>>);
+
+  const handleThemeSelect = (themeName: ThemeName) => {
+    setTheme(themeName);
+    toast({
+      title: "Theme Changed",
+      description: `Switched to ${themes[themeName].name} theme`,
+    });
+  };
 
   const isSelected = (themeName: ThemeName) => theme === themeName;
 
@@ -232,7 +55,7 @@ export function ThemeSelector() {
                 themeName={themeName}
                 themeData={themeData}
                 isSelected={isSelected(themeName)}
-                onSelect={setTheme}
+                onSelect={handleThemeSelect}
               />
             ))}
           </div>
@@ -250,6 +73,38 @@ interface ThemeCardProps {
 }
 
 function ThemeCard({ themeName, themeData, isSelected, onSelect }: ThemeCardProps) {
+  const getPreviewColors = (theme: ThemeName) => {
+    const colors = {
+      light: { bg: '#ffffff', fg: '#0f0f0f', primary: '#171717', muted: '#737373', border: '#e4e4e7' },
+      dark: { bg: '#0a0a0a', fg: '#fafafa', primary: '#fafafa', muted: '#a3a3a3', border: '#262626' },
+      blue: { bg: '#f0f8ff', fg: '#1e293b', primary: '#3b82f6', muted: '#64748b', border: '#cbd5e1' },
+      green: { bg: '#f0fdfa', fg: '#1e293b', primary: '#10b981', muted: '#64748b', border: '#d1fae5' },
+      purple: { bg: '#faf5ff', fg: '#1e293b', primary: '#a855f7', muted: '#64748b', border: '#e9d5ff' },
+      orange: { bg: '#fff7ed', fg: '#1e293b', primary: '#f97316', muted: '#64748b', border: '#fed7aa' },
+      red: { bg: '#fef2f2', fg: '#1e293b', primary: '#ef4444', muted: '#64748b', border: '#fecaca' },
+      pink: { bg: '#fdf2f8', fg: '#1e293b', primary: '#ec4899', muted: '#64748b', border: '#fbcfe8' },
+      yellow: { bg: '#fefce8', fg: '#1e293b', primary: '#eab308', muted: '#64748b', border: '#fef3c7' },
+      cyan: { bg: '#ecfeff', fg: '#1e293b', primary: '#06b6d4', muted: '#64748b', border: '#a5f3fc' },
+      lime: { bg: '#f7fee7', fg: '#1e293b', primary: '#84cc16', muted: '#64748b', border: '#d9f99d' },
+      slate: { bg: '#f8fafc', fg: '#1e293b', primary: '#334155', muted: '#64748b', border: '#cbd5e1' },
+      zinc: { bg: '#fafafa', fg: '#18181b', primary: '#27272a', muted: '#71717a', border: '#d4d4d8' },
+      neutral: { bg: '#fafafa', fg: '#171717', primary: '#404040', muted: '#737373', border: '#d4d4d4' },
+      stone: { bg: '#fafaf9', fg: '#1c1917', primary: '#44403c', muted: '#78716c', border: '#d6d3d1' },
+      emerald: { bg: '#ecfdf5', fg: '#1e293b', primary: '#059669', muted: '#64748b', border: '#a7f3d0' },
+      teal: { bg: '#f0fdfa', fg: '#1e293b', primary: '#0d9488', muted: '#64748b', border: '#99f6e4' },
+      sky: { bg: '#f0f9ff', fg: '#1e293b', primary: '#0ea5e9', muted: '#64748b', border: '#bae6fd' },
+      indigo: { bg: '#f0f4ff', fg: '#1e293b', primary: '#6366f1', muted: '#64748b', border: '#c7d2fe' },
+      violet: { bg: '#f5f3ff', fg: '#1e293b', primary: '#8b5cf6', muted: '#64748b', border: '#ddd6fe' },
+      fuchsia: { bg: '#fdf4ff', fg: '#1e293b', primary: '#d946ef', muted: '#64748b', border: '#f5d0fe' },
+      rose: { bg: '#fff1f2', fg: '#1e293b', primary: '#f43f5e', muted: '#64748b', border: '#fecdd3' },
+      amber: { bg: '#fffbeb', fg: '#1e293b', primary: '#f59e0b', muted: '#64748b', border: '#fde68a' },
+      system: { bg: '#ffffff', fg: '#0f0f0f', primary: '#171717', muted: '#737373', border: '#e4e4e7' }
+    };
+    return colors[theme] || colors.light;
+  };
+
+  const colors = getPreviewColors(themeName);
+
   return (
     <Card 
       className={cn(
@@ -261,21 +116,17 @@ function ThemeCard({ themeName, themeData, isSelected, onSelect }: ThemeCardProp
     >
       <CardContent className="p-3">
         {/* Theme Preview */}
-        <div className="aspect-video rounded-md mb-2 relative overflow-hidden border bg-background">
-          {/* Simulate theme colors with inline styles */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              backgroundColor: getThemeColor(themeName, 'background'),
-              color: getThemeColor(themeName, 'foreground')
-            }}
-          >
+        <div 
+          className="aspect-video rounded-md mb-2 relative overflow-hidden border"
+          style={{ backgroundColor: colors.bg, borderColor: colors.border }}
+        >
+          <div className="absolute inset-0" style={{ color: colors.fg }}>
             {/* Header simulation */}
             <div 
               className="h-2 border-b"
-              style={{
-                backgroundColor: getThemeColor(themeName, 'primary', 0.1),
-                borderColor: getThemeColor(themeName, 'border')
+              style={{ 
+                backgroundColor: colors.primary + '1A', 
+                borderColor: colors.border 
               }}
             ></div>
             
@@ -283,23 +134,23 @@ function ThemeCard({ themeName, themeData, isSelected, onSelect }: ThemeCardProp
             <div className="p-2 space-y-1">
               <div 
                 className="h-1 rounded w-3/4"
-                style={{ backgroundColor: getThemeColor(themeName, 'foreground', 0.8) }}
+                style={{ backgroundColor: colors.fg }}
               ></div>
               <div 
                 className="h-1 rounded w-1/2"
-                style={{ backgroundColor: getThemeColor(themeName, 'muted-foreground', 0.6) }}
+                style={{ backgroundColor: colors.muted }}
               ></div>
               <div 
                 className="h-1 rounded w-2/3"
-                style={{ backgroundColor: getThemeColor(themeName, 'muted-foreground', 0.4) }}
+                style={{ backgroundColor: colors.muted + '80' }}
               ></div>
             </div>
             
             {/* Button simulation */}
             <div className="absolute bottom-1 right-1">
               <div 
-                className="w-3 h-1.5 rounded text-xs"
-                style={{ backgroundColor: getThemeColor(themeName, 'primary') }}
+                className="w-3 h-1.5 rounded"
+                style={{ backgroundColor: colors.primary }}
               ></div>
             </div>
           </div>
