@@ -2,8 +2,10 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 
-interface User {
+interface AuthUser {
   id: string;
   email: string;
   displayName: string | null;
@@ -12,7 +14,7 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -25,45 +27,70 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Mock implementation
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage in this mock)
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            displayName: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || null,
+            photoURL: session.user.user_metadata?.avatar_url || null,
+            emailVerified: session.user.email_confirmed_at !== null,
+          });
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          displayName: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || null,
+          photoURL: session.user.user_metadata?.avatar_url || null,
+          emailVerified: session.user.email_confirmed_at !== null,
+        });
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // Mock implementation
-      const mockUser = {
-        id: "user-123",
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        displayName: email.split("@")[0],
-        photoURL: null,
-        emailVerified: true,
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem("user", JSON.stringify(mockUser));
+        password,
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Login successful",
         description: "Welcome back to SA Financial Insight",
       });
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
       throw error;
@@ -75,26 +102,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (email: string, password: string, displayName: string) => {
     try {
       setLoading(true);
-      // Mock implementation
-      const mockUser = {
-        id: "user-123",
-        email,
-        displayName,
-        photoURL: null,
-        emailVerified: false,
-      };
+      const redirectUrl = `${window.location.origin}/`;
       
-      setUser(mockUser);
-      localStorage.setItem("user", JSON.stringify(mockUser));
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            display_name: displayName,
+          },
+        },
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Registration successful",
-        description: "Please verify your email to continue",
+        description: "Please check your email to verify your account",
       });
       navigate("/verify-email");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Registration failed",
-        description: "Could not create account",
+        description: error.message || "Could not create account",
         variant: "destructive",
       });
       throw error;
@@ -106,26 +137,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = async () => {
     try {
       setLoading(true);
-      // Mock implementation
-      const mockUser = {
-        id: "google-user-123",
-        email: "user@gmail.com",
-        displayName: "Google User",
-        photoURL: "https://placekitten.com/100/100",
-        emailVerified: true,
-      };
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
-      setUser(mockUser);
-      localStorage.setItem("user", JSON.stringify(mockUser));
-      toast({
-        title: "Google login successful",
-        description: "Welcome to SA Financial Insight",
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+        },
       });
-      navigate("/dashboard");
-    } catch (error) {
+
+      if (error) throw error;
+
+      toast({
+        title: "Redirecting to Google",
+        description: "Please complete the login process",
+      });
+    } catch (error: any) {
       toast({
         title: "Google login failed",
-        description: "Could not login with Google",
+        description: error.message || "Could not login with Google",
         variant: "destructive",
       });
       throw error;
@@ -137,26 +167,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithFacebook = async () => {
     try {
       setLoading(true);
-      // Mock implementation
-      const mockUser = {
-        id: "facebook-user-123",
-        email: "user@facebook.com",
-        displayName: "Facebook User",
-        photoURL: "https://placekitten.com/100/100",
-        emailVerified: true,
-      };
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
-      setUser(mockUser);
-      localStorage.setItem("user", JSON.stringify(mockUser));
-      toast({
-        title: "Facebook login successful",
-        description: "Welcome to SA Financial Insight",
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: redirectUrl,
+        },
       });
-      navigate("/dashboard");
-    } catch (error) {
+
+      if (error) throw error;
+
+      toast({
+        title: "Redirecting to Facebook",
+        description: "Please complete the login process",
+      });
+    } catch (error: any) {
       toast({
         title: "Facebook login failed",
-        description: "Could not login with Facebook",
+        description: error.message || "Could not login with Facebook",
         variant: "destructive",
       });
       throw error;
@@ -168,18 +197,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setLoading(true);
-      // Mock implementation
-      setUser(null);
-      localStorage.removeItem("user");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+
       toast({
         title: "Logged out",
         description: "You have been logged out successfully",
       });
-      navigate("/login");
-    } catch (error) {
+      navigate("/");
+    } catch (error: any) {
       toast({
         title: "Logout failed",
-        description: "Could not log out",
+        description: error.message || "Could not log out",
         variant: "destructive",
       });
       throw error;
@@ -191,24 +221,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const sendVerificationEmail = async () => {
     try {
       setLoading(true);
-      // Mock implementation
+      if (!session?.user?.email) {
+        throw new Error("No email address found");
+      }
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: session.user.email,
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Verification email sent",
         description: "Please check your inbox",
       });
-      
-      // For demo purposes, let's simulate email verification
-      setTimeout(() => {
-        if (user) {
-          const verifiedUser = { ...user, emailVerified: true };
-          setUser(verifiedUser);
-          localStorage.setItem("user", JSON.stringify(verifiedUser));
-        }
-      }, 5000);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Could not send verification email",
-        description: "Please try again later",
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
