@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/Layout/ProtectedRoute";
+import { ThemeProvider } from "next-themes";
 
 // Import pages
 import Index from "./pages/Index";
@@ -55,55 +55,62 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <ErrorBoundary>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route path="/verification-success" element={<VerificationSuccess />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/qr-code" element={<QRCode />} />
-                
-                {/* Protected routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/import-statement" element={<ProtectedRoute><ImportStatement /></ProtectedRoute>} />
-                <Route path="/asset-management" element={<ProtectedRoute><AssetManagement /></ProtectedRoute>} />
-                <Route path="/documents" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
-                <Route path="/customers" element={<ProtectedRoute><CustomerManagement /></ProtectedRoute>} />
-                <Route path="/inventory" element={<ProtectedRoute><InventoryManagement /></ProtectedRoute>} />
-                <Route path="/suppliers" element={<ProtectedRoute><SupplierManagement /></ProtectedRoute>} />
-                <Route path="/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
-                <Route path="/bank-movements" element={<ProtectedRoute><BankBalanceMovements /></ProtectedRoute>} />
-                <Route path="/director-transactions" element={<ProtectedRoute><DirectorTransactions /></ProtectedRoute>} />
-                <Route path="/loan-management" element={<ProtectedRoute><LoanManagement /></ProtectedRoute>} />
-                <Route path="/employee-management" element={<ProtectedRoute><EmployeeManagement /></ProtectedRoute>} />
-                <Route path="/payroll-management" element={<ProtectedRoute><PayrollManagement /></ProtectedRoute>} />
-                <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
-                <Route path="/transaction-processing" element={<ProtectedRoute><TransactionProcessing /></ProtectedRoute>} />
-                <Route path="/company-profile" element={<ProtectedRoute><CompanyProfile /></ProtectedRoute>} />
-                <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                <Route path="/tax-calculators" element={<ProtectedRoute><TaxCalculators /></ProtectedRoute>} />
-                <Route path="/ai-features" element={<ProtectedRoute><AIFeatures /></ProtectedRoute>} />
-                
-                {/* 404 route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </ErrorBoundary>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange={false}
+      >
+        <TooltipProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <ErrorBoundary>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="/verification-success" element={<VerificationSuccess />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/qr-code" element={<QRCode />} />
+                  
+                  {/* Protected routes */}
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/import-statement" element={<ProtectedRoute><ImportStatement /></ProtectedRoute>} />
+                  <Route path="/asset-management" element={<ProtectedRoute><AssetManagement /></ProtectedRoute>} />
+                  <Route path="/documents" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
+                  <Route path="/customers" element={<ProtectedRoute><CustomerManagement /></ProtectedRoute>} />
+                  <Route path="/inventory" element={<ProtectedRoute><InventoryManagement /></ProtectedRoute>} />
+                  <Route path="/suppliers" element={<ProtectedRoute><SupplierManagement /></ProtectedRoute>} />
+                  <Route path="/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
+                  <Route path="/bank-movements" element={<ProtectedRoute><BankBalanceMovements /></ProtectedRoute>} />
+                  <Route path="/director-transactions" element={<ProtectedRoute><DirectorTransactions /></ProtectedRoute>} />
+                  <Route path="/loan-management" element={<ProtectedRoute><LoanManagement /></ProtectedRoute>} />
+                  <Route path="/employee-management" element={<ProtectedRoute><EmployeeManagement /></ProtectedRoute>} />
+                  <Route path="/payroll-management" element={<ProtectedRoute><PayrollManagement /></ProtectedRoute>} />
+                  <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
+                  <Route path="/transaction-processing" element={<ProtectedRoute><TransactionProcessing /></ProtectedRoute>} />
+                  <Route path="/company-profile" element={<ProtectedRoute><CompanyProfile /></ProtectedRoute>} />
+                  <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+                  <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  <Route path="/tax-calculators" element={<ProtectedRoute><TaxCalculators /></ProtectedRoute>} />
+                  <Route path="/ai-features" element={<ProtectedRoute><AIFeatures /></ProtectedRoute>} />
+                  
+                  {/* 404 route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </ErrorBoundary>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

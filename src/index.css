@@ -5,74 +5,107 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 3.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 3.9%;
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 8% 46%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
 
-    --accent: 220 14% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 221 83% 53%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+
+    --error: 0 84.2% 60.2%;
+    --error-foreground: 0 0% 98%;
+
+    --info: 221.2 83.2% 53.3%;
+    --info-foreground: 0 0% 98%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217 19% 27%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 223 30% 20%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 0 0% 9%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 96.1%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 89.8%;
+    --sidebar-ring: 0 0% 3.9%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
 
-    --secondary: 217 19% 27%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217 19% 27%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
 
-    --accent: 217 19% 27%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
-    --ring: 221 83% 53%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 95.7% 44.1%;
+    --warning-foreground: 0 0% 9%;
+
+    --error: 0 62.8% 30.6%;
+    --error-foreground: 0 0% 98%;
+
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 0 0% 98%;
+
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 9%;
+    --sidebar-accent: 0 0% 14.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 14.9%;
+    --sidebar-ring: 0 0% 83.1%;
   }
 }
 
@@ -86,6 +119,7 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
   
   /* Add justified text as a base style */
@@ -123,13 +157,13 @@
   @apply bg-muted-foreground/50;
 }
 
-/* Custom classes with updated blue theme */
+/* Custom classes using theme variables */
 .financial-card {
-  @apply bg-white rounded-lg shadow-md border border-border p-5 transition-all hover:shadow-lg;
+  @apply bg-card text-card-foreground rounded-lg shadow-md border border-border p-5 transition-all hover:shadow-lg;
 }
 
 .financial-input {
-  @apply rounded-md border border-input px-4 py-2 text-sm transition-colors 
+  @apply rounded-md border border-input bg-background px-4 py-2 text-sm transition-colors 
   focus:outline-none focus:ring-2 focus:ring-ring focus:border-input w-full;
 }
 
@@ -142,7 +176,7 @@
 }
 
 .auth-card {
-  @apply w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg border border-border;
+  @apply w-full max-w-md space-y-8 bg-card text-card-foreground p-8 rounded-xl shadow-lg border border-border;
 }
 
 /* Enhanced button visibility */
@@ -161,7 +195,7 @@
 
 /* Form improvements */
 .form-section {
-  @apply space-y-6 p-6 bg-white rounded-lg shadow-sm border border-border;
+  @apply space-y-6 p-6 bg-card text-card-foreground rounded-lg shadow-sm border border-border;
 }
 
 .form-tabs {

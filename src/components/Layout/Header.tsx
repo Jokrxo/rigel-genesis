@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -42,7 +43,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
           <img
             src="/lovable-uploads/b1f574c8-f027-467a-a92b-e556560a94cc.png"
             alt="Financial workspace"
-            className="h-8 w-12 mr-4 object-cover rounded-lg border border-financial-200"
+            className="h-8 w-12 mr-4 object-cover rounded-lg border border-border"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = "/placeholder.svg";
             }}
@@ -76,9 +77,10 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
         </Button>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-financial-600" />
+          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
           <span className="sr-only">Notifications</span>
         </Button>
+        <ModeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
