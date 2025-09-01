@@ -8,7 +8,7 @@ export const FloatingContactPanel: React.FC = () => {
 
   return (
     <div 
-      className="fixed bottom-20 left-4 z-50 md:top-20 md:bottom-auto md:left-6 lg:left-8"
+      className="fixed bottom-6 right-20 z-50"
       aria-label="Contact options panel"
     >
       {/* Minimized: only Get In Touch */}
