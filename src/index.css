@@ -45,6 +45,7 @@
   }
 
   .dark,
+  :root.theme-dark,
   .theme-dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -84,6 +85,7 @@
   }
 
   /* Blue Theme */
+  :root.theme-blue,
   .theme-blue {
     --background: 214 100% 97%;
     --foreground: 214 13% 8%;
@@ -123,6 +125,7 @@
   }
 
   /* Green Theme */
+  :root.theme-green,
   .theme-green {
     --background: 142 52% 96%;
     --foreground: 142 13% 8%;
@@ -162,6 +165,7 @@
   }
 
   /* Purple Theme */
+  :root.theme-purple,
   .theme-purple {
     --background: 270 50% 96%;
     --foreground: 270 13% 8%;
@@ -201,6 +205,7 @@
   }
 
   /* Orange Theme */
+  :root.theme-orange,
   .theme-orange {
     --background: 25 95% 96%;
     --foreground: 25 13% 8%;
@@ -240,6 +245,7 @@
   }
 
   /* Red Theme */
+  :root.theme-red,
   .theme-red {
     --background: 0 85% 96%;
     --foreground: 0 13% 8%;
@@ -279,6 +285,7 @@
   }
 
   /* Pink Theme */
+  :root.theme-pink,
   .theme-pink {
     --background: 330 85% 96%;
     --foreground: 330 13% 8%;
@@ -318,6 +325,7 @@
   }
 
   /* Yellow Theme */
+  :root.theme-yellow,
   .theme-yellow {
     --background: 48 96% 89%;
     --foreground: 48 13% 8%;
@@ -357,6 +365,7 @@
   }
 
   /* Cyan Theme */
+  :root.theme-cyan,
   .theme-cyan {
     --background: 188 100% 95%;
     --foreground: 188 13% 8%;
@@ -396,6 +405,7 @@
   }
 
   /* Lime Theme */
+  :root.theme-lime,
   .theme-lime {
     --background: 84 81% 91%;
     --foreground: 84 13% 8%;
@@ -435,6 +445,7 @@
   }
 
   /* Slate Theme */
+  :root.theme-slate,
   .theme-slate {
     --background: 210 40% 95%;
     --foreground: 210 20% 8%;
@@ -474,6 +485,7 @@
   }
 
   /* Zinc Theme */
+  :root.theme-zinc,
   .theme-zinc {
     --background: 0 0% 95%;
     --foreground: 0 0% 9%;
@@ -513,6 +525,7 @@
   }
 
   /* Neutral Theme */
+  :root.theme-neutral,
   .theme-neutral {
     --background: 0 0% 95%;
     --foreground: 0 0% 8%;
@@ -552,6 +565,7 @@
   }
 
   /* Stone Theme */
+  :root.theme-stone,
   .theme-stone {
     --background: 60 9% 95%;
     --foreground: 60 9% 8%;
@@ -591,6 +605,7 @@
   }
 
   /* Emerald Theme */
+  :root.theme-emerald,
   .theme-emerald {
     --background: 152 81% 92%;
     --foreground: 152 13% 8%;
@@ -630,6 +645,7 @@
   }
 
   /* Teal Theme */
+  :root.theme-teal,
   .theme-teal {
     --background: 173 80% 91%;
     --foreground: 173 13% 8%;
@@ -669,6 +685,7 @@
   }
 
   /* Sky Theme */
+  :root.theme-sky,
   .theme-sky {
     --background: 200 100% 94%;
     --foreground: 200 13% 8%;
@@ -708,6 +725,7 @@
   }
 
   /* Indigo Theme */
+  :root.theme-indigo,
   .theme-indigo {
     --background: 231 48% 93%;
     --foreground: 231 13% 8%;
@@ -747,6 +765,7 @@
   }
 
   /* Violet Theme */
+  :root.theme-violet,
   .theme-violet {
     --background: 262 83% 94%;
     --foreground: 262 13% 8%;
@@ -796,6 +815,7 @@
   }
 
   /* Fuchsia Theme */
+  :root.theme-fuchsia,
   .theme-fuchsia {
     --background: 292 84% 93%;
     --foreground: 292 13% 8%;
@@ -835,6 +855,7 @@
   }
 
   /* Rose Theme */
+  :root.theme-rose,
   .theme-rose {
     --background: 356 100% 94%;
     --foreground: 356 13% 8%;
@@ -874,6 +895,7 @@
   }
 
   /* Amber Theme */
+  :root.theme-amber,
   .theme-amber {
     --background: 48 100% 88%;
     --foreground: 48 13% 8%;
