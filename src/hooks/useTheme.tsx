@@ -85,6 +85,56 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.offsetHeight;
     
     console.log('Applied theme:', actualTheme, 'HTML classes:', root.className);
+    
+    // Debug: Check if CSS variables are actually being set
+    const computedStyle = getComputedStyle(root);
+    const bodyStyle = getComputedStyle(document.body);
+    console.log('CSS Variables check:', {
+      background: computedStyle.getPropertyValue('--background'),
+      primary: computedStyle.getPropertyValue('--primary'),
+      foreground: computedStyle.getPropertyValue('--foreground')
+    });
+    
+    console.log('Body computed styles:', {
+      backgroundColor: bodyStyle.backgroundColor,
+      color: bodyStyle.color,
+      cssBackground: bodyStyle.getPropertyValue('background-color'),
+    });
+    
+    // Force a style recalculation
+    document.body.offsetHeight;
+    
+    // Add visual feedback for theme change
+    const flashElement = document.createElement('div');
+    flashElement.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: hsl(var(--primary) / 0.1);
+      z-index: 9999;
+      pointer-events: none;
+      animation: themeFlash 0.5s ease-out;
+    `;
+    
+    // Add keyframes if not already added
+    if (!document.querySelector('#theme-flash-styles')) {
+      const style = document.createElement('style');
+      style.id = 'theme-flash-styles';
+      style.textContent = `
+        @keyframes themeFlash {
+          0% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(flashElement);
+    setTimeout(() => {
+      document.body.removeChild(flashElement);
+    }, 500);
   };
 
   const setTheme = (newTheme: ThemeName) => {
