@@ -58,8 +58,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const applyTheme = (themeName: ThemeName) => {
     const root = document.documentElement;
     
-    // Remove all theme classes
-    root.className = root.className.replace(/theme-\w+|dark/g, '').trim();
+    // Remove all theme classes more thoroughly
+    const classList = Array.from(root.classList);
+    classList.forEach(className => {
+      if (className.startsWith('theme-') || className === 'dark') {
+        root.classList.remove(className);
+      }
+    });
     
     let actualTheme = themeName;
     
@@ -75,6 +80,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else if (actualTheme !== 'light') {
       root.classList.add(`theme-${actualTheme}`);
     }
+    
+    // Force a reflow to ensure styles are applied
+    root.offsetHeight;
     
     console.log('Applied theme:', actualTheme, 'HTML classes:', root.className);
   };
