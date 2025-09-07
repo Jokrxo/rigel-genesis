@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -44,6 +44,39 @@ export type Database = {
           result_json?: Json | null
           upload_date?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      countries: {
+        Row: {
+          capital_gains_tax_inclusion: number
+          code: string
+          corporate_tax_rate: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          capital_gains_tax_inclusion?: number
+          code: string
+          corporate_tax_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          capital_gains_tax_inclusion?: number
+          code?: string
+          corporate_tax_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -109,6 +142,179 @@ export type Database = {
           vat_number?: string | null
         }
         Relationships: []
+      }
+      deferred_tax_categories: {
+        Row: {
+          applicable_tax_rate: number
+          book_value: number
+          category_type: string
+          created_at: string
+          deferred_tax_asset: number
+          deferred_tax_liability: number
+          description: string
+          entity_name: string | null
+          id: string
+          notes: string | null
+          project_id: string
+          recognition_criteria_met: boolean
+          reversal_pattern: string | null
+          tax_value: number
+          temporary_difference: number
+          updated_at: string
+        }
+        Insert: {
+          applicable_tax_rate: number
+          book_value?: number
+          category_type: string
+          created_at?: string
+          deferred_tax_asset?: number
+          deferred_tax_liability?: number
+          description: string
+          entity_name?: string | null
+          id?: string
+          notes?: string | null
+          project_id: string
+          recognition_criteria_met?: boolean
+          reversal_pattern?: string | null
+          tax_value?: number
+          temporary_difference?: number
+          updated_at?: string
+        }
+        Update: {
+          applicable_tax_rate?: number
+          book_value?: number
+          category_type?: string
+          created_at?: string
+          deferred_tax_asset?: number
+          deferred_tax_liability?: number
+          description?: string
+          entity_name?: string | null
+          id?: string
+          notes?: string | null
+          project_id?: string
+          recognition_criteria_met?: boolean
+          reversal_pattern?: string | null
+          tax_value?: number
+          temporary_difference?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deferred_tax_categories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deferred_tax_movements: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          deferred_tax_asset_movement: number
+          deferred_tax_liability_movement: number
+          description: string | null
+          id: string
+          loss_id: string | null
+          movement_date: string
+          movement_type: string
+          project_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          deferred_tax_asset_movement?: number
+          deferred_tax_liability_movement?: number
+          description?: string | null
+          id?: string
+          loss_id?: string | null
+          movement_date: string
+          movement_type: string
+          project_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          deferred_tax_asset_movement?: number
+          deferred_tax_liability_movement?: number
+          description?: string | null
+          id?: string
+          loss_id?: string | null
+          movement_date?: string
+          movement_type?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deferred_tax_movements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deferred_tax_movements_loss_id_fkey"
+            columns: ["loss_id"]
+            isOneToOne: false
+            referencedRelation: "tax_loss_carry_forwards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deferred_tax_movements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deferred_tax_projects: {
+        Row: {
+          country_id: string
+          created_at: string
+          id: string
+          multi_entity: boolean
+          name: string
+          reporting_currency: string
+          status: string
+          tax_year: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country_id: string
+          created_at?: string
+          id?: string
+          multi_entity?: boolean
+          name: string
+          reporting_currency?: string
+          status?: string
+          tax_year: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country_id?: string
+          created_at?: string
+          id?: string
+          multi_entity?: boolean
+          name?: string
+          reporting_currency?: string
+          status?: string
+          tax_year?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deferred_tax_projects_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_line_items: {
         Row: {
@@ -375,6 +581,59 @@ export type Database = {
           vat_number?: string | null
         }
         Relationships: []
+      }
+      tax_loss_carry_forwards: {
+        Row: {
+          created_at: string
+          deferred_tax_asset: number
+          entity_name: string | null
+          expiry_year: number | null
+          id: string
+          loss_amount: number
+          loss_type: string
+          notes: string | null
+          origination_year: number
+          project_id: string
+          updated_at: string
+          utilization_probability: number
+        }
+        Insert: {
+          created_at?: string
+          deferred_tax_asset?: number
+          entity_name?: string | null
+          expiry_year?: number | null
+          id?: string
+          loss_amount: number
+          loss_type: string
+          notes?: string | null
+          origination_year: number
+          project_id: string
+          updated_at?: string
+          utilization_probability?: number
+        }
+        Update: {
+          created_at?: string
+          deferred_tax_asset?: number
+          entity_name?: string | null
+          expiry_year?: number | null
+          id?: string
+          loss_amount?: number
+          loss_type?: string
+          notes?: string | null
+          origination_year?: number
+          project_id?: string
+          updated_at?: string
+          utilization_probability?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_loss_carry_forwards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
