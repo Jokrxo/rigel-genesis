@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 // Define all available themes
 export const THEMES = {
@@ -43,22 +45,57 @@ interface ThemeContextType {
   theme: ThemeName;
   setTheme: (theme: ThemeName) => void;
   themes: typeof THEMES;
+  isLoading: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeName>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('financial-theme') as ThemeName) || 'system';
+  const [theme, setThemeState] = useState<ThemeName>('system');
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Initialize theme from localStorage or user profile
+  const initializeTheme = async () => {
+    try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Fetch theme from user profile
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('theme')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (error) {
+          console.log('Profile not found, will create on theme change');
+          const localTheme = (localStorage.getItem('financial-theme') as ThemeName) || 'system';
+          setThemeState(localTheme);
+        } else {
+          const userTheme = (profile.theme as ThemeName) || 'system';
+          setThemeState(userTheme);
+          localStorage.setItem('financial-theme', userTheme);
+        }
+      } else {
+        // Use localStorage for guests
+        const localTheme = (localStorage.getItem('financial-theme') as ThemeName) || 'system';
+        setThemeState(localTheme);
+      }
+    } catch (error) {
+      console.error('Error initializing theme:', error);
+      const fallbackTheme = (localStorage.getItem('financial-theme') as ThemeName) || 'system';
+      setThemeState(fallbackTheme);
+    } finally {
+      setIsLoading(false);
     }
-    return 'system';
-  });
+  };
 
   const applyTheme = (themeName: ThemeName) => {
     const root = document.documentElement;
     
-    // Remove all theme classes more thoroughly
+    // Remove all theme classes
     const classList = Array.from(root.classList);
     classList.forEach(className => {
       if (className.startsWith('theme-') || className === 'dark') {
@@ -80,54 +117,82 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else if (actualTheme !== 'light') {
       root.classList.add(`theme-${actualTheme}`);
     }
-    
-    // Force a reflow to ensure styles are applied
-    root.offsetHeight;
-    
-    console.log('Applied theme:', actualTheme, 'HTML classes:', root.className);
-    
-    // Debug: Check if CSS variables are actually being set
-    const computedStyle = getComputedStyle(root);
-    const bodyStyle = getComputedStyle(document.body);
-    console.log('CSS Variables check:', {
-      background: computedStyle.getPropertyValue('--background'),
-      primary: computedStyle.getPropertyValue('--primary'),
-      foreground: computedStyle.getPropertyValue('--foreground')
-    });
-    
-    console.log('Body computed styles:', {
-      backgroundColor: bodyStyle.backgroundColor,
-      color: bodyStyle.color,
-      cssBackground: bodyStyle.getPropertyValue('background-color'),
-    });
-    
-    // Force a style recalculation
-    document.body.offsetHeight;
   };
 
-  const setTheme = (newTheme: ThemeName) => {
-    setThemeState(newTheme);
-    localStorage.setItem('financial-theme', newTheme);
-    applyTheme(newTheme);
-  };
-
-  // Apply theme on mount and when theme changes
-  useEffect(() => {
-    applyTheme(theme);
-    
-    // Listen for system theme changes if system theme is selected
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = () => applyTheme('system');
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
+  const setTheme = async (newTheme: ThemeName) => {
+    try {
+      setThemeState(newTheme);
+      localStorage.setItem('financial-theme', newTheme);
+      applyTheme(newTheme);
+      
+      // Update user profile if authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({ 
+            user_id: user.id, 
+            theme: newTheme 
+          }, { 
+            onConflict: 'user_id',
+            ignoreDuplicates: false 
+          });
+          
+        if (error) {
+          console.error('Error updating theme preference:', error);
+          toast({
+            title: "Theme saved locally",
+            description: "Your theme preference couldn't be synced but has been saved locally.",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error setting theme:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save theme preference.",
+        variant: "destructive"
+      });
     }
-  }, [theme]);
+  };
+
+  // Initialize theme on mount
+  useEffect(() => {
+    initializeTheme();
+  }, []);
+
+  // Apply theme when it changes
+  useEffect(() => {
+    if (!isLoading) {
+      applyTheme(theme);
+      
+      // Listen for system theme changes if system theme is selected
+      if (theme === 'system') {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = () => applyTheme('system');
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+      }
+    }
+  }, [theme, isLoading]);
+
+  // Listen for auth state changes to reinitialize theme
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setTimeout(() => initializeTheme(), 100);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const value = {
     theme,
     setTheme,
-    themes: THEMES
+    themes: THEMES,
+    isLoading
   };
 
   return (

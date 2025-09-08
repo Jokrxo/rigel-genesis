@@ -8,6 +8,11 @@ export default {
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
 	],
+	safelist: [
+		// Ensure theme classes aren't purged
+		{ pattern: /^theme-/, variants: ['hover', 'focus'] },
+		'dark'
+	],
 	prefix: "",
 	theme: {
 		container: {
