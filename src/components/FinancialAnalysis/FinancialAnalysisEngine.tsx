@@ -233,7 +233,7 @@ export const FinancialAnalysisEngine = () => {
                 disabled={!selectedFile || isProcessing}
                 className="w-full"
               >
-                {isProcessing ? "Processing..." : "Process File"}
+                {isProcessing ? "Processing..." : "Analyze Financial Data"}
               </Button>
             </CardContent>
           </Card>

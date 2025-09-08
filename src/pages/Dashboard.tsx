@@ -2,6 +2,7 @@
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { FinancialOverview } from "@/components/Dashboard/FinancialOverview";
 import { RecentActivity } from "@/components/Dashboard/RecentActivity";
+import { SystemHealthCheck } from "@/components/Dashboard/SystemHealthCheck";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -265,6 +266,8 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-6">
+          <FinancialOverview />
+          <SystemHealthCheck />
           <RecentActivity />
         </div>
       </div>
