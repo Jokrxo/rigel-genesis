@@ -143,6 +143,48 @@ export type Database = {
         }
         Relationships: []
       }
+      data_issues: {
+        Row: {
+          created_at: string
+          file_id: string | null
+          id: string
+          issue_description: string
+          issue_type: string
+          resolution_notes: string | null
+          resolution_status: string
+          severity: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          issue_description: string
+          issue_type: string
+          resolution_notes?: string | null
+          resolution_status?: string
+          severity?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          issue_description?: string
+          issue_type?: string
+          resolution_notes?: string | null
+          resolution_status?: string
+          severity?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       deferred_tax_categories: {
         Row: {
           applicable_tax_rate: number
@@ -438,6 +480,120 @@ export type Database = {
           },
         ]
       }
+      files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          processing_metadata: Json | null
+          processing_status: string
+          updated_at: string
+          upload_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          processing_metadata?: Json | null
+          processing_status?: string
+          updated_at?: string
+          upload_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          processing_metadata?: Json | null
+          processing_status?: string
+          updated_at?: string
+          upload_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      financial_statements: {
+        Row: {
+          created_at: string
+          file_id: string | null
+          generated_at: string
+          id: string
+          period_end: string
+          period_start: string
+          ratios: Json | null
+          statement_data: Json
+          statement_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_id?: string | null
+          generated_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          ratios?: Json | null
+          statement_data: Json
+          statement_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string | null
+          generated_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          ratios?: Json | null
+          statement_data?: Json
+          statement_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ml_tags: {
+        Row: {
+          confidence_score: number
+          created_at: string
+          id: string
+          model_version: string | null
+          tag_type: string
+          tag_value: string
+          transaction_id: string
+        }
+        Insert: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          model_version?: string | null
+          tag_type: string
+          tag_value: string
+          transaction_id: string
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          model_version?: string | null
+          tag_type?: string
+          tag_value?: string
+          transaction_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string | null
@@ -668,33 +824,66 @@ export type Database = {
       transactions: {
         Row: {
           amount: number | null
+          balance: number | null
           category: string | null
+          confidence_score: number | null
+          credit: number | null
+          currency: string | null
           date: string | null
+          debit: number | null
           description: string | null
+          file_id: string | null
           id: string
+          is_duplicate: boolean | null
           metadata: Json | null
+          normalized_description: string | null
+          original_description: string | null
+          processing_notes: string | null
+          reference_number: string | null
           statement_id: string
           type: string | null
           user_id: string
         }
         Insert: {
           amount?: number | null
+          balance?: number | null
           category?: string | null
+          confidence_score?: number | null
+          credit?: number | null
+          currency?: string | null
           date?: string | null
+          debit?: number | null
           description?: string | null
+          file_id?: string | null
           id?: string
+          is_duplicate?: boolean | null
           metadata?: Json | null
+          normalized_description?: string | null
+          original_description?: string | null
+          processing_notes?: string | null
+          reference_number?: string | null
           statement_id: string
           type?: string | null
           user_id: string
         }
         Update: {
           amount?: number | null
+          balance?: number | null
           category?: string | null
+          confidence_score?: number | null
+          credit?: number | null
+          currency?: string | null
           date?: string | null
+          debit?: number | null
           description?: string | null
+          file_id?: string | null
           id?: string
+          is_duplicate?: boolean | null
           metadata?: Json | null
+          normalized_description?: string | null
+          original_description?: string | null
+          processing_notes?: string | null
+          reference_number?: string | null
           statement_id?: string
           type?: string | null
           user_id?: string
