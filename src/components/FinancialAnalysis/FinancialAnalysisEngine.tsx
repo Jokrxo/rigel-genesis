@@ -11,6 +11,7 @@ import { Upload, FileText, BarChart3, AlertTriangle, CheckCircle } from "lucide-
 import { TransactionsView } from "./TransactionsView";
 import { FinancialStatementsView } from "./FinancialStatementsView";
 import { DataIssuesView } from "./DataIssuesView";
+import { FileUploadTester } from "@/components/Debug/FileUploadTester";
 import { ERDiagram } from "./ERDiagram";
 
 interface FileData {
@@ -61,21 +62,80 @@ export const FinancialAnalysisEngine = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/png', 'image/jpeg'];
+    validateAndSetFile(file);
+  };
+
+  const validateAndSetFile = (file: File) => {
+    // Check file size (10MB limit)
+    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSizeInBytes) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const allowedTypes = [
+      'application/pdf', 
+      'application/vnd.ms-excel', 
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+      'image/png', 
+      'image/jpeg'
+    ];
+    
     if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Invalid File Type",
-        description: "Please upload a PDF, Excel file, or image (PNG/JPEG)",
+        description: "Please upload a PDF, Excel file, CSV, or image (PNG/JPEG)",
         variant: "destructive",
       });
       return;
     }
 
     setSelectedFile(file);
+    toast({
+      title: "File Selected",
+      description: `${file.name} is ready for processing`,
+    });
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length > 0) {
+      validateAndSetFile(files[0]);
+    }
   };
 
   const processFile = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a file to process",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -170,7 +230,7 @@ export const FinancialAnalysisEngine = () => {
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="statements">Statements</TabsTrigger>
           <TabsTrigger value="issues">Issues</TabsTrigger>
-          <TabsTrigger value="schema">Schema</TabsTrigger>
+          <TabsTrigger value="debug">Debug</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="space-y-4">
@@ -185,7 +245,14 @@ export const FinancialAnalysisEngine = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center space-y-4">
+              <div 
+                className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center space-y-4 hover:border-primary/50 transition-colors cursor-pointer"
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
                 <div className="mx-auto h-12 w-12 text-muted-foreground">
                   <FileText className="h-full w-full" />
                 </div>
@@ -200,12 +267,12 @@ export const FinancialAnalysisEngine = () => {
                     id="file-upload"
                     type="file"
                     className="hidden"
-                    accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg"
+                    accept=".pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg"
                     onChange={handleFileUpload}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  PDF, Excel, PNG, or JPEG files up to 10MB
+                  PDF, Excel, CSV, PNG, or JPEG files up to 10MB
                 </p>
               </div>
 
@@ -321,6 +388,28 @@ export const FinancialAnalysisEngine = () => {
 
         <TabsContent value="issues">
           <DataIssuesView />
+        </TabsContent>
+
+        <TabsContent value="debug">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="text-center p-8">
+              <p className="text-muted-foreground">Debug tools for testing upload functionality</p>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload Debug Info</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Selected File:</strong> {selectedFile?.name || 'None'}</p>
+                  <p><strong>File Size:</strong> {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : 'N/A'}</p>
+                  <p><strong>File Type:</strong> {selectedFile?.type || 'N/A'}</p>
+                  <p><strong>Processing Status:</strong> {isProcessing ? 'Processing...' : 'Ready'}</p>
+                  <p><strong>Progress:</strong> {processingProgress}%</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="schema">
