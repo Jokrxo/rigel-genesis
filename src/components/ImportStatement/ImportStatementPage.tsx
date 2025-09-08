@@ -114,33 +114,35 @@ const ImportStatementPage = () => {
         throw error || new Error("Failed to register statement.");
 
       setUploadProgress(40);
-      setProcessingStatus("Initiating statement processing...");
+      setProcessingStatus("Processing transactions...");
 
-      const resp = await fetch("/functions/v1/process-statement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data: processResult, error: processError } = await supabase.functions.invoke('process-statement', {
+        body: {
           statement_id: statement.id,
           user_id: userId,
-        }),
+        }
       });
-
-      setUploadProgress(70);
-      if (resp.ok) {
-        setProcessingStatus("Processing complete! Refreshing data...");
-        setTimeout(() => {
-          setIsUploading(false);
-          setUploadProgress(100);
-          setProcessingStatus(null);
-          setIsProcessingComplete(true);
-          toast({
-            title: "Import Complete",
-            description: "Your bank statement was successfully processed.",
-          });
-        }, 1300);
-      } else {
-        throw new Error("Processing failed!");
+      
+      if (processError) {
+        throw new Error(processError.message || 'Processing failed');
       }
+      
+      if (!processResult?.success) {
+        throw new Error(processResult?.error || 'Processing failed');
+      }
+
+      setUploadProgress(90);
+      setProcessingStatus("Processing complete! Refreshing data...");
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(100);
+        setProcessingStatus(null);
+        setIsProcessingComplete(true);
+        toast({
+          title: "Import Complete",
+          description: "Your bank statement was successfully processed.",
+        });
+      }, 1300);
     } catch (err) {
       setIsUploading(false);
       setProcessingStatus(null);

@@ -34,11 +34,22 @@ serve(async (req) => {
   }
 
   try {
-    const { fileId, fileContent, fileType, userId } = await req.json();
+    const requestData = await req.json();
+    console.log('Received request data:', requestData);
+    
+    const { fileId, fileContent, fileType, userId } = requestData;
+    
+    if (!fileId || !userId) {
+      throw new Error('Missing required parameters: fileId or userId');
+    }
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -98,12 +109,13 @@ Return JSON format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Process this ${fileType} bank statement data: ${fileContent}` }
+          { role: 'user', content: `Process this ${fileType} bank statement data: ${fileContent || 'No content provided - please extract from file at fileId: ' + fileId}` }
         ],
-        max_completion_tokens: 4000,
+        max_tokens: 4000,
+        temperature: 0.1,
       }),
     });
 
@@ -123,7 +135,26 @@ Return JSON format:
 
     console.log(`Parsed ${processedData.transactions?.length || 0} transactions`);
 
-    // Store transactions in database
+    // Store transactions in database with proper UUID generation
+    const { data: existingFile } = await supabase
+      .from('files')
+      .select('id')
+      .eq('id', fileId)
+      .single();
+    
+    if (!existingFile) {
+      console.log('File not found in files table, creating entry...');
+      await supabase.from('files').insert({
+        id: fileId,
+        user_id: userId,
+        file_name: `statement_${fileType}`,
+        file_type: fileType,
+        file_url: '',
+        file_size: 0,
+        processing_status: 'processing'
+      });
+    }
+
     const transactionsToInsert = processedData.transactions.map((t: Transaction) => ({
       user_id: userId,
       file_id: fileId,
@@ -141,36 +172,53 @@ Return JSON format:
       metadata: {
         suggestedDeduction: t.suggestedDeduction,
         aiProcessed: true,
-        model: 'gpt-5-2025-08-07'
+        model: 'gpt-4o-mini'
       }
     }));
 
-    const { error: transactionError } = await supabase
+    const { data: insertedTransactions, error: transactionError } = await supabase
       .from('transactions')
-      .insert(transactionsToInsert);
+      .insert(transactionsToInsert)
+      .select();
 
     if (transactionError) {
       console.error('Error inserting transactions:', transactionError);
-      throw new Error('Failed to store transactions');
+      throw new Error(`Failed to store transactions: ${transactionError.message}`);
     }
 
-    // Store ML tags for categorization
-    const mlTags = processedData.transactions.flatMap((t: Transaction, index: number) => [
-      {
-        transaction_id: transactionsToInsert[index].id,
-        tag_type: 'category',
-        tag_value: t.category,
-        confidence_score: t.confidence,
-        model_version: 'gpt-5-2025-08-07'
-      },
-      {
-        transaction_id: transactionsToInsert[index].id,
-        tag_type: 'tax_deductible',
-        tag_value: t.suggestedDeduction.toString(),
-        confidence_score: t.confidence,
-        model_version: 'gpt-5-2025-08-07'
+    console.log(`Successfully inserted ${insertedTransactions?.length || 0} transactions`);
+
+    // Store ML tags for categorization only if we have transactions
+    if (insertedTransactions && insertedTransactions.length > 0) {
+      const mlTags = insertedTransactions.flatMap((transaction: any, index: number) => {
+        const originalTransaction = processedData.transactions[index];
+        if (!originalTransaction) return [];
+        
+        return [
+          {
+            transaction_id: transaction.id,
+            tag_type: 'category',
+            tag_value: originalTransaction.category,
+            confidence_score: originalTransaction.confidence,
+            model_version: 'gpt-4o-mini'
+          },
+          {
+            transaction_id: transaction.id,
+            tag_type: 'tax_deductible',
+            tag_value: originalTransaction.suggestedDeduction.toString(),
+            confidence_score: originalTransaction.confidence,
+            model_version: 'gpt-4o-mini'
+          }
+        ];
+      });
+
+      if (mlTags.length > 0) {
+        const { error: mlTagError } = await supabase.from('ml_tags').insert(mlTags);
+        if (mlTagError) {
+          console.error('Error inserting ML tags:', mlTagError);
+        }
       }
-    ]);
+    }
 
     // Store validation issues
     if (processedData.validationIssues?.length > 0) {
@@ -199,8 +247,8 @@ Return JSON format:
       })
       .eq('id', fileId);
 
-    // Generate financial statements
-    await generateFinancialStatements(supabase, userId, fileId, processedData);
+    // Generate financial statements in background  
+    EdgeRuntime.waitUntil(generateFinancialStatements(supabase, userId, fileId, processedData));
 
     return new Response(
       JSON.stringify({
