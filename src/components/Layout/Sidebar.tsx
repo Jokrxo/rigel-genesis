@@ -141,6 +141,11 @@ const navItems: NavItem[] = [
     href: "/tax-calculators",
     icon: Calculator,
   },
+  {
+    title: "Financial Analysis",
+    href: "/financial-analysis",
+    icon: TrendingUp,
+  },
 ];
 
 const bottomNavItems: NavItem[] = [

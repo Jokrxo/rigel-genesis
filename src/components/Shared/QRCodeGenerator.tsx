@@ -66,12 +66,18 @@ export const QRCodeGenerator = () => {
             alt="QR Code"
             className="h-64 w-64 border border-border rounded-lg"
             onError={(e) => {
-              console.error("QR code generation failed");
-              toast({
-                title: "Error Generating QR Code",
-                description: "Please try a different URL or try again later",
-                variant: "destructive"
-              });
+              console.warn("QR code generation failed, retrying...");
+              // Retry with a simpler fallback
+              const fallbackUrl = `https://qr-server.com/api/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+              if (e.currentTarget.src !== fallbackUrl) {
+                e.currentTarget.src = fallbackUrl;
+              } else {
+                toast({
+                  title: "Error Generating QR Code",
+                  description: "Please try a different URL or try again later",
+                  variant: "destructive"
+                });
+              }
             }}
           />
         </div>

@@ -44,6 +44,7 @@ import EmployeeManagement from "./pages/EmployeeManagement";
 import Investments from "./pages/Investments";
 import TransactionProcessing from "./pages/TransactionProcessing";
 import PayrollManagement from "./pages/PayrollManagement";
+import FinancialAnalysis from "./pages/FinancialAnalysis";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +104,7 @@ const App = () => (
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                   <Route path="/tax-calculators" element={<ProtectedRoute><TaxCalculators /></ProtectedRoute>} />
                   <Route path="/ai-features" element={<ProtectedRoute><AIFeatures /></ProtectedRoute>} />
+                  <Route path="/financial-analysis" element={<ProtectedRoute><FinancialAnalysis /></ProtectedRoute>} />
                   
                   {/* 404 route */}
                   <Route path="*" element={<NotFound />} />

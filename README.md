@@ -1,8 +1,10 @@
-# Welcome to your Lovable project
+# SA Financial Insight
 
-## Project info
+[![CI Status](https://github.com/your-username/sa-financial-insight/workflows/CI/badge.svg)](https://github.com/your-username/sa-financial-insight/actions)
 
 **URL**: https://lovable.dev/projects/4c49427d-36ad-4035-8d31-6d1850448134
+
+A comprehensive financial management and analysis platform built with React, TypeScript, and Supabase.
 
 ## How can I edit this code?
 
