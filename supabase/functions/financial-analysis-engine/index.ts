@@ -179,6 +179,7 @@ Return JSON format:
 
     const transactionsToInsert = processedData.transactions.map((t: Transaction) => ({
       user_id: userId,
+      statement_id: fileId, // Use fileId as statement_id to satisfy the database constraint
       file_id: fileId,
       date: t.date,
       description: t.description,
