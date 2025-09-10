@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, BarChart3, AlertTriangle, CheckCircle } from "lucide-react";
+import { Upload, FileText, BarChart3, AlertTriangle, CheckCircle, Eye, Download, Trash2 } from "lucide-react";
 import { TransactionsView } from "./TransactionsView";
 import { FinancialStatementsView } from "./FinancialStatementsView";
 import { DataIssuesView } from "./DataIssuesView";
@@ -18,6 +18,7 @@ interface FileData {
   id: string;
   file_name: string;
   file_type: string;
+  file_url: string;
   processing_status: string;
   upload_date: string;
   processing_metadata?: any;
@@ -214,6 +215,60 @@ export const FinancialAnalysisEngine = () => {
     }
   };
 
+  const handleViewFile = (file: FileData) => {
+    toast({
+      title: "File Details",
+      description: `${file.file_name} - Status: ${file.processing_status}`,
+    });
+    // Navigate to detailed view or show modal with file details
+  };
+
+  const handleDownloadFile = async (file: FileData) => {
+    try {
+      // Create a download link
+      const link = document.createElement('a');
+      link.href = file.file_url || '#';
+      link.download = file.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${file.file_name}...`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Unable to download the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('files')
+        .delete()
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      setFiles(files.filter(f => f.id !== fileId));
+      toast({
+        title: "File Deleted",
+        description: "File has been successfully deleted.",
+      });
+    } catch (error) {
+      toast({
+        title: "Delete Failed",
+        description: "Unable to delete the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -313,15 +368,44 @@ export const FinancialAnalysisEngine = () => {
               <div className="space-y-2">
                 {files.map((file) => (
                   <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{file.file_name}</p>
+                    <div className="flex-1">
+                      <p className="font-medium truncate">{file.file_name}</p>
                       <p className="text-sm text-muted-foreground">
                         Uploaded {new Date(file.upload_date).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge variant={file.processing_status === 'completed' ? 'default' : 'secondary'}>
-                      {file.processing_status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={file.processing_status === 'completed' ? 'default' : 'secondary'}>
+                        {file.processing_status}
+                      </Badge>
+                      <div className="flex gap-1">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewFile(file)}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDownloadFile(file)}
+                          title="Download"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDeleteFile(file.id)}
+                          title="Delete"
+                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -157,7 +157,26 @@ Return JSON format:
 
     console.log(`Parsed ${processedData.transactions?.length || 0} transactions`);
 
-    // Store transactions in database with proper UUID generation
+    // Create bank statement entry first (required for foreign key constraint)
+    const { data: bankStatement, error: bankStatementError } = await supabase
+      .from('bank_statements')
+      .insert({
+        id: fileId, // Use fileId as bank statement ID
+        user_id: userId,
+        bank_id: 'unknown',
+        file_url: '',
+        file_type: fileType,
+        processing_status: 'processing'
+      })
+      .select()
+      .single();
+
+    if (bankStatementError) {
+      console.error('Error creating bank statement:', bankStatementError);
+      throw new Error(`Failed to create bank statement: ${bankStatementError.message}`);
+    }
+
+    // Ensure file entry exists
     const { data: existingFile } = await supabase
       .from('files')
       .select('id')
