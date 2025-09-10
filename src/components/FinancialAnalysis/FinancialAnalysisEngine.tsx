@@ -22,6 +22,12 @@ interface FileData {
   processing_status: string;
   upload_date: string;
   processing_metadata?: any;
+  transaction_count: number;
+  total_debits: number;
+  total_credits: number;
+  statement_count: number;
+  issues_count: number;
+  bank_id?: string;
 }
 
 interface AnalysisResult {
@@ -43,20 +49,63 @@ export const FinancialAnalysisEngine = () => {
 
   useEffect(() => {
     fetchFiles();
+    
+    // Set up real-time subscriptions for file updates
+    const channel = supabase
+      .channel('financial-data-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'files'
+      }, () => {
+        fetchFiles(); // Refresh files when any file changes
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'transactions'
+      }, () => {
+        fetchFiles(); // Refresh to update transaction counts
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'financial_statements'
+      }, () => {
+        fetchFiles(); // Refresh to update statement counts
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'data_issues'
+      }, () => {
+        fetchFiles(); // Refresh to update issue counts
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchFiles = async () => {
-    const { data, error } = await supabase
-      .from('files')
-      .select('*')
-      .order('upload_date', { ascending: false });
+    try {
+      const { data, error } = await supabase.rpc('get_file_overview');
+      
+      if (error) {
+        console.error('Error fetching files:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch files",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (error) {
+      setFiles(data || []);
+    } catch (error) {
       console.error('Error fetching files:', error);
-      return;
     }
-
-    setFiles(data || []);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -367,43 +416,70 @@ export const FinancialAnalysisEngine = () => {
             <CardContent>
               <div className="space-y-2">
                 {files.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium truncate">{file.file_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Uploaded {new Date(file.upload_date).toLocaleDateString()}
-                      </p>
+                  <div key={file.id} className="p-4 border rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{file.file_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Uploaded {new Date(file.upload_date).toLocaleDateString()}
+                          {file.bank_id && ` • ${file.bank_id}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={file.processing_status === 'completed' ? 'default' : 'secondary'}>
+                          {file.processing_status}
+                        </Badge>
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleViewFile(file)}
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDownloadFile(file)}
+                            title="Download"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDeleteFile(file.id)}
+                            title="Delete"
+                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={file.processing_status === 'completed' ? 'default' : 'secondary'}>
-                        {file.processing_status}
-                      </Badge>
-                      <div className="flex gap-1">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleViewFile(file)}
-                          title="View Details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDownloadFile(file)}
-                          title="Download"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDeleteFile(file.id)}
-                          title="Delete"
-                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                    
+                    {/* Related Data Summary */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                      <div className="text-center p-2 bg-muted/50 rounded">
+                        <p className="font-semibold text-primary">{file.transaction_count}</p>
+                        <p className="text-muted-foreground">Transactions</p>
+                      </div>
+                      <div className="text-center p-2 bg-muted/50 rounded">
+                        <p className="font-semibold text-green-600">
+                          R{Math.abs(file.total_credits || 0).toLocaleString()}
+                        </p>
+                        <p className="text-muted-foreground">Credits</p>
+                      </div>
+                      <div className="text-center p-2 bg-muted/50 rounded">
+                        <p className="font-semibold text-red-600">
+                          R{Math.abs(file.total_debits || 0).toLocaleString()}
+                        </p>
+                        <p className="text-muted-foreground">Debits</p>
+                      </div>
+                      <div className="text-center p-2 bg-muted/50 rounded">
+                        <p className="font-semibold text-orange-600">{file.issues_count}</p>
+                        <p className="text-muted-foreground">Issues</p>
                       </div>
                     </div>
                   </div>

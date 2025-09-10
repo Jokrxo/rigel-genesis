@@ -266,7 +266,6 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-6">
-          <FinancialOverview />
           <SystemHealthCheck />
           <RecentActivity />
         </div>

@@ -903,7 +903,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_file_overview: {
+        Args: { user_uuid?: string }
+        Returns: {
+          bank_id: string
+          bank_statement_result: Json
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          issues_count: number
+          processing_metadata: Json
+          processing_status: string
+          statement_count: number
+          total_credits: number
+          total_debits: number
+          transaction_count: number
+          updated_at: string
+          upload_date: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

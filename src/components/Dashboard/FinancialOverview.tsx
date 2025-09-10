@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, BarChart3, Download, Printer } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import StatCard from "./FinancialOverview/StatCard";
 import RevenueExpensesChart from "./FinancialOverview/RevenueExpensesChart";
 import ExpenseBreakdownChart from "./FinancialOverview/ExpenseBreakdownChart";
@@ -34,6 +35,74 @@ const incomeBreakdown = [
 
 export const FinancialOverview = () => {
   const [chartType] = useState<'line' | 'bar'>('line');
+  const [dashboardData, setDashboardData] = useState({
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    totalFiles: 0,
+    totalTransactions: 0,
+    totalIssues: 0
+  });
+
+  useEffect(() => {
+    fetchDashboardData();
+    
+    // Set up real-time subscription for dashboard updates
+    const channel = supabase
+      .channel('dashboard-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'files'
+      }, () => {
+        fetchDashboardData();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'transactions'
+      }, () => {
+        fetchDashboardData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_file_overview');
+      
+      if (error) {
+        console.error('Error fetching dashboard data:', error);
+        return;
+      }
+
+      // Aggregate all the data
+      const aggregated = data.reduce((acc: any, file: any) => {
+        acc.totalRevenue += Math.abs(file.total_credits || 0);
+        acc.totalExpenses += Math.abs(file.total_debits || 0);
+        acc.totalFiles += 1;
+        acc.totalTransactions += file.transaction_count || 0;
+        acc.totalIssues += file.issues_count || 0;
+        return acc;
+      }, {
+        totalRevenue: 0,
+        totalExpenses: 0,
+        totalFiles: 0,
+        totalTransactions: 0,
+        totalIssues: 0
+      });
+
+      aggregated.netProfit = aggregated.totalRevenue - aggregated.totalExpenses;
+      
+      setDashboardData(aggregated);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
   
   const handlePrintReport = () => {
     window.print();
@@ -105,26 +174,26 @@ export const FinancialOverview = () => {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Revenue"
-          value="R 124,500.00"
+          value={`R ${dashboardData.totalRevenue.toLocaleString()}`}
           change={12.5}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
           title="Total Expenses"
-          value="R 78,300.00"
+          value={`R ${dashboardData.totalExpenses.toLocaleString()}`}
           change={5.2}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
           title="Net Profit"
-          value="R 46,200.00"
+          value={`R ${dashboardData.netProfit.toLocaleString()}`}
           change={8.7}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
-          title="Tax Liability"
-          value="R 12,936.00"
-          change={-3.1}
+          title="Files Processed"
+          value={dashboardData.totalFiles.toString()}
+          change={0}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
       </div>
