@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { emailSchema } from "@/utils/validation";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -20,9 +21,20 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      // Validate email before submission
+      emailSchema.parse(email);
+      
       await login(email, password);
-    } catch (error) {
-      // Error is handled in useAuth
+    } catch (error: any) {
+      if (error.errors) {
+        // Zod validation error
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      }
+      // Other errors handled in useAuth
     } finally {
       setIsLoading(false);
     }

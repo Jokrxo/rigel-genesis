@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { emailSchema, passwordSchema, displayNameSchema } from "@/utils/validation";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
@@ -13,15 +15,29 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { register, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // Validate inputs before submission
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+      displayNameSchema.parse(fullName);
+      
       await register(email, password, fullName);
-    } catch (error) {
-      // Error is handled in useAuth
+    } catch (error: any) {
+      if (error.errors) {
+        // Zod validation error
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      }
+      // Other errors handled in useAuth
     } finally {
       setIsLoading(false);
     }
@@ -44,15 +60,8 @@ const Register = () => {
   };
 
   return (
-    <div
-      className="auth-container"
-      style={{
-        // Override with a deep blue vertical gradient background
-        background: "linear-gradient(135deg, #155e75 0%, #0e7490 50%, #164e63 100%)",
-        minHeight: "100vh",
-      }}
-    >
-      <div className="auth-card shadow-2xl">
+    <div className="auth-container">
+      <div className="auth-card">
         <div className="flex flex-col items-center text-center mb-6">
           <img 
             src="/lovable-uploads/3b7b3f31-f5d5-4f5c-b75b-6e7f54d5bf88.png" 
