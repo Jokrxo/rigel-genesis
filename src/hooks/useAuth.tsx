@@ -141,15 +141,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
 
       if (data.user && !data.session) {
+        // Send welcome email after successful registration
+        const { sendWelcomeEmail } = await import("@/utils/emailService");
+        await sendWelcomeEmail({
+          userName: displayName,
+          email: email.trim().toLowerCase(),
+        });
+
         toast({
           title: "Registration successful",
           description: "Please check your email to verify your account",
         });
         navigate("/verify-email");
       } else if (data.session) {
+        // Send welcome email for instant verification
+        const { sendWelcomeEmail } = await import("@/utils/emailService");
+        await sendWelcomeEmail({
+          userName: displayName,
+          email: email.trim().toLowerCase(),
+        });
+
         toast({
           title: "Registration successful",
-          description: "Welcome to SA Financial Insight",
+          description: "Welcome to Rigel Financial Insight",
         });
         navigate("/dashboard");
       }

@@ -1,89 +1,160 @@
-
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, CheckCircle2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
+import { sendVerificationEmail } from "@/utils/emailService";
 import { useToast } from "@/hooks/use-toast";
 
 const VerifyEmail = () => {
-  const { user, sendVerificationEmail } = useAuth();
+  const [isResending, setIsResending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const { user, sendVerificationEmail: resendVerification } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
-      // If no user, they shouldn't be on this page
       toast({
         title: "Not logged in",
         description: "Please log in or create an account first",
         variant: "destructive",
       });
+      navigate("/login");
     }
-  }, [user, toast]);
+  }, [user, toast, navigate]);
 
   const handleResendEmail = async () => {
+    if (!user?.email) return;
+
+    setIsResending(true);
     try {
-      await sendVerificationEmail();
-      toast({
-        title: "Email sent",
-        description: "Verification email has been resent to your inbox",
+      // Use Supabase's built-in resend
+      await resendVerification();
+      
+      // Also send our custom branded email
+      const verificationUrl = `${window.location.origin}/verification-success`;
+      await sendVerificationEmail({
+        userName: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        verificationUrl,
       });
-    } catch (error) {
+
+      setEmailSent(true);
       toast({
-        title: "Failed to send email",
-        description: "Please try again later",
+        title: "Verification email sent",
+        description: "Please check your inbox and spam folder",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend verification email",
         variant: "destructive",
       });
+    } finally {
+      setIsResending(false);
     }
   };
 
-  // Mock: For demo purposes, we'll simulate verification after a short delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // For demo, redirect to verification success page automatically
-      window.location.href = "/verification-success";
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   if (!user) {
-    return null; // Component will handle redirect in useEffect
+    return null;
   }
 
   return (
-    <div className="auth-container">
-      <div className="max-w-md w-full">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-financial-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Mail className="h-8 w-8 text-financial-600" />
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-background via-background to-muted">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center space-y-4">
+          <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center">
+            {emailSent ? (
+              <CheckCircle2 className="h-10 w-10 text-primary-foreground animate-scale-in" />
+            ) : (
+              <Mail className="h-10 w-10 text-primary-foreground" />
+            )}
+          </div>
+          <CardTitle className="text-2xl">
+            {emailSent ? "Email Sent!" : "Verify Your Email"}
+          </CardTitle>
+          <CardDescription className="text-base">
+            {emailSent
+              ? "We've sent another verification email to your inbox."
+              : `We've sent a verification link to ${user.email}. Please check your inbox and click the link to verify your account.`}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-primary text-sm font-semibold">1</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Check your inbox</p>
+                <p className="text-xs text-muted-foreground">
+                  Look for an email from Rigel Team
+                </p>
+              </div>
             </div>
-            <CardTitle className="text-xl font-semibold">Verify your email</CardTitle>
-            <CardDescription>
-              We've sent a verification email to{" "}
-              <span className="font-medium">{user.email}</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-sm text-muted-foreground mb-6">
-              Please check your email and click on the verification link to continue.
-              If you don't see the email, check your spam folder.
-            </p>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button onClick={handleResendEmail} variant="outline" className="w-full">
-              Resend verification email
+            
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-primary text-sm font-semibold">2</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Click the verification link</p>
+                <p className="text-xs text-muted-foreground">
+                  Or copy the verification code from the email
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-primary text-sm font-semibold">3</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Start using Rigel</p>
+                <p className="text-xs text-muted-foreground">
+                  Access all features and manage your finances
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Button
+              onClick={handleResendEmail}
+              disabled={isResending}
+              className="w-full"
+              variant="outline"
+            >
+              <Send className="mr-2 h-4 w-4" />
+              {isResending ? "Sending..." : "Resend Verification Email"}
             </Button>
-            <div className="text-center text-sm text-muted-foreground">
-              <Link to="/login" className="text-financial-600 hover:underline">
-                Back to login
-              </Link>
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
+
+            <Button
+              onClick={() => navigate("/login")}
+              variant="ghost"
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Didn't receive the email? Check your spam folder or{" "}
+              <button
+                onClick={handleResendEmail}
+                className="text-primary hover:underline font-medium"
+                disabled={isResending}
+              >
+                resend verification email
+              </button>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
