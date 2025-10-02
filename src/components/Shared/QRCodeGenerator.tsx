@@ -15,11 +15,20 @@ export const QRCodeGenerator = () => {
   
   // Generate QR code whenever URL changes
   useEffect(() => {
-    // Using a more reliable QR code API with better parameters for scanning
-    const encodedUrl = encodeURIComponent(url);
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUrl}&margin=10&format=png&ecc=H`;
-    setQrCodeImage(qrApiUrl);
-  }, [url]);
+    // Using a more reliable QR code API with proper error handling
+    try {
+      const encodedUrl = encodeURIComponent(url);
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodedUrl}&margin=15&format=png&ecc=H`;
+      setQrCodeImage(qrApiUrl);
+    } catch (error) {
+      console.error("Failed to generate QR code URL:", error);
+      toast({
+        title: "QR Code Error",
+        description: "Unable to generate QR code. Please check the URL.",
+        variant: "destructive"
+      });
+    }
+  }, [url, toast]);
 
   const downloadQRCode = () => {
     if (!qrImageRef.current) return;
@@ -60,26 +69,32 @@ export const QRCodeGenerator = () => {
           />
         </div>
         <div className="flex justify-center py-4">
-          <img
-            ref={qrImageRef}
-            src={qrCodeImage}
-            alt="QR Code"
-            className="h-64 w-64 border border-border rounded-lg"
-            onError={(e) => {
-              console.warn("QR code generation failed, retrying...");
-              // Retry with a simpler fallback
-              const fallbackUrl = `https://qr-server.com/api/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
-              if (e.currentTarget.src !== fallbackUrl) {
-                e.currentTarget.src = fallbackUrl;
-              } else {
-                toast({
-                  title: "Error Generating QR Code",
-                  description: "Please try a different URL or try again later",
-                  variant: "destructive"
-                });
-              }
-            }}
-          />
+          {qrCodeImage ? (
+            <img
+              ref={qrImageRef}
+              src={qrCodeImage}
+              alt="QR Code for sharing"
+              className="h-64 w-64 border-2 border-border rounded-lg shadow-sm bg-white p-2"
+              onError={(e) => {
+                // Single fallback attempt with better API
+                const fallbackUrl = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=400&margin=2&ecLevel=H`;
+                if (e.currentTarget.src !== fallbackUrl) {
+                  e.currentTarget.src = fallbackUrl;
+                } else {
+                  toast({
+                    title: "QR Code Generation Failed",
+                    description: "Please verify the URL and try again",
+                    variant: "destructive"
+                  });
+                }
+              }}
+              loading="lazy"
+            />
+          ) : (
+            <div className="h-64 w-64 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
+              <p className="text-muted-foreground text-sm">Loading QR code...</p>
+            </div>
+          )}
         </div>
         <Button onClick={downloadQRCode} className="w-full">
           <Download className="mr-2 h-4 w-4" />

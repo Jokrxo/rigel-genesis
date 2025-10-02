@@ -75,12 +75,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
+      
+      // Validate input
+      if (!email || !password) {
+        throw new Error("Email and password are required");
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Provide user-friendly error messages
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password");
+        }
+        throw error;
+      }
 
       toast({
         title: "Login successful",
@@ -88,9 +100,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       navigate("/dashboard");
     } catch (error: any) {
+      const errorMessage = error.message || "Invalid email or password";
       toast({
         title: "Login failed",
-        description: error.message || "Invalid email or password",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -102,30 +115,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (email: string, password: string, displayName: string) => {
     try {
       setLoading(true);
+      
+      // Validate input before sending to Supabase
+      if (!email || !password || !displayName) {
+        throw new Error("All fields are required");
+      }
+      
+      if (password.length < 8) {
+        throw new Error("Password must be at least 8 characters long");
+      }
+      
       const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            display_name: displayName,
+            display_name: displayName.trim(),
           },
         },
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Registration successful",
-        description: "Please check your email to verify your account",
-      });
-      navigate("/verify-email");
+      if (data.user && !data.session) {
+        toast({
+          title: "Registration successful",
+          description: "Please check your email to verify your account",
+        });
+        navigate("/verify-email");
+      } else if (data.session) {
+        toast({
+          title: "Registration successful",
+          description: "Welcome to SA Financial Insight",
+        });
+        navigate("/dashboard");
+      }
     } catch (error: any) {
+      const errorMessage = error.message || "Could not create account";
       toast({
         title: "Registration failed",
-        description: error.message || "Could not create account",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
