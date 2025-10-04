@@ -1,5 +1,6 @@
 import { QRCodeGenerator } from "@/components/Shared/QRCodeGenerator";
 import { Share2, Smartphone } from "lucide-react";
+import globeImage from "@/assets/globe.jpg";
 
 const financeImages = [
   { src: "/photo-1488590528505-98d2b5aba04b", alt: "Modern finance workspace" },
@@ -43,7 +44,7 @@ export const QRSection = () => {
                 src={financeImages[1].src} 
                 alt="Finance technology" 
                 className="relative w-48 h-32 object-cover rounded-xl shadow-lg border-2 border-border" 
-                onError={(e) => ((e.target as HTMLImageElement).src = "/lovable-uploads/globe.png")}
+                onError={(e) => ((e.target as HTMLImageElement).src = globeImage)}
               />
             </div>
             

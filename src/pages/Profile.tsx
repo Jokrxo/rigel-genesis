@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Mail, Phone, MapPin, Camera } from "lucide-react";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import globeImage from "@/assets/globe.jpg";
 
 const Profile = () => {
   return (
@@ -77,7 +78,7 @@ const Profile = () => {
               <CardContent className="space-y-4">
                 <div className="flex flex-col items-center space-y-4">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src="/lovable-uploads/globe.png" alt="Profile" />
+                    <AvatarImage src={globeImage} alt="Profile" />
                     <AvatarFallback>
                       <User className="h-12 w-12" />
                     </AvatarFallback>
