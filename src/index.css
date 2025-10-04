@@ -24,6 +24,19 @@
     --input: 0 0% 89%;
     --ring: 180 64% 35%;
     --radius: 0.5rem;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 50%;
+    --warning-foreground: 0 0% 0%;
+    --info: 204 86% 53%;
+    --info-foreground: 0 0% 100%;
+    --error: 350 80% 50%;
+    --error-foreground: 0 0% 100%;
+    --financial-50: 180 60% 97%;
+    --financial-100: 180 55% 90%;
+    --financial-600: 180 64% 35%;
+    --financial-700: 180 64% 25%;
+    --financial-950: 180 64% 10%;
   }
 
   .dark {
@@ -47,28 +60,21 @@
     --input: 0 0% 14%;
     --ring: 180 64% 35%;
     --radius: 0.5rem;
-  }
-
-  /* Semantic colors */
-  .success {
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-  }
-
-  .warning {
     --warning: 45 100% 50%;
     --warning-foreground: 0 0% 0%;
-  }
-
-  .info {
     --info: 204 86% 53%;
     --info-foreground: 0 0% 100%;
-  }
-
-  .error {
     --error: 350 80% 50%;
     --error-foreground: 0 0% 100%;
+    --financial-50: 180 60% 97%;
+    --financial-100: 180 55% 90%;
+    --financial-600: 180 64% 35%;
+    --financial-700: 180 64% 25%;
+    --financial-950: 180 64% 10%;
   }
+
 
   /* Typography */
   body {

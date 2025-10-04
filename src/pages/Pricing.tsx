@@ -158,7 +158,7 @@ const Pricing = () => {
               <CardFooter>
                 <Button 
                   variant={tier.buttonVariant}
-                  className={cn("w-full", tier.highlighted ? "bg-primary hover:bg-primary/90 text-white" : "")}
+                  className={cn("w-full", tier.highlighted ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "")}
                 >
                   {tier.buttonText}
                 </Button>

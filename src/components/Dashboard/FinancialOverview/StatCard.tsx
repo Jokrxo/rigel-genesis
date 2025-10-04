@@ -26,15 +26,15 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon }) => (
       <div className="flex items-center pt-1 text-xs text-muted-foreground">
         {change > 0 ? (
           <>
-            <ArrowUp className="mr-1 h-4 w-4 text-success-600" />
-            <span className="text-success-600">
+            <ArrowUp className="mr-1 h-4 w-4 text-success" />
+            <span className="text-success">
               {change.toString()}% from last month
             </span>
           </>
         ) : (
           <>
-            <ArrowDown className="mr-1 h-4 w-4 text-error-600" />
-            <span className="text-error-600">
+            <ArrowDown className="mr-1 h-4 w-4 text-error" />
+            <span className="text-error">
               {Math.abs(change).toString()}% from last month
             </span>
           </>

@@ -82,6 +82,13 @@ export default {
 				info: {
 					DEFAULT: 'hsl(var(--info))',
 					foreground: 'hsl(var(--info-foreground))'
+				},
+				financial: {
+					50: 'hsl(var(--financial-50))',
+					100: 'hsl(var(--financial-100))',
+					600: 'hsl(var(--financial-600))',
+					700: 'hsl(var(--financial-700))',
+					950: 'hsl(var(--financial-950))'
 				}
 			},
 			backgroundImage: {

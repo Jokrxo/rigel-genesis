@@ -166,7 +166,7 @@ const Dashboard = () => {
                 <Card key={index} className="hover:shadow-md transition-shadow duration-200 border-0 shadow-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`${action.color} p-2 rounded-lg text-white`}>
+                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg`}>
                         <action.icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -202,7 +202,7 @@ const Dashboard = () => {
                 <Card key={index} className="hover:shadow-md transition-shadow duration-200 border-0 shadow-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`${action.color} p-2 rounded-lg text-white`}>
+                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg`}>
                         <action.icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -238,7 +238,7 @@ const Dashboard = () => {
                 <Card key={index} className="hover:shadow-md transition-shadow duration-200 border-0 shadow-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`${action.color} p-2 rounded-lg text-white`}>
+                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg`}>
                         <action.icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
