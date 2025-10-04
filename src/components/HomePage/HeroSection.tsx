@@ -1,14 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import heroImage from "@/assets/hero-financial.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative flex flex-col items-center justify-center min-h-[400px] md:min-h-[600px] bg-gradient-to-br from-primary to-primary/80 text-primary-foreground px-4 pt-10 pb-24">
-      <div className="w-full max-w-6xl mx-auto flex flex-col items-center gap-6">
-        <h1 className="text-4xl md:text-6xl font-bold text-center">
+    <section className="relative flex flex-col items-center justify-center min-h-[400px] md:min-h-[600px] overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/95 to-primary/85" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col items-center gap-6 px-4 pt-10 pb-24">
+        <h1 className="text-4xl md:text-6xl font-bold text-center text-primary-foreground">
           Streamline Your Business Finances with Rigel
         </h1>
-        <p className="text-lg md:text-2xl text-center max-w-2xl">
+        <p className="text-lg md:text-2xl text-center max-w-2xl text-primary-foreground">
           Take control of your financial future. Automate tasks, gain insights, and grow your business.
         </p>
         <div className="flex items-center gap-4">
