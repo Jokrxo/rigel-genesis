@@ -10,7 +10,7 @@ const HeroSection = () => {
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/95 to-primary/85" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(200,30%,15%)] via-[hsl(180,40%,12%)] to-[hsl(160,50%,10%)]" />
       </div>
 
       {/* Content */}
@@ -23,12 +23,12 @@ const HeroSection = () => {
         </p>
         <div className="flex items-center gap-4">
           <Link to="/register">
-            <Button size="lg" className="bg-background text-foreground hover:bg-background/90 transition-colors duration-300 font-semibold">
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-300 font-semibold shadow-lg shadow-primary/20">
               Get Started Free
             </Button>
           </Link>
           <Link to="/ai-features">
-            <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary transition-colors duration-300 font-semibold">
+            <Button size="lg" variant="outline" className="border-2 border-primary text-primary-foreground bg-transparent hover:bg-primary hover:text-primary-foreground transition-colors duration-300 font-semibold">
               Explore AI Features
             </Button>
           </Link>
