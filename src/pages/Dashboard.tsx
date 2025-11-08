@@ -163,10 +163,10 @@ const Dashboard = () => {
             <h2 className="text-xl md:text-2xl font-semibold mb-4">Master Records</h2>
             <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {masterRecords.map((action, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow duration-200 border-0 shadow-sm">
+                <Card key={index} className="hover:shadow-lg hover:border-primary/20 transition-all duration-300 border border-border/50 shadow-sm bg-card">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg`}>
+                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg shadow-sm`}>
                         <action.icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -199,10 +199,10 @@ const Dashboard = () => {
             <h2 className="text-xl md:text-2xl font-semibold mb-4">Quick Actions</h2>
             <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {quickActions.map((action, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow duration-200 border-0 shadow-sm">
+                <Card key={index} className="hover:shadow-lg hover:border-primary/20 transition-all duration-300 border border-border/50 shadow-sm bg-card">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg`}>
+                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg shadow-sm`}>
                         <action.icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -235,10 +235,10 @@ const Dashboard = () => {
             <h2 className="text-xl md:text-2xl font-semibold mb-4">Advanced Features</h2>
             <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {advancedFeatures.map((action, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow duration-200 border-0 shadow-sm">
+                <Card key={index} className="hover:shadow-lg hover:border-primary/20 transition-all duration-300 border border-border/50 shadow-sm bg-card">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg`}>
+                      <div className={`${action.color} ${action.color.replace('bg-', 'text-')}-foreground p-2 rounded-lg shadow-sm`}>
                         <action.icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">

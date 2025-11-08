@@ -16,10 +16,10 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon }) => (
-  <Card>
+  <Card className="hover:shadow-lg hover:border-primary/30 transition-all duration-300 border-border/50 bg-card">
     <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      {icon}
+      <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
+      <div className="text-primary">{icon}</div>
     </CardHeader>
     <CardContent>
       <div className="text-2xl font-bold">{value}</div>
