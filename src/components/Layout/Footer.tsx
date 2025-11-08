@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { Mail, MessageSquare, Phone } from "lucide-react";
+import { Mail, Phone, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import globeImage from "@/assets/globe.jpg";
+import rigelLogo from "@/assets/rigel-logo.jpg";
 
 export const Footer = () => {
   return (
@@ -20,7 +20,7 @@ export const Footer = () => {
                 className="h-20 w-auto rounded shadow border-4 border-primary object-cover" 
                 style={{ minWidth: "120px", minHeight: "80px" }}
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = globeImage;
+                  (e.currentTarget as HTMLImageElement).src = rigelLogo;
                 }}
               />
               <div className="text-xs text-muted-foreground mt-2">

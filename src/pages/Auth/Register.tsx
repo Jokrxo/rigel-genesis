@@ -8,7 +8,7 @@ import { QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { emailSchema, passwordSchema, displayNameSchema } from "@/utils/validation";
 import { useToast } from "@/hooks/use-toast";
-import globeImage from "@/assets/globe.jpg";
+import rigelLogo from "@/assets/rigel-logo.jpg";
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
@@ -70,7 +70,7 @@ const Register = () => {
             className="h-24 w-auto mb-4 object-cover rounded-lg border border-border bg-background"
             onError={(e) => {
               console.log("Register page image failed to load");
-              (e.target as HTMLImageElement).src = globeImage;
+              (e.target as HTMLImageElement).src = rigelLogo;
             }}
             onLoad={() => console.log("Register page image loaded successfully")}
           />

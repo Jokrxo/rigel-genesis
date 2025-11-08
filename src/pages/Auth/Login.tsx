@@ -8,7 +8,7 @@ import { QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { emailSchema } from "@/utils/validation";
-import globeImage from "@/assets/globe.jpg";
+import rigelLogo from "@/assets/rigel-logo.jpg";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -67,7 +67,7 @@ const Login = () => {
             className="h-24 w-auto mb-4 object-cover rounded-lg border border-border"
             onError={(e) => {
               console.log("Login page image failed to load");
-              (e.target as HTMLImageElement).src = globeImage;
+              (e.target as HTMLImageElement).src = rigelLogo;
             }}
             onLoad={() => console.log("Login page image loaded successfully")}
           />

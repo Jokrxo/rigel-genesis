@@ -1,6 +1,6 @@
 import { LucideIcon } from "lucide-react";
 import React from "react";
-import globeImage from "@/assets/globe.jpg";
+import rigelLogo from "@/assets/rigel-logo.jpg";
 
 interface FeatureCardProps {
   imageSrc: string;
@@ -32,7 +32,7 @@ export const FeatureCard = ({
           />
         ) : (
           <div className="w-full h-32 flex items-center justify-center bg-muted">
-            <img src={globeImage} alt="placeholder" className="w-14 h-14 opacity-70 object-cover" />
+            <img src={rigelLogo} alt="Rigel Logo" className="w-14 h-14 opacity-70 object-cover" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent"></div>

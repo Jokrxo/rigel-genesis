@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import globeImage from "@/assets/globe.jpg";
+import rigelLogo from "@/assets/rigel-logo.jpg";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -78,7 +78,7 @@ const ForgotPassword = () => {
             alt="Financial workspace" 
             className="h-16 w-auto mx-auto mb-4 object-cover rounded-lg border border-border"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = globeImage;
+              (e.target as HTMLImageElement).src = rigelLogo;
             }}
           />
           <CardTitle>Reset Your Password</CardTitle>

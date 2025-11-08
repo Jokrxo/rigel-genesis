@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, MessageSquare, Phone, MapPin } from "lucide-react";
-import globeImage from "@/assets/globe.jpg";
+import rigelLogo from "@/assets/rigel-logo.jpg";
 
 const logoSrc = "/photo-1461749280684-dccba630e2f6";
 
@@ -23,7 +23,7 @@ export const HomePageFooter = () => {
                 alt="Professional financial solutions" 
                 className="h-20 w-24 rounded-lg border-2 border-financial-700 object-cover shadow-lg" 
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = globeImage;
+                  (e.target as HTMLImageElement).src = rigelLogo;
                 }}
               />
               <div>

@@ -48,7 +48,7 @@ export const defaultProfile: CompanyProfile = {
     branchCode: "250655",
     accountType: "Business Account",
   },
-  logoUrl: "/lovable-uploads/globe.png",
+  logoUrl: "/lovable-uploads/rigel-logo.jpg",
   description:
     "A leading financial solutions provider based in South Africa. We specialize in accounting, taxation, and financial management services for SMEs across various industries.",
 };
