@@ -3,6 +3,7 @@ import { MainLayout } from '@/components/Layout/MainLayout'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
+import { apiFetch } from '@/api/client'
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 
 export default function TrialBalance() {
@@ -11,7 +12,7 @@ export default function TrialBalance() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch('/api/trial-balance?entityId=demo')
+      const res = await apiFetch('/api/trial-balance?entityId=demo')
       const d = await res.json()
       setRows(d.rows || [])
       setTotals(d.totals || { debit: 0, credit: 0 })
@@ -28,7 +29,7 @@ export default function TrialBalance() {
         </CardHeader>
         <CardContent>
           <Button variant="outline" className="mb-4" onClick={async () => {
-            const res = await fetch('/api/reports/trial-balance?entityId=demo')
+            const res = await apiFetch('/api/reports/trial-balance?entityId=demo')
             const blob = await res.blob()
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')

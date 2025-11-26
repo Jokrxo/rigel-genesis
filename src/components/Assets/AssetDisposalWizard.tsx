@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
+import { apiFetch } from '@/api/client'
 
 interface Props {
   assetId: string
@@ -23,7 +24,7 @@ export function AssetDisposalWizard({ assetId, open, onClose }: Props) {
 
   const submit = async () => {
     try {
-      const res = await fetch(`/api/disposals/${assetId}`, {
+      const res = await apiFetch(`/api/disposals/${assetId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sellingPrice, disposalDate, method })

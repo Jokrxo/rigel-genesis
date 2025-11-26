@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
+import { apiFetch } from '@/api/client'
 
 type OwnershipForm = 'sole' | 'partnership' | 'llc' | 'corp'
 
@@ -20,7 +21,7 @@ export default function SignupWizard() {
 
   const loadPreview = async () => {
     try {
-      const res = await fetch('/api/entities/setup', {
+      const res = await apiFetch('/api/entities/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, address, ownership })
@@ -122,4 +123,3 @@ export default function SignupWizard() {
     </MainLayout>
   )
 }
-

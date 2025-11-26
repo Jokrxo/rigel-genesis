@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Download } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { apiFetch } from '@/api/client'
 
 export default function TaxDashboard() {
   const [data, setData] = useState<any | null>(null)
@@ -13,7 +14,7 @@ export default function TaxDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/tax/report?entityId=demo')
+        const res = await apiFetch('/api/tax/report?entityId=demo')
         if (!res.ok) throw new Error('Failed to fetch tax report')
         const d = await res.json()
         setData(d)
