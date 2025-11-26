@@ -74,4 +74,3 @@ export async function mockFetch(path: string, init?: RequestInit) {
   }
   return jsonResponse({ error: 'Not Found in mock' }, 404)
 }
-

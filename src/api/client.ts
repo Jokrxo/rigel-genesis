@@ -6,4 +6,3 @@ export async function apiFetch(path: string, init?: RequestInit) {
   if (isMock) return mockFetch(path, init)
   return fetch(path, init)
 }
-

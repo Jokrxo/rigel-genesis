@@ -20,4 +20,3 @@ export interface DisposalPayload {
   disposalDate: string
   method: 'cash' | 'credit'
 }
-

@@ -17,3 +17,10 @@ test('gain on disposal', () => {
   expect(Math.round(gainLoss)).toBe(100)
 })
 
+test('loss on disposal', () => {
+  const dep = computeDepreciationTillDisposal(10000, 12, new Date('2024-01-01'), new Date('2024-07-01'))
+  const gainLoss = computeGainLoss(10000, dep, 9000)
+  expect(Math.round(dep)).toBe(600)
+  expect(Math.round(gainLoss)).toBe(-400)
+})
+

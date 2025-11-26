@@ -51,6 +51,11 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: "Sign-Up Wizard",
+    href: "/signup-wizard",
+    icon: FolderOpen,
+  },
+  {
     title: "Import Statement",
     href: "/import-statement",
     icon: Upload,

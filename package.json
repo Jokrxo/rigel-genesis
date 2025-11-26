@@ -11,9 +11,13 @@
     "preview": "vite preview",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
     "test": "jest -c jest.config.cjs",
     "test:unit": "jest -c jest.config.cjs",
     "test:e2e": "cypress run"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

@@ -11,9 +11,14 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const isMock = String(import.meta.env.VITE_MOCK_API).toLowerCase() === 'true';
 
   if (loading) {
     return <PageLoadingSpinner />;
+  }
+
+  if (isMock) {
+    return <>{children}</>;
   }
 
   if (!user) {
