@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OwnershipForm {
+  sole
+  partnership
+  llc
+  corp
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+  CONTRA_ASSET
+}
+
+enum DisposalMethod {
+  cash
+  credit
+}
+
+model Entity {
+  id           String         @id @default(uuid())
+  name         String
+  address      String?
+  ownership    OwnershipForm
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  chartOfAccounts ChartOfAccount[]
+  transactions    Transaction[]
+  fixedAssets     FixedAsset[]
+  taxConfig       TaxConfig?
+
+  @@map("entities")
+}
+
+model ChartOfAccount {
+  id        String      @id @default(uuid())
+  entityId  String
+  code      String      @unique
+  name      String
+  type      AccountType
+  parentId  String?
+  balance   Decimal     @default(0)
+  isActive  Boolean     @default(true)
+
+  entity    Entity      @relation(fields: [entityId], references: [id])
+  journalDebit   JournalEntry[]  @relation("JournalDebit")
+  journalCredit  JournalEntry[]  @relation("JournalCredit")
+  postings       LedgerPosting[]
+
+  @@map("chart_of_accounts")
+}
+
+model FooCoaTemplate {
+  id        String       @id @default(uuid())
+  name      String
+  ownership OwnershipForm
+  accounts  Json
+  createdAt DateTime     @default(now())
+
+  @@map("foo_coa_templates")
+}
+
+model TransactionTypeMapping {
+  id              String         @id @default(uuid())
+  type            String
+  ownership       OwnershipForm?
+  debitCode       String
+  creditCode      String
+  taxRule         Json?
+  description     String?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+
+  @@map("transaction_type_mappings")
+}
+
+model Transaction {
+  id            String       @id @default(uuid())
+  entityId      String
+  date          DateTime
+  description   String
+  amount        Decimal
+  type          String
+  taxRule       Json?
+  createdAt     DateTime     @default(now())
+
+  entity        Entity       @relation(fields: [entityId], references: [id])
+  journalEntries JournalEntry[]
+
+  @@index([entityId, date])
+  @@map("transactions")
+}
+
+model JournalEntry {
+  id              String   @id @default(uuid())
+  transactionId   String
+  date            DateTime
+  debitAccountId  String
+  creditAccountId String
+  amount          Decimal
+  memo            String?
+  createdAt       DateTime @default(now())
+
+  transaction     Transaction @relation(fields: [transactionId], references: [id])
+  debitAccount    ChartOfAccount @relation("JournalDebit", fields: [debitAccountId], references: [id])
+  creditAccount   ChartOfAccount @relation("JournalCredit", fields: [creditAccountId], references: [id])
+  ledgerPostings  LedgerPosting[]
+  disposal        Disposal?
+
+  @@map("journal_entries")
+}
+
+model LedgerPosting {
+  id            String       @id @default(uuid())
+  journalEntryId String
+  accountId     String
+  date          DateTime
+  debit         Decimal      @default(0)
+  credit        Decimal      @default(0)
+
+  journalEntry  JournalEntry @relation(fields: [journalEntryId], references: [id])
+  account       ChartOfAccount @relation(fields: [accountId], references: [id])
+
+  @@index([accountId, date])
+  @@map("ledger_postings")
+}
+
+model FixedAsset {
+  id            String       @id @default(uuid())
+  entityId      String
+  name          String
+  category      String?
+  purchaseDate  DateTime
+  costPrice     Decimal
+  depreciationRate Decimal
+  accumDepr     Decimal      @default(0)
+  disposalDate  DateTime?
+  sellingPrice  Decimal?
+
+  entity        Entity       @relation(fields: [entityId], references: [id])
+  disposals     Disposal[]
+
+  @@map("fixed_assets")
+}
+
+model Disposal {
+  id            String         @id @default(uuid())
+  assetId       String
+  disposalDate  DateTime
+  sellingPrice  Decimal
+  method        DisposalMethod
+  profitLoss    Decimal        @default(0)
+  journalEntryId String? @unique
+
+  asset         FixedAsset     @relation(fields: [assetId], references: [id])
+  journalEntry  JournalEntry?  @relation(fields: [journalEntryId], references: [id])
+
+  @@map("disposals")
+}
+
+model TaxConfig {
+  id            String       @id @default(uuid())
+  entityId      String       @unique
+  vatRate       Decimal      @default(0.15)
+  depreciationMethod String  @default("monthly")
+  corpTaxBracket Json?
+  createdAt     DateTime     @default(now())
+
+  entity        Entity       @relation(fields: [entityId], references: [id])
+
+  @@map("tax_config")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  userId     String
+  timestamp  DateTime @default(now())
+  oldValues  Json?
+  newValues  Json?
+
+  @@map("audit_logs")
+}
+
+model Role {
+  id      String @id @default(uuid())
+  name    String @unique
+  users   UserRole[]
+  @@map("rbac_roles")
+}
+
+model UserRole {
+  id      String @id @default(uuid())
+  userId  String
+  roleId  String
+  role    Role   @relation(fields: [roleId], references: [id])
+  @@index([userId])
+  @@map("user_roles")
+}

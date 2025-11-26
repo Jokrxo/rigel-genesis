@@ -1,5 +1,6 @@
 
 import { MainLayout } from "@/components/Layout/MainLayout";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Building, Plus, Search, Edit, Trash2, Printer, Download, TrendingDown }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { AssetDisposalWizard } from "@/components/Assets/AssetDisposalWizard";
 
 const AssetManagement = () => {
   // Mock data for demonstration
@@ -46,6 +48,7 @@ const AssetManagement = () => {
     }
   ];
 
+  const [disposalAssetId, setDisposalAssetId] = useState<string | null>(null);
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -174,7 +177,7 @@ const AssetManagement = () => {
                           <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => setDisposalAssetId(asset.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -186,6 +189,9 @@ const AssetManagement = () => {
             </div>
           </CardContent>
         </Card>
+        {disposalAssetId && (
+          <AssetDisposalWizard assetId={disposalAssetId} open={Boolean(disposalAssetId)} onClose={() => setDisposalAssetId(null)} />
+        )}
       </div>
       <Chatbot />
     </MainLayout>

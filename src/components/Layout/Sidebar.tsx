@@ -146,6 +146,21 @@ const navItems: NavItem[] = [
     href: "/financial-analysis",
     icon: TrendingUp,
   },
+  {
+    title: "Trial Balance",
+    href: "/trial-balance",
+    icon: BarChart3,
+  },
+  {
+    title: "Tax Dashboard",
+    href: "/tax-dashboard",
+    icon: Calculator,
+  },
+  {
+    title: "Accounting Cycle",
+    href: "/accounting-cycle",
+    icon: FolderOpen,
+  },
 ];
 
 const bottomNavItems: NavItem[] = [

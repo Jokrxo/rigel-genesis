@@ -45,6 +45,10 @@ import Investments from "./pages/Investments";
 import TransactionProcessing from "./pages/TransactionProcessing";
 import PayrollManagement from "./pages/PayrollManagement";
 import FinancialAnalysis from "./pages/FinancialAnalysis";
+import SignupWizard from "./pages/SignupWizard";
+import TaxDashboard from "./pages/TaxDashboard";
+import TrialBalance from "./pages/TrialBalance";
+import AccountingCycle from "./pages/AccountingCycle";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +80,7 @@ const App = () => (
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/features" element={<Features />} />
+                  <Route path="/signup-wizard" element={<SignupWizard />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
@@ -105,6 +110,9 @@ const App = () => (
                   <Route path="/tax-calculators" element={<ProtectedRoute><TaxCalculators /></ProtectedRoute>} />
                   <Route path="/ai-features" element={<ProtectedRoute><AIFeatures /></ProtectedRoute>} />
                   <Route path="/financial-analysis" element={<ProtectedRoute><FinancialAnalysis /></ProtectedRoute>} />
+                  <Route path="/tax-dashboard" element={<ProtectedRoute><TaxDashboard /></ProtectedRoute>} />
+                  <Route path="/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
+                  <Route path="/accounting-cycle" element={<ProtectedRoute><AccountingCycle /></ProtectedRoute>} />
                   
                   {/* 404 route */}
                   <Route path="*" element={<NotFound />} />

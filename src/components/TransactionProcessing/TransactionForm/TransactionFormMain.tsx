@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "/src/integrations/supabase/client";
 import { CompanyProfile } from "@/components/CompanyProfile/types";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import { getTransactionTypesForOwnership } from "../hooks/useTransactionTypesForOwnership";
@@ -100,68 +100,33 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("Not authenticated");
-      }
+      if (!user) throw new Error("Not authenticated");
 
-      // Create a mock statement first
-      const { data: statement, error: statementError } = await supabase
-        .from("bank_statements")
-        .insert([
-          {
-            user_id: user.id,
-            bank_id: "manual",
-            file_url: "manual-entry",
-            file_type: "manual",
-            processing_status: "completed",
-            result_json: { manual_entry: true },
-          }
-        ])
-        .select()
-        .single();
-        
-      if (statementError) {
-        console.error("Statement creation error:", statementError);
-        throw statementError;
-      }
+      const payload = {
+        entityId: user.id, // temporary: use user id as entity linkage; replace with selected entity
+        type: data.type,
+        amount: Math.abs(data.amount),
+        date: data.date.toISOString(),
+        description: data.description,
+      };
 
-      const { error } = await supabase.from("transactions").insert([
-        {
-          statement_id: statement.id,
-          user_id: user.id,
-          date: data.date.toISOString().split("T")[0],
-          amount: data.type === "expense" ? -Math.abs(data.amount) : Math.abs(data.amount),
-          description: data.description,
-          type: data.type,
-          category: data.category,
-          metadata: {
-            reference: data.reference,
-            party_type: data.party_type,
-            party_id: data.party_id,
-            manual_entry: true,
-          },
-        },
-      ]);
-      
-      if (error) {
-        console.error("Transaction creation error:", error);
-        throw error;
-      }
-      
-      toast({ 
-        title: "Success", 
-        description: "Transaction recorded successfully" 
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
+      if (!res.ok) {
+        const t = await res.json().catch(() => ({}));
+        throw new Error(t.error || 'Failed to create transaction');
+      }
+
+      const result = await res.json();
+      toast({ title: 'Transaction recorded', description: `Journal created: Debit ${result.suggested.debit.name}, Credit ${result.suggested.credit.name}` });
       form.reset();
       onSuccess();
     } catch (error) {
-      console.error("Error saving transaction:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to record transaction",
-        variant: "destructive",
-      });
+      console.error('Error saving transaction:', error);
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to record transaction', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
