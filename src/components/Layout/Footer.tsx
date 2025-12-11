@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MessageSquare } from "lucide-react";
+import { Mail, Phone, MessageSquare, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import rigelLogo from "@/assets/rigel-logo.jpg";
+import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 
 export const Footer = () => {
   return (
@@ -9,23 +9,19 @@ export const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="text-justify">
-            <h3 className="text-lg font-semibold mb-4">Rigel</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <img 
+                src={rigelFullLogo}
+                alt="Rigel - Financial Management" 
+                className="h-16 w-auto object-contain rounded-lg" 
+              />
+            </div>
             <p className="text-muted-foreground">
               Comprehensive financial management for South African businesses.
             </p>
-            <div className="mt-4">
-              <img 
-                src="/photo-1461749280684-dccba630e2f6"
-                alt="Financial technology" 
-                className="h-20 w-auto rounded shadow border-4 border-primary object-cover" 
-                style={{ minWidth: "120px", minHeight: "80px" }}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = rigelLogo;
-                }}
-              />
-              <div className="text-xs text-muted-foreground mt-2">
-                Professional Financial Management Solutions
-              </div>
+            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <Building2 className="h-4 w-4" />
+              <span>Stella Lumen (Pty) Ltd</span>
             </div>
           </div>
           
@@ -34,18 +30,19 @@ export const Footer = () => {
             <div className="space-y-3 text-justify">
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <a href="tel:0739882190" className="text-muted-foreground hover:text-foreground transition-colors">
-                  073 988 2190
+                <a href="tel:0319444635" className="text-muted-foreground hover:text-foreground transition-colors">
+                  031 944 4635
                 </a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <a href="mailto:luthando@stella-lumen.com" className="text-muted-foreground hover:text-foreground transition-colors">
-                  luthando@stella-lumen.com
+                <a href="mailto:info@stella-lumen.com" className="text-muted-foreground hover:text-foreground transition-colors">
+                  info@stella-lumen.com
                 </a>
               </div>
-              <div>
-                <p className="text-muted-foreground">Luthando Zulu</p>
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Stella Lumen (Pty) Ltd</span>
               </div>
             </div>
           </div>
@@ -53,15 +50,15 @@ export const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Get in Touch</h3>
             <div className="flex flex-col space-y-3 text-justify">
-              <Button variant="outline" className="gap-2 justify-start" onClick={() => window.open("mailto:luthando@stella-lumen.com")}>
+              <Button variant="outline" className="gap-2 justify-start" onClick={() => window.open("mailto:info@stella-lumen.com")}>
                 <Mail className="h-4 w-4" />
                 <span>Email Us</span>
               </Button>
-              <Button variant="outline" className="gap-2 justify-start" onClick={() => window.open("https://wa.me/27739882190")}>
+              <Button variant="outline" className="gap-2 justify-start" onClick={() => window.open("https://wa.me/27319444635")}>
                 <MessageSquare className="h-4 w-4" />
                 <span>WhatsApp</span>
               </Button>
-              <Button variant="outline" className="gap-2 justify-start" onClick={() => window.open("sms:+27739882190")}>
+              <Button variant="outline" className="gap-2 justify-start" onClick={() => window.open("sms:+27319444635")}>
                 <MessageSquare className="h-4 w-4" />
                 <span>SMS</span>
               </Button>
@@ -72,12 +69,12 @@ export const Footer = () => {
         <div className="border-t border-border mt-8 pt-6 text-center text-muted-foreground">
           <div className="flex justify-center mb-4">
             <img 
-              src="/photo-1531297484001-80022131f5a1" 
-              alt="Financial workspace" 
-              className="h-10 object-cover rounded border border-border" 
+              src={rigelFullLogo}
+              alt="Rigel Logo" 
+              className="h-10 object-contain rounded" 
             />
           </div>
-          <p>&copy; 2025 Rigel - All rights reserved.</p>
+          <p>&copy; 2025 Rigel by Stella Lumen (Pty) Ltd - All rights reserved.</p>
         </div>
       </div>
     </footer>
