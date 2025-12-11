@@ -103,20 +103,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
     });
     
-    let actualTheme = themeName;
-    
-    // Handle system theme
+    // Handle system theme - converts to light or dark
     if (themeName === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      actualTheme = prefersDark ? 'dark' : 'light';
+      if (prefersDark) {
+        root.classList.add('dark');
+      }
+      // Light is default (no class needed)
+      return;
     }
     
-    // Apply theme class
-    if (actualTheme === 'dark') {
+    // Handle basic dark/light themes
+    if (themeName === 'dark') {
       root.classList.add('dark');
-    } else if (actualTheme !== 'light') {
-      root.classList.add(`theme-${actualTheme}`);
+      return;
     }
+    
+    if (themeName === 'light') {
+      // Light is default (no class needed)
+      return;
+    }
+    
+    // For color themes, check system preference for dark mode variant
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (prefersDark) {
+      root.classList.add('dark');
+    }
+    root.classList.add(`theme-${themeName}`);
   };
 
   const setTheme = async (newTheme: ThemeName) => {
