@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "/src/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from '@/api/client'
 import { CompanyProfile } from "@/components/CompanyProfile/types";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";

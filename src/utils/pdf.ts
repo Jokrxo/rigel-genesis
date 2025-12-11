@@ -2,8 +2,8 @@ import PDFDocument from 'pdfkit'
 
 export function exportTrialBalancePDF(rows: { code: string, name: string, type: string, debit: number, credit: number }[], totals: { debit: number, credit: number }) {
   const doc = new PDFDocument({ margin: 40 })
-  const chunks: Buffer[] = []
-  doc.on('data', (c) => chunks.push(c))
+  const chunks: BlobPart[] = []
+  doc.on('data', (c: BlobPart) => chunks.push(c))
   return new Promise<Blob>((resolve) => {
     doc.on('end', () => {
       const blob = new Blob(chunks, { type: 'application/pdf' })

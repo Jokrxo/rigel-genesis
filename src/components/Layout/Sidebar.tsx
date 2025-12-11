@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +31,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -268,11 +268,12 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
       >
         <div className="flex h-full flex-col">
           {/* Logo Section */}
-          <div className="flex items-center gap-2 px-6 py-4 border-b border-sidebar-border">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">R</span>
-            </div>
-            <span className="font-bold text-xl text-sidebar-foreground">Rigel</span>
+          <div className="flex items-center justify-center px-4 py-4 border-b border-sidebar-border">
+            <img 
+              src={rigelFullLogo}
+              alt="Rigel - Powered by Stella Lumen" 
+              className="h-14 w-auto object-contain"
+            />
           </div>
 
           {/* Navigation */}
