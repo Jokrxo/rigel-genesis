@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import rigelLogo from "@/assets/rigel-logo.jpg";
+import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -82,12 +83,9 @@ const ResetPassword = () => {
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <img 
-            src="/lovable-uploads/3b7b3f31-f5d5-4f5c-b75b-6e7f54d5bf88.png"
-            alt="Financial workspace" 
-            className="h-16 w-auto mx-auto mb-4 object-cover rounded-lg border border-border"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = rigelLogo;
-            }}
+            src={rigelFullLogo}
+            alt="Rigel - Powered by Stella Lumen" 
+            className="h-20 w-auto mx-auto mb-4 object-contain"
           />
           <CardTitle>Set New Password</CardTitle>
           <CardDescription>

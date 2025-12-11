@@ -1,4 +1,4 @@
-import { PrismaClient, Transaction } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
@@ -16,7 +16,7 @@ prisma.$use(async (params, next) => {
     try {
       // Dynamically import mapping helpers to avoid circular dependency
       const { getMappingFor, findAccountsByCodes } = await import('../../api/_lib/mappings')
-      const tx = result as Transaction
+      const tx = result as { id: string; type: string; date: Date; amount: number; entityId: string }
       const mapping = await getMappingFor(tx.type)
       const { debit, credit } = await findAccountsByCodes(tx.entityId, mapping.debitCode, mapping.creditCode)
       await prisma.journalEntry.create({

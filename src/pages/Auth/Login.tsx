@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { emailSchema } from "@/utils/validation";
 import rigelLogo from "@/assets/rigel-logo.jpg";
+import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -62,14 +63,9 @@ const Login = () => {
       <div className="auth-card">
         <div className="flex flex-col items-center text-center mb-6">
           <img 
-            src="/lovable-uploads/3b7b3f31-f5d5-4f5c-b75b-6e7f54d5bf88.png"
-            alt="Financial workspace" 
-            className="h-24 w-auto mb-4 object-cover rounded-lg border border-border"
-            onError={(e) => {
-              console.log("Login page image failed to load");
-              (e.target as HTMLImageElement).src = rigelLogo;
-            }}
-            onLoad={() => console.log("Login page image loaded successfully")}
+            src={rigelFullLogo}
+            alt="Rigel - Powered by Stella Lumen" 
+            className="h-28 w-auto mb-4 object-contain"
           />
           <h2 className="text-2xl font-bold text-foreground">Welcome to Rigel</h2>
           <p className="mt-2 text-sm text-muted-foreground text-justify max-w-sm mx-auto">
