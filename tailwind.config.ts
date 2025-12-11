@@ -22,8 +22,21 @@ export default {
 				'2xl': '1400px'
 			}
 		},
-		extend: {
-			colors: {
+	extend: {
+		fontFamily: {
+			sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+		},
+		fontSize: {
+			'xs': ['0.75rem', { lineHeight: '1.25rem' }],
+			'sm': ['0.875rem', { lineHeight: '1.5rem' }],
+			'base': ['1rem', { lineHeight: '1.75rem' }],
+			'lg': ['1.125rem', { lineHeight: '1.875rem' }],
+			'xl': ['1.25rem', { lineHeight: '2rem' }],
+			'2xl': ['1.5rem', { lineHeight: '2.25rem' }],
+			'3xl': ['1.875rem', { lineHeight: '2.5rem' }],
+			'4xl': ['2.25rem', { lineHeight: '2.75rem' }],
+		},
+		colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
