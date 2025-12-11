@@ -2,7 +2,6 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -25,8 +24,6 @@ import {
   Briefcase,
   Target,
   PiggyBank,
-  Menu,
-  X,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -216,7 +213,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
               variant="ghost"
               className={cn(
                 "w-full justify-start gap-2 px-3 py-2.5 text-left font-normal",
-                "hover:bg-accent hover:text-accent-foreground",
+                "hover:bg-primary/10 hover:text-primary",
                 "transition-colors duration-200",
                 depth > 0 && "ml-4"
               )}
@@ -230,7 +227,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
               )}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1">
+          <CollapsibleContent className="space-y-1 ml-2">
             {item.children?.map(child => renderNavItem(child, depth + 1))}
           </CollapsibleContent>
         </Collapsible>
@@ -243,9 +240,9 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
         variant="ghost"
         className={cn(
           "w-full justify-start gap-2 px-3 py-2.5 text-left font-normal",
-          "hover:bg-accent hover:text-accent-foreground",
+          "hover:bg-primary/10 hover:text-primary",
           "transition-colors duration-200",
-          isActive && "bg-accent text-accent-foreground font-medium",
+          isActive && "bg-primary/15 text-primary font-medium",
           depth > 0 && "ml-4"
         )}
         asChild
@@ -262,13 +259,13 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
     <>
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 ease-in-out md:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar transition-transform duration-300 ease-in-out md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-full flex-col">
           {/* Logo Section */}
-          <div className="flex items-center justify-center px-4 py-4 border-b border-sidebar-border">
+          <div className="flex items-center justify-center px-4 py-5 bg-gradient-to-b from-primary/5 to-transparent">
             <img 
               src={rigelFullLogo}
               alt="Rigel - Powered by Stella Lumen" 
@@ -284,7 +281,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
           </ScrollArea>
 
           {/* Bottom Navigation */}
-          <div className="border-t border-sidebar-border p-3">
+          <div className="p-3 bg-gradient-to-t from-primary/5 to-transparent">
             <div className="space-y-1">
               {bottomNavItems.map(item => renderNavItem(item))}
             </div>

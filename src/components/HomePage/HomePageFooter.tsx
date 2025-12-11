@@ -1,8 +1,6 @@
 import { Link } from "react-router-dom";
-import { Mail, MessageSquare, Phone, MapPin } from "lucide-react";
-import rigelLogo from "@/assets/rigel-logo.jpg";
-
-const logoSrc = "/photo-1461749280684-dccba630e2f6";
+import { Mail, Phone, MapPin, Building2 } from "lucide-react";
+import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 
 export const HomePageFooter = () => {
   return (
@@ -19,19 +17,16 @@ export const HomePageFooter = () => {
             
             <div className="flex items-center gap-4">
               <img 
-                src={logoSrc} 
-                alt="Professional financial solutions" 
-                className="h-20 w-24 rounded-lg border-2 border-financial-700 object-cover shadow-lg" 
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = rigelLogo;
-                }}
+                src={rigelFullLogo}
+                alt="Rigel - Financial Management" 
+                className="h-20 w-auto rounded-lg border-2 border-financial-700 object-contain shadow-lg bg-white p-1" 
               />
               <div>
                 <div className="text-sm font-medium text-financial-200">
-                  Professional Financial Solutions
+                  Stella Lumen (Pty) Ltd
                 </div>
                 <div className="text-xs text-financial-400 mt-1">
-                  Trusted by businesses across South Africa
+                  Professional Financial Solutions
                 </div>
               </div>
             </div>
@@ -52,21 +47,21 @@ export const HomePageFooter = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-financial-400 flex-shrink-0" />
-                <a href="tel:0739882190" className="text-financial-300 hover:text-financial-100 transition-colors duration-200">
-                  073 988 2190
+                <a href="tel:0319444635" className="text-financial-300 hover:text-financial-100 transition-colors duration-200">
+                  031 944 4635
                 </a>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-financial-400 flex-shrink-0" />
-                <a href="mailto:luthando@stella-lumen.com" className="text-financial-300 hover:text-financial-100 transition-colors duration-200">
-                  luthando@stella-lumen.com
+                <a href="mailto:info@stella-lumen.com" className="text-financial-300 hover:text-financial-100 transition-colors duration-200">
+                  info@stella-lumen.com
                 </a>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-financial-400 flex-shrink-0 mt-0.5" />
+                <Building2 className="w-5 h-5 text-financial-400 flex-shrink-0 mt-0.5" />
                 <div className="text-financial-300">
-                  <div className="font-medium">Luthando Zulu</div>
-                  <div className="text-sm text-financial-400">Business Development</div>
+                  <div className="font-medium">Stella Lumen (Pty) Ltd</div>
+                  <div className="text-sm text-financial-400">Professional Financial Solutions</div>
                 </div>
               </div>
             </div>
@@ -76,7 +71,7 @@ export const HomePageFooter = () => {
         <div className="border-t border-financial-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-financial-400 text-sm">
-              &copy; 2025 Rigel - Professional Financial Management Solutions. All rights reserved.
+              &copy; 2025 Rigel by Stella Lumen (Pty) Ltd - All rights reserved.
             </p>
             <div className="flex gap-6">
               <Link to="/terms" className="text-financial-400 hover:text-financial-200 text-sm transition-colors duration-200">
