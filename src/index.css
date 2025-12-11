@@ -75,8 +75,8 @@
     --financial-950: 160 84% 10%;
   }
 
-  /* Color Themes */
-  .theme-blue {
+  /* Color Themes - using html.theme-* for higher specificity */
+  html.theme-blue {
     --background: 210 40% 98%;
     --foreground: 222.2 47.4% 11.2%;
     --card: 210 40% 99%;
@@ -98,7 +98,7 @@
     --ring: 221.2 83.2% 53.3%;
   }
 
-  .theme-green {
+  html.theme-green {
     --background: 138 76% 97%;
     --foreground: 142 71% 8%;
     --card: 138 76% 98%;
@@ -120,7 +120,7 @@
     --ring: 142 76% 36%;
   }
 
-  .theme-purple {
+  html.theme-purple {
     --background: 270 100% 98%;
     --foreground: 270 55% 10%;
     --card: 270 100% 99%;
@@ -142,7 +142,7 @@
     --ring: 262.1 83.3% 57.8%;
   }
 
-  .theme-orange {
+  html.theme-orange {
     --background: 33 100% 97%;
     --foreground: 20 14.3% 4.1%;
     --card: 33 100% 98%;
@@ -164,7 +164,7 @@
     --ring: 24.6 95% 53.1%;
   }
 
-  .theme-red {
+  html.theme-red {
     --background: 0 100% 98%;
     --foreground: 0 84.2% 10%;
     --card: 0 100% 99%;
@@ -186,7 +186,7 @@
     --ring: 0 84.2% 60.2%;
   }
 
-  .theme-pink {
+  html.theme-pink {
     --background: 326 100% 98%;
     --foreground: 326 71% 10%;
     --card: 326 100% 99%;
@@ -208,7 +208,7 @@
     --ring: 330 81% 60%;
   }
 
-  .theme-yellow {
+  html.theme-yellow {
     --background: 48 100% 96%;
     --foreground: 20 14.3% 4.1%;
     --card: 48 100% 97%;
@@ -230,7 +230,7 @@
     --ring: 47.9 95.8% 53.1%;
   }
 
-  .theme-cyan {
+  html.theme-cyan {
     --background: 183 100% 96%;
     --foreground: 184 91% 8%;
     --card: 183 100% 97%;
@@ -252,7 +252,7 @@
     --ring: 188 94% 43%;
   }
 
-  .theme-lime {
+  html.theme-lime {
     --background: 78 92% 95%;
     --foreground: 84 93% 8%;
     --card: 78 92% 96%;
@@ -275,7 +275,7 @@
   }
 
   /* Neutral Themes */
-  .theme-slate {
+  html.theme-slate {
     --background: 210 40% 98%;
     --foreground: 222.2 47.4% 11.2%;
     --card: 210 40% 99%;
@@ -297,7 +297,7 @@
     --ring: 215 27.9% 16.9%;
   }
 
-  .theme-zinc {
+  html.theme-zinc {
     --background: 0 0% 98%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 99%;
@@ -319,7 +319,7 @@
     --ring: 240 5.9% 10%;
   }
 
-  .theme-neutral {
+  html.theme-neutral {
     --background: 0 0% 98%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 99%;
@@ -341,7 +341,7 @@
     --ring: 0 0% 9%;
   }
 
-  .theme-stone {
+  html.theme-stone {
     --background: 60 9.1% 97.8%;
     --foreground: 20 14.3% 4.1%;
     --card: 60 9.1% 98.5%;
@@ -364,7 +364,7 @@
   }
 
   /* Nature Themes */
-  .theme-emerald {
+  html.theme-emerald {
     --background: 152 76% 97%;
     --foreground: 152 71% 8%;
     --card: 152 76% 98%;
@@ -386,7 +386,7 @@
     --ring: 160 84% 39%;
   }
 
-  .theme-teal {
+  html.theme-teal {
     --background: 166 76% 97%;
     --foreground: 173 80% 8%;
     --card: 166 76% 98%;
@@ -408,7 +408,7 @@
     --ring: 173 80% 40%;
   }
 
-  .theme-sky {
+  html.theme-sky {
     --background: 204 100% 97%;
     --foreground: 200 92% 8%;
     --card: 204 100% 98%;
@@ -431,7 +431,7 @@
   }
 
   /* Vibrant Themes */
-  .theme-indigo {
+  html.theme-indigo {
     --background: 226 100% 97%;
     --foreground: 226 71% 10%;
     --card: 226 100% 98%;
@@ -453,7 +453,7 @@
     --ring: 239 84% 67%;
   }
 
-  .theme-violet {
+  html.theme-violet {
     --background: 270 100% 98%;
     --foreground: 270 55% 10%;
     --card: 270 100% 99%;
@@ -475,7 +475,7 @@
     --ring: 258 90% 66%;
   }
 
-  .theme-fuchsia {
+  html.theme-fuchsia {
     --background: 292 100% 98%;
     --foreground: 292 71% 10%;
     --card: 292 100% 99%;
@@ -497,7 +497,7 @@
     --ring: 292 84% 61%;
   }
 
-  .theme-rose {
+  html.theme-rose {
     --background: 351 100% 98%;
     --foreground: 351 71% 10%;
     --card: 351 100% 99%;
@@ -519,7 +519,7 @@
     --ring: 347 77% 50%;
   }
 
-  .theme-amber {
+  html.theme-amber {
     --background: 48 100% 96%;
     --foreground: 20 14.3% 4.1%;
     --card: 48 100% 97%;
@@ -542,8 +542,8 @@
   }
 
 
-  /* Dark Mode Color Themes */
-  .dark.theme-blue {
+  /* Dark Mode Color Themes - using html.dark.theme-* for higher specificity */
+  html.dark.theme-blue {
     --background: 222 47% 4%;
     --foreground: 210 40% 98%;
     --card: 222 47% 5%;
@@ -565,7 +565,7 @@
     --ring: 221.2 83.2% 53.3%;
   }
 
-  .dark.theme-green {
+  html.dark.theme-green {
     --background: 142 71% 4%;
     --foreground: 138 76% 97%;
     --card: 142 71% 5%;
@@ -587,7 +587,7 @@
     --ring: 142 76% 36%;
   }
 
-  .dark.theme-purple {
+  html.dark.theme-purple {
     --background: 270 55% 4%;
     --foreground: 270 100% 98%;
     --card: 270 55% 5%;
@@ -609,9 +609,9 @@
     --ring: 262.1 83.3% 57.8%;
   }
 
-  .dark.theme-orange,
-  .dark.theme-amber,
-  .dark.theme-yellow {
+  html.dark.theme-orange,
+  html.dark.theme-amber,
+  html.dark.theme-yellow {
     --background: 20 14% 4%;
     --foreground: 48 100% 96%;
     --card: 20 14% 5%;
@@ -630,25 +630,25 @@
     --input: 48 80% 12%;
   }
 
-  .dark.theme-orange {
+  html.dark.theme-orange {
     --primary: 24.6 95% 53.1%;
     --primary-foreground: 20 14% 4%;
     --ring: 24.6 95% 53.1%;
   }
 
-  .dark.theme-yellow {
+  html.dark.theme-yellow {
     --primary: 47.9 95.8% 53.1%;
     --primary-foreground: 26 83.3% 14.1%;
     --ring: 47.9 95.8% 53.1%;
   }
 
-  .dark.theme-amber {
+  html.dark.theme-amber {
     --primary: 38 92% 50%;
     --primary-foreground: 0 0% 100%;
     --ring: 38 92% 50%;
   }
 
-  .dark.theme-red {
+  html.dark.theme-red {
     --background: 0 84% 4%;
     --foreground: 0 100% 98%;
     --card: 0 84% 5%;
@@ -670,14 +670,14 @@
     --ring: 0 84.2% 60.2%;
   }
 
-  .dark.theme-pink,
-  .dark.theme-fuchsia,
-  .dark.theme-rose {
+  html.dark.theme-pink,
+  html.dark.theme-fuchsia,
+  html.dark.theme-rose {
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
   }
 
-  .dark.theme-pink {
+  html.dark.theme-pink {
     --background: 326 71% 4%;
     --foreground: 326 100% 98%;
     --card: 326 71% 5%;
@@ -697,14 +697,14 @@
     --ring: 330 81% 60%;
   }
 
-  .dark.theme-cyan,
-  .dark.theme-teal,
-  .dark.theme-sky {
+  html.dark.theme-cyan,
+  html.dark.theme-teal,
+  html.dark.theme-sky {
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
   }
 
-  .dark.theme-cyan {
+  html.dark.theme-cyan {
     --background: 184 91% 4%;
     --foreground: 183 100% 96%;
     --card: 184 91% 5%;
@@ -724,14 +724,14 @@
     --ring: 188 94% 43%;
   }
 
-  .dark.theme-lime,
-  .dark.theme-green,
-  .dark.theme-emerald {
+  html.dark.theme-lime,
+  html.dark.theme-green,
+  html.dark.theme-emerald {
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
   }
 
-  .dark.theme-lime {
+  html.dark.theme-lime {
     --background: 84 93% 4%;
     --foreground: 78 92% 95%;
     --card: 84 93% 5%;
@@ -751,15 +751,15 @@
     --ring: 84 81% 44%;
   }
 
-  .dark.theme-slate,
-  .dark.theme-zinc,
-  .dark.theme-neutral,
-  .dark.theme-stone {
+  html.dark.theme-slate,
+  html.dark.theme-zinc,
+  html.dark.theme-neutral,
+  html.dark.theme-stone {
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
   }
 
-  .dark.theme-slate {
+  html.dark.theme-slate {
     --background: 222 47% 4%;
     --foreground: 210 40% 98%;
     --card: 222 47% 5%;
@@ -779,7 +779,7 @@
     --ring: 215 27.9% 16.9%;
   }
 
-  .dark.theme-zinc {
+  html.dark.theme-zinc {
     --background: 240 10% 4%;
     --foreground: 0 0% 98%;
     --card: 240 10% 5%;
@@ -799,7 +799,7 @@
     --ring: 240 5.9% 10%;
   }
 
-  .dark.theme-neutral {
+  html.dark.theme-neutral {
     --background: 0 0% 4%;
     --foreground: 0 0% 98%;
     --card: 0 0% 5%;
@@ -819,7 +819,7 @@
     --ring: 0 0% 9%;
   }
 
-  .dark.theme-stone {
+  html.dark.theme-stone {
     --background: 20 14% 4%;
     --foreground: 60 9% 98%;
     --card: 20 14% 5%;
@@ -839,7 +839,7 @@
     --ring: 24 9.8% 10%;
   }
 
-  .dark.theme-emerald {
+  html.dark.theme-emerald {
     --background: 152 71% 4%;
     --foreground: 152 76% 97%;
     --card: 152 71% 5%;
@@ -859,7 +859,7 @@
     --ring: 160 84% 39%;
   }
 
-  .dark.theme-teal {
+  html.dark.theme-teal {
     --background: 173 80% 4%;
     --foreground: 166 76% 97%;
     --card: 173 80% 5%;
@@ -879,7 +879,7 @@
     --ring: 173 80% 40%;
   }
 
-  .dark.theme-sky {
+  html.dark.theme-sky {
     --background: 200 92% 4%;
     --foreground: 204 100% 97%;
     --card: 200 92% 5%;
@@ -899,13 +899,13 @@
     --ring: 199 89% 48%;
   }
 
-  .dark.theme-indigo,
-  .dark.theme-violet {
+  html.dark.theme-indigo,
+  html.dark.theme-violet {
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
   }
 
-  .dark.theme-indigo {
+  html.dark.theme-indigo {
     --background: 226 71% 4%;
     --foreground: 226 100% 97%;
     --card: 226 71% 5%;
@@ -925,7 +925,7 @@
     --ring: 239 84% 67%;
   }
 
-  .dark.theme-violet {
+  html.dark.theme-violet {
     --background: 270 55% 4%;
     --foreground: 270 100% 98%;
     --card: 270 55% 5%;
@@ -945,7 +945,7 @@
     --ring: 258 90% 66%;
   }
 
-  .dark.theme-fuchsia {
+  html.dark.theme-fuchsia {
     --background: 292 71% 4%;
     --foreground: 292 100% 98%;
     --card: 292 71% 5%;
@@ -965,7 +965,7 @@
     --ring: 292 84% 61%;
   }
 
-  .dark.theme-rose {
+  html.dark.theme-rose {
     --background: 351 71% 4%;
     --foreground: 351 100% 98%;
     --card: 351 71% 5%;
