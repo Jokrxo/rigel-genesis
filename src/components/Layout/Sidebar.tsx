@@ -272,7 +272,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
             <img 
               src={rigelFullLogo}
               alt="Rigel - Powered by Stella Lumen" 
-              className="h-14 w-auto object-contain"
+              className="h-20 w-auto object-contain"
             />
           </div>
 

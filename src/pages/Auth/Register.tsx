@@ -68,7 +68,7 @@ const Register = () => {
           <img 
             src={rigelFullLogo}
             alt="Rigel - Powered by Stella Lumen" 
-            className="h-28 w-auto mb-4 object-contain"
+            className="h-40 w-auto mb-4 object-contain"
           />
           <h2 className="text-2xl font-bold text-foreground">Create an account</h2>
           <p className="mt-2 text-sm text-muted-foreground text-justify max-w-sm mx-auto">

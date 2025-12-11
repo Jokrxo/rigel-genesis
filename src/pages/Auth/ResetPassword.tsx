@@ -85,7 +85,7 @@ const ResetPassword = () => {
           <img 
             src={rigelFullLogo}
             alt="Rigel - Powered by Stella Lumen" 
-            className="h-20 w-auto mx-auto mb-4 object-contain"
+            className="h-32 w-auto mx-auto mb-4 object-contain"
           />
           <CardTitle>Set New Password</CardTitle>
           <CardDescription>
