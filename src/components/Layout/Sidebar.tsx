@@ -202,36 +202,38 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
 
   const renderNavItem = (item: NavItem, depth: number = 0) => {
     const isActive = item.href === location.pathname;
-    const isExpanded = expandedItems.includes(item.title);
     const hasChildren = item.children && item.children.length > 0;
+    const isGroupActive = hasChildren ? item.children!.some(child => child.href === location.pathname) : false;
+    const isExpanded = expandedItems.includes(item.title) || isGroupActive;
 
     if (hasChildren) {
       return (
-        <Collapsible key={item.title} open={isExpanded} onOpenChange={() => toggleExpanded(item.title)}>
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
-                "hover:bg-primary/10 hover:text-primary",
-                "transition-all duration-200",
-                "rounded-lg",
-                depth > 0 && "ml-4"
-              )}
-            >
-              <item.icon className="h-5 w-5 shrink-0" />
-              <span className="truncate flex-1">{item.title}</span>
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 shrink-0 transition-transform" />
-              ) : (
-                <ChevronRight className="h-4 w-4 shrink-0 transition-transform" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1 ml-2 mt-1">
-            {item.children?.map(child => renderNavItem(child, depth + 1))}
-          </CollapsibleContent>
-        </Collapsible>
+          <Collapsible key={item.title} open={isExpanded} onOpenChange={() => toggleExpanded(item.title)}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
+                  "hover:bg-primary/10 hover:text-primary",
+                  "transition-all duration-200",
+                  "rounded-lg",
+                  depth > 0 && "ml-4",
+                  isGroupActive && "bg-primary/10 text-primary border border-primary/20"
+                )}
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+                <span className="truncate flex-1">{item.title}</span>
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0 transition-transform" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1 ml-2 mt-1">
+              {item.children?.map(child => renderNavItem(child, depth + 1))}
+            </CollapsibleContent>
+          </Collapsible>
       );
     }
 
@@ -249,7 +251,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
         )}
         asChild
       >
-        <Link to={item.href || "#"}>
+        <Link to={item.href || "#"} aria-current={isActive ? "page" : undefined}>
           <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
           <span className="truncate">{item.title}</span>
         </Link>

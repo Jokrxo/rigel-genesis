@@ -7,25 +7,32 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 export function ThemeSelector() {
-  const { theme, setTheme, themes } = useTheme();
+  const { theme, mode, setMode, setPalette, themes } = useTheme();
   const { toast } = useToast();
 
-  // Group themes by category
-  const themeGroups = Object.entries(themes).reduce((acc, [key, themeData]) => {
-    const category = themeData.category;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push([key as ThemeName, themeData]);
-    return acc;
-  }, {} as Record<string, Array<[ThemeName, typeof themes[ThemeName]]>>);
+  const basic: ThemeName[] = ['light', 'dark', 'system'];
+  const color: ThemeName[] = ['blue','green','purple','orange','red','pink','yellow','cyan','lime'];
+  const neutral: ThemeName[] = ['slate','zinc','neutral','stone'];
+  const nature: ThemeName[] = ['emerald','teal','sky'];
+  const vibrant: ThemeName[] = ['indigo','violet','fuchsia','rose','amber'];
+
+  const groups: Array<{ title: string; keys: ThemeName[] }> = [
+    { title: 'Basic', keys: basic },
+    { title: 'Colors', keys: color },
+    { title: 'Neutral', keys: neutral },
+    { title: 'Nature', keys: nature },
+    { title: 'Vibrant', keys: vibrant },
+  ];
 
   const handleThemeSelect = (themeName: ThemeName) => {
-    setTheme(themeName);
-    toast({
-      title: "Theme Changed",
-      description: `Switched to ${themes[themeName].name} theme`,
-    });
+    if (['light', 'dark', 'system'].includes(themeName)) {
+      setMode(themeName as any);
+      toast({ title: 'Mode Changed', description: `Switched to ${themes[themeName].name}` });
+    } else {
+      setPalette(themeName as any);
+      const variant = mode === 'dark' ? 'dark' : 'light';
+      toast({ title: 'Theme Changed', description: `Switched to ${themes[themeName].name} (${variant})` });
+    }
   };
 
   const isSelected = (themeName: ThemeName) => theme === themeName;
@@ -34,26 +41,21 @@ export function ThemeSelector() {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold mb-2">Choose Your Theme</h3>
-        <p className="text-sm text-muted-foreground">
-          Select from {Object.keys(themes).length} carefully crafted themes with optimized contrast for better readability.
-        </p>
+        <p className="text-sm text-muted-foreground">Trimmed, curated selection for clarity and consistency.</p>
       </div>
 
-      {Object.entries(themeGroups).map(([category, categoryThemes]) => (
-        <div key={category} className="space-y-3">
+      {groups.map(({ title, keys }) => (
+        <div key={title} className="space-y-3">
           <div className="flex items-center gap-2">
-            <h4 className="font-medium text-sm text-foreground">{category}</h4>
-            <Badge variant="secondary" className="text-xs">
-              {categoryThemes.length}
-            </Badge>
+            <h4 className="font-medium text-sm text-foreground">{title}</h4>
+            <Badge variant="secondary" className="text-xs">{keys.length}</Badge>
           </div>
-          
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-            {categoryThemes.map(([themeName, themeData]) => (
+            {keys.map((themeName) => (
               <ThemeCard
                 key={themeName}
                 themeName={themeName}
-                themeData={themeData}
+                themeData={themes[themeName]}
                 isSelected={isSelected(themeName)}
                 onSelect={handleThemeSelect}
               />

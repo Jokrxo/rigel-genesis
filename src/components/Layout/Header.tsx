@@ -51,7 +51,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
           <span className="font-semibold">Rigel</span>
         </div>
         
-        <form onSubmit={handleSearch} className="hidden md:block">
+        <form onSubmit={handleSearch} className="hidden md:block" role="search" aria-label="Site search">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -60,6 +60,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
               className="w-[200px] pl-8 md:w-[300px] lg:w-[400px]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search the site"
             />
           </div>
         </form>

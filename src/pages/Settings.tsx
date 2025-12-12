@@ -7,11 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings as SettingsIcon, Bell, Shield, Palette, Globe } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Shield, Palette, Globe, Sun, Moon, Monitor } from "lucide-react";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { ThemeSelector } from "@/components/ui/theme-selector";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useTheme } from "@/hooks/useTheme";
 
 const Settings = () => {
+  const { mode, setMode } = useTheme();
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -194,6 +197,20 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  <Label>Theme Mode</Label>
+                  <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v as any)}>
+                    <ToggleGroupItem value="light" aria-label="Light mode">
+                      <Sun className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="dark" aria-label="Dark mode">
+                      <Moon className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="system" aria-label="System mode">
+                      <Monitor className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
                 <ThemeSelector />
                 <div className="space-y-4 pt-6 border-t">
                   <div className="grid gap-2">

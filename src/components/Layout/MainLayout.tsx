@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Phone, MessageSquare, Mail } from "lucide-react";
 import { FloatingContactPanel } from "@/components/Shared/FloatingContactPanel";
+import { SkipToMain } from "@/components/Shared/SkipToMain";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="flex min-h-screen w-full bg-background flex-col">
+      <SkipToMain />
       {/* Main background pattern with professional gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-background to-muted/30 pointer-events-none z-0" />
       
@@ -35,7 +37,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           )}
         >
           <Header toggleSidebar={toggleSidebar} />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 xl:p-10 overflow-x-auto">
+          <main id="main-content" role="main" tabIndex={-1} className="flex-1 p-4 md:p-6 lg:p-8 xl:p-10 overflow-x-auto focus:outline-none">
             {/* Professional header section - Only show on mobile */}
             <div className="flex justify-center mb-6 md:hidden">
               <img
