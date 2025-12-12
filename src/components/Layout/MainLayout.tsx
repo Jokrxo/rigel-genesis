@@ -21,7 +21,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex min-h-screen w-full bg-background flex-col">
       {/* Main background pattern with professional gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-50/10 to-blue-100/15 pointer-events-none z-0"></div>
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-background to-muted/30 pointer-events-none z-0" />
       
       {/* Floating contact panel */}
       <FloatingContactPanel />
@@ -53,8 +53,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <div className="max-w-full mx-auto space-y-6 md:space-y-8 pb-20">
               {/* Enhanced spacing and typography */}
               <div className="relative">
-                <div className="absolute inset-0 opacity-3 bg-gradient-to-br from-blue-50 to-blue-100 pointer-events-none rounded-lg"></div>
-                <div className="relative z-10 p-1">
+                <div className="absolute inset-0 opacity-5 bg-gradient-to-br from-primary to-primary/50 pointer-events-none rounded-xl" />
+                <div className="relative z-10">
                   {children}
                 </div>
               </div>

@@ -212,22 +212,23 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start gap-2 px-3 py-2.5 text-left font-normal",
+                "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
                 "hover:bg-primary/10 hover:text-primary",
-                "transition-colors duration-200",
+                "transition-all duration-200",
+                "rounded-lg",
                 depth > 0 && "ml-4"
               )}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
+              <item.icon className="h-5 w-5 shrink-0" />
               <span className="truncate flex-1">{item.title}</span>
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 shrink-0" />
+                <ChevronDown className="h-4 w-4 shrink-0 transition-transform" />
               ) : (
-                <ChevronRight className="h-4 w-4 shrink-0" />
+                <ChevronRight className="h-4 w-4 shrink-0 transition-transform" />
               )}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1 ml-2">
+          <CollapsibleContent className="space-y-1 ml-2 mt-1">
             {item.children?.map(child => renderNavItem(child, depth + 1))}
           </CollapsibleContent>
         </Collapsible>
@@ -239,16 +240,17 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
         key={item.title}
         variant="ghost"
         className={cn(
-          "w-full justify-start gap-2 px-3 py-2.5 text-left font-normal",
+          "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
           "hover:bg-primary/10 hover:text-primary",
-          "transition-colors duration-200",
-          isActive && "bg-primary/15 text-primary font-medium",
+          "transition-all duration-200",
+          "rounded-lg",
+          isActive && "bg-primary/15 text-primary font-semibold shadow-sm border border-primary/20",
           depth > 0 && "ml-4"
         )}
         asChild
       >
         <Link to={item.href || "#"}>
-          <item.icon className="h-4 w-4 shrink-0" />
+          <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
           <span className="truncate">{item.title}</span>
         </Link>
       </Button>
