@@ -12,6 +12,7 @@ import { Chatbot } from "@/components/Shared/Chatbot";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTheme } from "@/hooks/useTheme";
+import globe from "@/assets/globe.jpg";
 
 const Settings = () => {
   const { mode, setMode } = useTheme();
@@ -197,9 +198,15 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <div className="relative w-full h-32">
+                    <img src={globe} alt="Globe" className="absolute inset-0 w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/40 via-primary/50 to-accent/40 mix-blend-color dark:mix-blend-multiply dark:from-primary/70 dark:via-primary/75 dark:to-accent/70 transition-colors" />
+                  </div>
+                </div>
                 <div className="space-y-3">
                   <Label>Theme Mode</Label>
-                  <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v as any)}>
+                  <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v as 'light' | 'dark' | 'system')}>
                     <ToggleGroupItem value="light" aria-label="Light mode">
                       <Sun className="h-4 w-4" />
                     </ToggleGroupItem>

@@ -50,37 +50,37 @@
 
   .dark {
     --background: 200 30% 8%;
-    --foreground: 0 0% 96%;
+    --foreground: 0 0% 100%;
     --card: 200 25% 10%;
-    --card-foreground: 0 0% 96%;
+    --card-foreground: 0 0% 100%;
     --popover: 200 30% 8%;
-    --popover-foreground: 0 0% 96%;
+    --popover-foreground: 0 0% 100%;
     --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
     --secondary: 160 30% 18%;
-    --secondary-foreground: 0 0% 96%;
+    --secondary-foreground: 0 0% 100%;
     --muted: 200 20% 18%;
-    --muted-foreground: 0 0% 64%;
+    --muted-foreground: 0 0% 100%;
     --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 0 0% 100%;
     --border: 200 20% 22%;
     --input: 200 20% 22%;
     --ring: 160 84% 39%;
     --sidebar-background: 200 25% 10%;
-    --sidebar-foreground: 0 0% 96%;
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 160 84% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 200 20% 16%;
-    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-accent: 200 20% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 200 20% 18%;
     --sidebar-ring: 160 84% 39%;
     --radius: 0.5rem;
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
     --warning: 45 100% 50%;
-    --warning-foreground: 0 0% 0%;
+    --warning-foreground: 0 0% 100%;
     --info: 204 86% 53%;
     --info-foreground: 0 0% 100%;
     --error: 350 80% 50%;
@@ -90,6 +90,22 @@
     --financial-600: 160 84% 39%;
     --financial-700: 160 84% 25%;
     --financial-950: 160 84% 10%;
+  }
+
+  html.dark[class*="theme-"] {
+    --foreground: 0 0% 100%;
+    --card-foreground: 0 0% 100%;
+    --popover-foreground: 0 0% 100%;
+    --secondary-foreground: 0 0% 100%;
+    --muted-foreground: 0 0% 100%;
+    --accent-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 100%;
+    --warning-foreground: 0 0% 100%;
+    --info-foreground: 0 0% 100%;
+    --error-foreground: 0 0% 100%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --primary-foreground: 0 0% 100%;
   }
 
   /* Color Themes - using html.theme-* for higher specificity */
@@ -401,6 +417,12 @@
     --border: 152 50% 85%;
     --input: 152 50% 85%;
     --ring: 160 84% 39%;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   html.theme-teal {
@@ -1110,6 +1132,27 @@
     }
   }
 
+  /* Final dark theme override to enforce pure white text across palettes */
+  html.dark[class*="theme-"] {
+    --foreground: 0 0% 100%;
+    --card-foreground: 0 0% 100%;
+    --popover-foreground: 0 0% 100%;
+    --secondary-foreground: 0 0% 100%;
+    --muted-foreground: 0 0% 100%;
+    --accent-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 100%;
+    --warning-foreground: 0 0% 100%;
+    --info-foreground: 0 0% 100%;
+    --error-foreground: 0 0% 100%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --primary-foreground: 0 0% 100%;
+  }
+
+  /* Force all text to use foreground in dark mode */
+  html.dark, html.dark * {
+    color: hsl(var(--foreground)) !important;
+  }
 }
 
 @layer components {
