@@ -12,8 +12,9 @@ import { AssetDisposalWizard } from "@/components/Assets/AssetDisposalWizard";
 import { AssetFormDialog, AssetFormData, Asset } from "@/components/Assets/AssetFormDialog";
 import { ViewAssetDialog } from "@/components/Assets/ViewAssetDialog";
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const STORAGE_KEY = 'rigel_assets';
 
 const AssetManagement = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -21,7 +22,6 @@ const AssetManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  // Dialog states
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
   
@@ -33,9 +33,6 @@ const AssetManagement = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingAsset, setDeletingAsset] = useState<Asset | null>(null);
 
-  // Disposal Wizard state (keeping for advanced disposal if needed, or replace with delete)
-  // For now, I'll use the standard DeleteConfirmationDialog for the "Delete" action as requested.
-  // The Disposal Wizard can be a separate action if needed, but for "Quick Actions" consistent pattern, Delete is key.
   const [disposalAssetId, setDisposalAssetId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,13 +41,10 @@ const AssetManagement = () => {
 
   const fetchAssets = async () => {
     try {
-      const { data, error } = await supabase
-        .from('assets')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAssets(data || []);
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setAssets(JSON.parse(stored));
+      }
     } catch (error) {
       console.error('Error fetching assets:', error);
       toast({
@@ -61,6 +55,11 @@ const AssetManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveAssets = (newAssets: Asset[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newAssets));
+    setAssets(newAssets);
   };
 
   const handleViewAsset = (asset: Asset) => {
@@ -80,17 +79,26 @@ const AssetManagement = () => {
 
   const handleCreateAsset = async (data: AssetFormData) => {
     try {
-      const { error } = await supabase
-        .from('assets')
-        .insert([data]);
+      const newAsset: Asset = {
+        id: crypto.randomUUID(),
+        name: data.name || '',
+        category: data.category || '',
+        purchase_date: data.purchase_date || new Date().toISOString().split('T')[0],
+        purchase_price: data.purchase_price || 0,
+        current_value: data.current_value || 0,
+        depreciation_rate: data.depreciation_rate || 0,
+        useful_life: data.useful_life || 0,
+        location: data.location || '',
+        created_at: new Date().toISOString(),
+      };
 
-      if (error) throw error;
+      const newAssets = [newAsset, ...assets];
+      saveAssets(newAssets);
 
       toast({
         title: "Success",
         description: "Asset created successfully",
       });
-      fetchAssets();
       setIsCreateOpen(false);
     } catch (error) {
       console.error('Error creating asset:', error);
@@ -106,18 +114,25 @@ const AssetManagement = () => {
     if (!editingAsset) return;
 
     try {
-      const { error } = await supabase
-        .from('assets')
-        .update(data)
-        .eq('id', editingAsset.id);
-
-      if (error) throw error;
+      const updatedAssets = assets.map(a => 
+        a.id === editingAsset.id ? { 
+          ...a, 
+          name: data.name || a.name,
+          category: data.category || a.category,
+          purchase_date: data.purchase_date || a.purchase_date,
+          purchase_price: data.purchase_price ?? a.purchase_price,
+          current_value: data.current_value ?? a.current_value,
+          depreciation_rate: data.depreciation_rate ?? a.depreciation_rate,
+          useful_life: data.useful_life ?? a.useful_life,
+          location: data.location || a.location,
+        } : a
+      );
+      saveAssets(updatedAssets);
 
       toast({
         title: "Success",
         description: "Asset updated successfully",
       });
-      fetchAssets();
       setIsEditOpen(false);
       setEditingAsset(null);
     } catch (error) {
@@ -134,18 +149,13 @@ const AssetManagement = () => {
     if (!deletingAsset) return;
 
     try {
-      const { error } = await supabase
-        .from('assets')
-        .delete()
-        .eq('id', deletingAsset.id);
-
-      if (error) throw error;
+      const filteredAssets = assets.filter(a => a.id !== deletingAsset.id);
+      saveAssets(filteredAssets);
 
       toast({
         title: "Success",
         description: "Asset deleted successfully",
       });
-      fetchAssets();
       setIsDeleteOpen(false);
       setDeletingAsset(null);
     } catch (error) {
@@ -164,10 +174,8 @@ const AssetManagement = () => {
     asset.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate Summary Metrics
   const totalAssetsValue = assets.reduce((sum, asset) => sum + (asset.purchase_price || 0), 0);
   const currentTotalValue = assets.reduce((sum, asset) => sum + (asset.current_value || 0), 0);
-  // Annual depreciation approximation: Purchase Price * Rate / 100
   const annualDepreciation = assets.reduce((sum, asset) => sum + ((asset.purchase_price || 0) * (asset.depreciation_rate || 0) / 100), 0);
   const uniqueCategories = new Set(assets.map(a => a.category)).size;
 
@@ -199,7 +207,6 @@ const AssetManagement = () => {
           </div>
         </div>
 
-        {/* Asset Summary Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -208,9 +215,7 @@ const AssetManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalAssetsValue)}</div>
-              <p className="text-xs text-muted-foreground">
-                Historical cost
-              </p>
+              <p className="text-xs text-muted-foreground">Historical cost</p>
             </CardContent>
           </Card>
           <Card>
@@ -220,9 +225,7 @@ const AssetManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(currentTotalValue)}</div>
-              <p className="text-xs text-muted-foreground">
-                Net book value
-              </p>
+              <p className="text-xs text-muted-foreground">Net book value</p>
             </CardContent>
           </Card>
           <Card>
@@ -232,9 +235,7 @@ const AssetManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(annualDepreciation)}</div>
-              <p className="text-xs text-muted-foreground">
-                Estimated per year
-              </p>
+              <p className="text-xs text-muted-foreground">Estimated per year</p>
             </CardContent>
           </Card>
           <Card>
@@ -244,9 +245,7 @@ const AssetManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{uniqueCategories}</div>
-              <p className="text-xs text-muted-foreground">
-                Active categories
-              </p>
+              <p className="text-xs text-muted-foreground">Active categories</p>
             </CardContent>
           </Card>
         </div>
@@ -269,9 +268,7 @@ const AssetManagement = () => {
               <Building className="h-5 w-5" />
               Assets ({filteredAssets.length})
             </CardTitle>
-            <CardDescription>
-              Track asset values, depreciation, and performance
-            </CardDescription>
+            <CardDescription>Track asset values, depreciation, and performance</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -291,23 +288,17 @@ const AssetManagement = () => {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        Loading assets...
-                      </TableCell>
+                      <TableCell colSpan={8} className="text-center py-8">Loading assets...</TableCell>
                     </TableRow>
                   ) : filteredAssets.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        No assets found
-                      </TableCell>
+                      <TableCell colSpan={8} className="text-center py-8">No assets found</TableCell>
                     </TableRow>
                   ) : (
                     filteredAssets.map((asset) => (
                       <TableRow key={asset.id}>
                         <TableCell className="font-medium">{asset.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{asset.category || '-'}</Badge>
-                        </TableCell>
+                        <TableCell><Badge variant="outline">{asset.category || '-'}</Badge></TableCell>
                         <TableCell>{new Date(asset.purchase_date).toLocaleDateString()}</TableCell>
                         <TableCell>R{asset.purchase_price.toFixed(2)}</TableCell>
                         <TableCell>R{asset.current_value.toFixed(2)}</TableCell>
@@ -315,25 +306,13 @@ const AssetManagement = () => {
                         <TableCell>{asset.location || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleViewAsset(asset)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => handleViewAsset(asset)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleEditAsset(asset)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => handleEditAsset(asset)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleDeleteAsset(asset)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteAsset(asset)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

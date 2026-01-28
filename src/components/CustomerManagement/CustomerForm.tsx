@@ -148,7 +148,20 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
         const { error } = await supabase
           .from('customers')
           .insert([{
-            ...data,
+            name: data.name,
+            email: data.email || null,
+            phone: data.phone || null,
+            company: data.company || null,
+            vat_number: data.vat_number || null,
+            address_line1: data.address_line1 || null,
+            address_line2: data.address_line2 || null,
+            city: data.city || null,
+            province: data.province || null,
+            postal_code: data.postal_code || null,
+            country: data.country || "South Africa",
+            payment_terms: data.payment_terms,
+            credit_limit: data.credit_limit,
+            notes: data.notes || null,
             user_id: user.id,
           }]);
 

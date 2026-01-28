@@ -15,7 +15,7 @@ export interface DeferredTaxProject {
   tax_year: number;
   reporting_currency: string;
   multi_entity: boolean;
-  status: 'draft' | 'final' | 'archived';
+  status: 'draft' | 'active' | 'archived';
   created_at: string;
   updated_at: string;
   country?: Country;

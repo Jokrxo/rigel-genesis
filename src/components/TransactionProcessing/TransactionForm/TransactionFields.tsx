@@ -116,7 +116,7 @@ export function TransactionFields({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Transaction Type</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value} disabled={lockedTransactionTypes}>
+            <Select onValueChange={field.onChange} value={field.value} disabled={lockedTransactionTypes.length > 0}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />

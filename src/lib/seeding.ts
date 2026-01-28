@@ -1,5 +1,4 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { ownershipTemplates } from './coa-data';
 
 export type OwnershipForm = 'sole' | 'partnership' | 'llc' | 'corp' | 'pty_ltd' | 'soe' | 'other';
@@ -10,27 +9,25 @@ export async function seedEntity(
   ownership: OwnershipForm,
   inventorySystem: 'periodic' | 'perpetual' = 'periodic'
 ) {
-  // 1. Create Entity
-  const { data: entity, error: entityError } = await supabase
-    .from('entities')
-    .insert({
-      name,
-      address,
-      ownership,
-      inventory_system: inventorySystem
-    })
-    .select()
-    .single();
+  // Create entity in localStorage since DB table doesn't exist
+  const entityId = crypto.randomUUID();
+  const entity = {
+    id: entityId,
+    name,
+    address,
+    ownership,
+    inventory_system: inventorySystem,
+    created_at: new Date().toISOString(),
+  };
 
-  if (entityError) throw new Error(`Failed to create entity: ${entityError.message}`);
-  if (!entity) throw new Error('Entity creation failed');
+  // Store entity
+  localStorage.setItem(`rigel_entity_${entityId}`, JSON.stringify(entity));
 
-  // 2. Seed Chart of Accounts
+  // Prepare chart of accounts template
   const template = ownershipTemplates[ownership] || ownershipTemplates.other;
   
-  // Map accounts to DB columns (snake_case assumed for Supabase)
   const accountsToInsert = template.accounts.map(account => ({
-    entity_id: entity.id,
+    entity_id: entityId,
     code: account.code,
     name: account.name,
     type: account.type,
@@ -38,11 +35,9 @@ export async function seedEntity(
     is_active: true
   }));
 
-  // Adjust for Inventory System
   if (inventorySystem === 'periodic') {
-     // For Periodic, we often track Purchases separately
      accountsToInsert.push({
-        entity_id: entity.id,
+        entity_id: entityId,
         code: '5002',
         name: 'Purchases',
         type: 'EXPENSE',
@@ -51,16 +46,9 @@ export async function seedEntity(
      });
   }
 
-  const { error: coaError } = await supabase
-    .from('chart_of_accounts')
-    .insert(accountsToInsert);
-
-  if (coaError) {
-    console.error('COA Seed Error:', coaError);
-    // We don't throw here to allow partial success, but ideally should transaction.
-    // Since Supabase REST doesn't support multi-table transaction easily without RPC,
-    // we proceed.
-  }
+  // Store chart of accounts in localStorage
+  localStorage.setItem(`rigel_coa_${entityId}`, JSON.stringify(accountsToInsert));
+  console.log('Chart of accounts template prepared:', accountsToInsert.length, 'accounts');
 
   return { entity, accounts: accountsToInsert };
 }

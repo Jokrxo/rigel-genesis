@@ -83,8 +83,8 @@ export const BasicInfoSection = ({ profile, handleChange }: BasicInfoSectionProp
           <div className="space-y-2">
             <Label htmlFor="ownership">Form of Ownership</Label>
             <Select
-              value={profile.ownership}
-              onValueChange={(value) => handleChange({ target: { name: 'ownership', value } })}
+              value={profile.ownership || ""}
+              onValueChange={(value) => handleChange({ target: { name: 'ownership', value } } as React.ChangeEvent<HTMLInputElement>)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select ownership" />
@@ -103,8 +103,8 @@ export const BasicInfoSection = ({ profile, handleChange }: BasicInfoSectionProp
           <div className="space-y-2">
             <Label htmlFor="inventorySystem">Inventory System</Label>
             <Select
-              value={profile.inventorySystem}
-              onValueChange={(value) => handleChange({ target: { name: 'inventorySystem', value } })}
+              value={profile.inventorySystem || ""}
+              onValueChange={(value) => handleChange({ target: { name: 'inventorySystem', value } } as React.ChangeEvent<HTMLInputElement>)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select system" />

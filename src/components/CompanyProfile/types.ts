@@ -3,6 +3,8 @@ export interface CompanyProfile {
   registrationNumber: string;
   vatNumber: string;
   foundedDate: string;
+  ownership?: string;
+  inventorySystem?: string;
   address: {
     street: string;
     city: string;
