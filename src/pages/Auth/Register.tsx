@@ -114,6 +114,7 @@ const Register = () => {
             <span>Continue with Facebook</span>
           </Button>
         </div>
+        </div>
 
         <div className="my-5 flex items-center">
           <Separator className="flex-1" />

@@ -39,7 +39,7 @@ export async function sendWelcomeEmail({
       return { success: false, error: error.message };
     }
 
-    console.log('Welcome email sent:', data);
+    // console.log('Welcome email sent:', data);
     return { success: true };
   } catch (error: any) {
     console.error('Exception sending welcome email:', error);
@@ -71,7 +71,7 @@ export async function sendVerificationEmail({
       return { success: false, error: error.message };
     }
 
-    console.log('Verification email sent:', data);
+    // console.log('Verification email sent:', data);
     return {
       success: true,
       code: data?.verificationCode,

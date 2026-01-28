@@ -78,7 +78,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           .single();
           
         if (error) {
-          console.log('Profile not found, will create on theme change');
+          // console.log('Profile not found, will create on theme change');
           const localTheme = (localStorage.getItem('financial-theme') as ThemeName) || 'system';
           const localMode = (localStorage.getItem('financial-mode') as ThemeMode) || (localTheme === 'dark' ? 'dark' : 'system');
           const localPalette = (localStorage.getItem('financial-palette') as ThemePalette | null) || (['light','dark','system'].includes(localTheme) ? null : (localTheme as ThemePalette));

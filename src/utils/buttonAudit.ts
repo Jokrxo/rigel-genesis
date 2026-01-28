@@ -122,6 +122,7 @@ export const generateAuditReport = () => {
     ]
   };
   
+  /*
   console.group('🔍 Button & Navigation Audit Report');
   console.log('Generated at:', report.timestamp);
   console.log('Button Status:', `${report.buttonAudit.working}/${report.buttonAudit.total} working`);
@@ -147,6 +148,7 @@ export const generateAuditReport = () => {
   report.recommendations.forEach(rec => console.log(`• ${rec}`));
   console.groupEnd();
   console.groupEnd();
+  */
   
   return report;
 };

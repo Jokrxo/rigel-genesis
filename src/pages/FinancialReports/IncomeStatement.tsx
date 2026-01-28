@@ -113,22 +113,4 @@ const IncomeStatement = () => {
   );
 };
 
-export default IncomeStatement;                  <TableCell className="text-right">{formatCurrency(profitBeforeTax)}</TableCell>
-                </TableRow>
-
-                {renderRow("Income tax expense", data.incomeTax)}
-                
-                <TableRow className="bg-primary/10 text-lg font-bold">
-                  <TableCell>Profit for the year</TableCell>
-                  <TableCell className="text-right">{formatCurrency(profitForYear)}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-    </MainLayout>
-  );
-};
-
 export default IncomeStatement;

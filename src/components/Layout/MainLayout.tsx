@@ -67,10 +67,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 alt="Financial data visualization"
                 className="h-12 w-auto object-cover rounded-lg shadow-lg border border-blue-200 sm:h-16"
                 onError={(e) => {
-                  console.log("Header image failed to load");
+                  // console.log("Header image failed to load");
                   e.currentTarget.src = "/placeholder.svg";
                 }}
-                onLoad={() => console.log("Header image loaded successfully")}
+                onLoad={() => {
+                  // console.log("Header image loaded successfully")
+                }}
               />
             </div>
             
