@@ -50,6 +50,16 @@ import TaxDashboard from "./pages/TaxDashboard";
 import TrialBalance from "./pages/TrialBalance";
 import AccountingCycle from "./pages/AccountingCycle";
 
+import BalanceSheet from "./pages/FinancialReports/BalanceSheet";
+import IncomeStatement from "./pages/FinancialReports/IncomeStatement";
+import CashFlowStatement from "./pages/FinancialReports/CashFlowStatement";
+import EquityStatement from "./pages/FinancialReports/EquityStatement";
+import Notes from "./pages/FinancialReports/Notes";
+import GeneralLedger from "./pages/GeneralLedger/GeneralLedger";
+import LedgerPosting from "./pages/GeneralLedger/LedgerPosting";
+import MonthlyReports from "./pages/MonthlyReports";
+import JournalEntries from "./pages/JournalEntries";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -113,6 +123,15 @@ const App = () => (
                   <Route path="/tax-dashboard" element={<ProtectedRoute><TaxDashboard /></ProtectedRoute>} />
                   <Route path="/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
                   <Route path="/accounting-cycle" element={<ProtectedRoute><AccountingCycle /></ProtectedRoute>} />
+                  <Route path="/reports/balance-sheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
+                  <Route path="/reports/income-statement" element={<ProtectedRoute><IncomeStatement /></ProtectedRoute>} />
+                  <Route path="/reports/cash-flow" element={<ProtectedRoute><CashFlowStatement /></ProtectedRoute>} />
+                  <Route path="/reports/equity" element={<ProtectedRoute><EquityStatement /></ProtectedRoute>} />
+                  <Route path="/reports/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
+                  <Route path="/general-ledger" element={<ProtectedRoute><GeneralLedger /></ProtectedRoute>} />
+                  <Route path="/general-ledger/posting" element={<ProtectedRoute><LedgerPosting /></ProtectedRoute>} />
+                  <Route path="/monthly-reports" element={<ProtectedRoute><MonthlyReports /></ProtectedRoute>} />
+                  <Route path="/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
                   
                   {/* 404 route */}
                   <Route path="*" element={<NotFound />} />

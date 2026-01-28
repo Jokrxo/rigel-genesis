@@ -26,6 +26,10 @@ import {
   PiggyBank,
   ChevronDown,
   ChevronRight,
+  Calendar,
+  BookOpen,
+  Sparkles,
+  DollarSign,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
@@ -43,110 +47,201 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Sign-Up Wizard",
-    href: "/signup-wizard",
-    icon: FolderOpen,
-  },
-  {
-    title: "Import Statement",
-    href: "/import-statement",
-    icon: Upload,
-  },
-  {
-    title: "Transaction Processing",
-    href: "/transaction-processing",
-    icon: CreditCard,
-  },
-  {
-    title: "Master Records",
-    icon: FolderOpen,
+    title: "Settings",
+    icon: Settings,
     children: [
       {
-        title: "Company Profile",
-        href: "/company-profile",
-        icon: Building2,
+        title: "Profile",
+        icon: User,
+        children: [
+          {
+            title: "Sign-Up Wizard",
+            href: "/signup-wizard",
+            icon: FolderOpen,
+          },
+          {
+            title: "Import Statement",
+            href: "/import-statement",
+            icon: Upload,
+          },
+          {
+            title: "Company Profile",
+            href: "/company-profile",
+            icon: Building2,
+          },
+        ],
       },
       {
-        title: "Customer Management",
-        href: "/customers",
-        icon: Users,
+        title: "QR Code",
+        href: "/qr-code",
+        icon: QrCode,
       },
       {
-        title: "Supplier Management",
-        href: "/suppliers",
-        icon: Truck,
-      },
-      {
-        title: "Project Management",
-        href: "/projects",
-        icon: Target,
-      },
-      {
-        title: "Bank Balance Movements",
-        href: "/bank-movements",
-        icon: TrendingUp,
+        title: "Help",
+        href: "/help",
+        icon: HelpCircle,
       },
     ],
   },
   {
-    title: "Document Management",
-    href: "/documents",
-    icon: FileText,
-  },
-  {
-    title: "Inventory Management",
-    href: "/inventory",
-    icon: Package,
-  },
-  {
-    title: "Director Transactions",
-    href: "/director-transactions",
-    icon: UserCheck,
-  },
-  {
-    title: "Loan Management",
-    href: "/loan-management",
-    icon: CreditCard,
-  },
-  {
-    title: "Employee Management",
-    href: "/employee-management",
-    icon: Briefcase,
-  },
-  {
-    title: "Payroll Management",
-    href: "/payroll-management",
-    icon: Calculator,
-  },
-  {
-    title: "Asset Management",
-    href: "/asset-management",
-    icon: Building2,
-  },
-  {
-    title: "Investments",
-    href: "/investments",
-    icon: PiggyBank,
-  },
-  {
-    title: "Reports",
-    href: "/reports",
+    title: "Financial Reports",
     icon: BarChart3,
+    children: [
+      {
+        title: "Financial Dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        children: [
+          {
+            title: "Bank Balance Movement",
+            href: "/bank-movements",
+            icon: TrendingUp,
+          },
+          {
+            title: "Tax Dashboard",
+            href: "/tax-dashboard",
+            icon: Calculator,
+          },
+          {
+            title: "Financial Analysis",
+            href: "/financial-analysis",
+            icon: TrendingUp,
+          },
+        ],
+      },
+      {
+        title: "Balance Sheet",
+        href: "/reports/balance-sheet",
+        icon: FileText,
+      },
+      {
+        title: "Income Statement",
+        href: "/reports/income-statement",
+        icon: FileText,
+      },
+      {
+        title: "Cash Flow Statement",
+        href: "/reports/cash-flow",
+        icon: FileText,
+      },
+      {
+        title: "Statement of Changes in Equity",
+        href: "/reports/equity",
+        icon: FileText,
+      },
+      {
+        title: "Notes to the Financial Statements",
+        href: "/reports/notes",
+        icon: FileText,
+      },
+      {
+        title: "Trial Balance",
+        href: "/trial-balance",
+        icon: BarChart3,
+      },
+      {
+        title: "General Ledger",
+        href: "/general-ledger",
+        icon: BookOpen,
+        children: [
+          {
+            title: "Ledger Posting",
+            href: "/general-ledger/posting",
+            icon: FileText,
+          },
+        ],
+      },
+      {
+        title: "Tax Management",
+        icon: Calculator,
+        children: [
+          {
+            title: "Tax Calculators",
+            href: "/tax-calculators",
+            icon: Calculator,
+          },
+        ],
+      },
+      {
+        title: "Transaction Processing",
+        href: "/transaction-processing",
+        icon: CreditCard,
+        children: [
+          {
+            title: "Supplier Management",
+            href: "/suppliers",
+            icon: Truck,
+          },
+          {
+            title: "Revenue",
+            icon: PiggyBank,
+            children: [
+              {
+                title: "Customer Management",
+                href: "/customers",
+                icon: Users,
+              },
+              {
+                title: "Document Management",
+                href: "/documents",
+                icon: FileText,
+              },
+            ],
+          },
+          {
+            title: "Asset Management",
+            href: "/asset-management",
+            icon: Building2,
+          },
+          {
+            title: "Loan Management",
+            href: "/loan-management",
+            icon: CreditCard,
+          },
+          {
+            title: "Investments",
+            href: "/investments",
+            icon: PiggyBank,
+          },
+          {
+            title: "Payroll",
+            icon: Briefcase,
+            children: [
+              {
+                title: "Employee Management",
+                href: "/employee-management",
+                icon: Briefcase,
+              },
+              {
+                title: "Payroll Management",
+                href: "/payroll-management",
+                icon: Calculator,
+              },
+            ],
+          },
+          {
+            title: "Director’s Transactions",
+            href: "/director-transactions",
+            icon: UserCheck,
+          },
+          {
+            title: "Inventory Management",
+            href: "/inventory",
+            icon: Package,
+          },
+          {
+            title: "Project Management",
+            href: "/projects",
+            icon: Target,
+          },
+        ],
+      },
+    ],
   },
   {
-    title: "Tax Calculators",
-    href: "/tax-calculators",
-    icon: Calculator,
-  },
-  {
-    title: "Financial Analysis",
-    href: "/financial-analysis",
-    icon: TrendingUp,
+    title: "Monthly Reports",
+    href: "/monthly-reports",
+    icon: Calendar,
   },
   {
     title: "Trial Balance",
@@ -154,37 +249,24 @@ const navItems: NavItem[] = [
     icon: BarChart3,
   },
   {
-    title: "Tax Dashboard",
-    href: "/tax-dashboard",
-    icon: Calculator,
+    title: "Pricing",
+    href: "/pricing",
+    icon: DollarSign,
+  },
+  {
+    title: "AI Features",
+    href: "/ai-features",
+    icon: Sparkles,
   },
   {
     title: "Accounting Cycle",
     href: "/accounting-cycle",
     icon: FolderOpen,
   },
-];
-
-const bottomNavItems: NavItem[] = [
   {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
-  {
-    title: "Profile",
-    href: "/profile",
-    icon: User,
-  },
-  {
-    title: "QR Code",
-    href: "/qr-code",
-    icon: QrCode,
-  },
-  {
-    title: "Help",
-    href: "/help",
-    icon: HelpCircle,
+    title: "Journal Entries",
+    href: "/journal-entries",
+    icon: BookOpen,
   },
 ];
 
@@ -200,10 +282,16 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
     );
   };
 
+  const checkIsActive = (items: NavItem[]): boolean => {
+    return items.some(child => 
+      child.href === location.pathname || (child.children && checkIsActive(child.children))
+    );
+  };
+
   const renderNavItem = (item: NavItem, depth: number = 0) => {
     const isActive = item.href === location.pathname;
     const hasChildren = item.children && item.children.length > 0;
-    const isGroupActive = hasChildren ? item.children!.some(child => child.href === location.pathname) : false;
+    const isGroupActive = hasChildren ? checkIsActive(item.children!) : false;
     const isExpanded = expandedItems.includes(item.title) || isGroupActive;
 
     if (hasChildren) {
@@ -283,13 +371,6 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
               {navItems.map(item => renderNavItem(item))}
             </div>
           </ScrollArea>
-
-          {/* Bottom Navigation */}
-          <div className="p-3 bg-gradient-to-t from-primary/5 to-transparent">
-            <div className="space-y-1">
-              {bottomNavItems.map(item => renderNavItem(item))}
-            </div>
-          </div>
         </div>
       </div>
     </>
