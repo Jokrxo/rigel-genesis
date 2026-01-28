@@ -69,13 +69,11 @@ const LoanManagement = () => {
   const fetchLoans = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('loans')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setLoans(data || []);
+      // Use localStorage since loans table doesn't exist in DB
+      const stored = localStorage.getItem('rigel_loans');
+      if (stored) {
+        setLoans(JSON.parse(stored));
+      }
     } catch (error) {
       console.error('Error fetching loans:', error);
       toast({
@@ -86,6 +84,11 @@ const LoanManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveLoans = (newLoans: Loan[]) => {
+    localStorage.setItem('rigel_loans', JSON.stringify(newLoans));
+    setLoans(newLoans);
   };
 
   const calculateMonthlyPayment = (principal: number, rate: number, months: number) => {
@@ -133,45 +136,42 @@ const LoanManagement = () => {
     
     try {
       if (selectedLoan) {
-        // Update existing loan
-        const { error } = await supabase
-          .from('loans')
-          .update({
-            borrower_name: loanForm.borrower_name,
-            lender: loanForm.lender,
-            principal_amount: principal,
-            interest_rate: rate,
-            term_months: months,
-            start_date: loanForm.start_date,
-            monthly_payment: monthlyPayment,
-          })
-          .eq('id', selectedLoan.id);
-
-        if (error) throw error;
+        // Update existing loan in localStorage
+        const updatedLoans = loans.map(l => 
+          l.id === selectedLoan.id 
+            ? {
+                ...l,
+                borrower_name: loanForm.borrower_name,
+                lender: loanForm.lender,
+                principal_amount: principal,
+                interest_rate: rate,
+                term_months: months,
+                start_date: loanForm.start_date,
+                monthly_payment: monthlyPayment,
+              }
+            : l
+        );
+        saveLoans(updatedLoans);
         toast({ title: "Success", description: "Loan updated successfully" });
       } else {
-        // Create new loan
-        const { error } = await supabase
-          .from('loans')
-          .insert({
-            user_id: user.id,
-            loan_number: `LOAN-${Date.now().toString().slice(-6)}`,
-            borrower_name: loanForm.borrower_name,
-            lender: loanForm.lender,
-            principal_amount: principal,
-            interest_rate: rate,
-            term_months: months,
-            start_date: loanForm.start_date,
-            monthly_payment: monthlyPayment,
-            status: "active",
-            remaining_balance: principal,
-          });
-
-        if (error) throw error;
+        // Create new loan in localStorage
+        const newLoan: Loan = {
+          id: crypto.randomUUID(),
+          loan_number: `LOAN-${Date.now().toString().slice(-6)}`,
+          borrower_name: loanForm.borrower_name,
+          lender: loanForm.lender,
+          principal_amount: principal,
+          interest_rate: rate,
+          term_months: months,
+          start_date: loanForm.start_date,
+          monthly_payment: monthlyPayment,
+          status: "active",
+          remaining_balance: principal,
+        };
+        saveLoans([newLoan, ...loans]);
         toast({ title: "Success", description: "Loan added successfully" });
       }
       
-      fetchLoans();
       setLoanForm({
         borrower_name: "",
         lender: "",
@@ -214,15 +214,10 @@ const LoanManagement = () => {
   const confirmDelete = async () => {
     if (loanToDelete) {
       try {
-        const { error } = await supabase
-          .from('loans')
-          .delete()
-          .eq('id', loanToDelete.id);
-
-        if (error) throw error;
+        const filteredLoans = loans.filter(l => l.id !== loanToDelete.id);
+        saveLoans(filteredLoans);
         
         toast({ title: "Success", description: "Loan deleted successfully" });
-        fetchLoans();
         
         if (selectedLoan?.id === loanToDelete.id) {
           setSelectedLoan(null);
@@ -543,7 +538,7 @@ const LoanManagement = () => {
         </Tabs>
 
         <DeleteConfirmationDialog 
-          isOpen={isDeleteDialogOpen}
+          open={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
           onConfirm={confirmDelete}
           title="Delete Loan"

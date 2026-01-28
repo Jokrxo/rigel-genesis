@@ -41,7 +41,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
   const [customers, setCustomers] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const companyProfile = useCompanyProfile(open);
-  const [lockedTransactionTypes, setLockedTransactionTypes] = useState(false);
+  const [lockedTransactionTypes, setLockedTransactionTypes] = useState<string[]>([]);
   
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -63,7 +63,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
     if (open) {
       fetchCustomers();
       fetchSuppliers();
-      setLockedTransactionTypes(true);
+      setLockedTransactionTypes(["locked"]);
       if (companyProfile) {
         try {
           const types = getTransactionTypesForOwnership(companyProfile);

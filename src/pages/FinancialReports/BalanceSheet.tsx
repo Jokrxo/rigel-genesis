@@ -14,20 +14,20 @@ const BalanceSheet = () => {
   const data = {
     assets: {
       nonCurrent: [
-        { name: "Property, Plant and Equipment", value: balanceData.assets.nonCurrentAssets },
+        { name: "Property, Plant and Equipment", value: balanceData.assets.nonCurrent },
         { name: "Intangible Assets", value: 0 },
         { name: "Goodwill", value: 0 },
       ],
       current: [
-        { name: "Inventories", value: 0 }, // Needs inventory module integration
-        { name: "Trade and Other Receivables", value: 0 }, // Needs invoicing integration
-        { name: "Cash and Cash Equivalents", value: balanceData.assets.cash },
+        { name: "Inventories", value: 0 },
+        { name: "Trade and Other Receivables", value: 0 },
+        { name: "Cash and Cash Equivalents", value: balanceData.assets.current },
       ]
     },
     equity: [
-      { name: "Share Capital", value: balanceData.equity.capital },
+      { name: "Share Capital", value: balanceData.equity.shareCapital },
       { name: "Retained Earnings", value: balanceData.equity.retainedEarnings },
-      { name: "Drawings", value: -balanceData.equity.drawings }, // Show as deduction
+      { name: "Drawings", value: 0 },
     ],
     liabilities: {
       nonCurrent: [

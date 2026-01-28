@@ -105,9 +105,25 @@ const InventoryManagement = () => {
 
   const handleCreateProduct = async (data: ProductFormData) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('products')
-        .insert([data]);
+        .insert([{
+          name: data.name,
+          description: data.description || null,
+          sku: data.sku || null,
+          category: data.category || null,
+          unit_price: data.unit_price,
+          cost_price: data.cost_price || null,
+          quantity_on_hand: data.quantity_on_hand || 0,
+          reorder_level: data.reorder_level || 0,
+          unit_of_measure: data.unit_of_measure || null,
+          is_active: data.is_active ?? true,
+          tax_rate: data.tax_rate || 0,
+          user_id: user.id,
+        }]);
 
       if (error) throw error;
 

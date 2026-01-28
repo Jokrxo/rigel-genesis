@@ -1,4 +1,6 @@
 
+export type OwnershipForm = 'sole' | 'partnership' | 'llc' | 'corp' | 'pty_ltd' | 'soe' | 'other';
+
 export type AccountType = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE' | 'CONTRA_ASSET';
 
 export interface BaseAccount {

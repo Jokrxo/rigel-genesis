@@ -34,7 +34,7 @@ const projectSchema = z.object({
   tax_year: z.coerce.number().int().min(2000).max(2100),
   reporting_currency: z.string().min(1, "Currency is required"),
   multi_entity: z.boolean().default(false),
-  status: z.enum(['draft', 'active', 'archived']).default('draft'),
+  status: z.enum(['draft', 'active', 'archived'] as const).default('draft'),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -54,12 +54,21 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       tax_year: initialData?.tax_year || new Date().getFullYear(),
       reporting_currency: initialData?.reporting_currency || 'ZAR',
       multi_entity: initialData?.multi_entity || false,
-      status: initialData?.status || 'draft',
+      status: (initialData?.status === 'active' || initialData?.status === 'archived' || initialData?.status === 'draft') 
+        ? initialData.status 
+        : 'draft',
     },
   });
 
   const handleSubmit = (data: ProjectFormValues) => {
-    onSubmit(data);
+    onSubmit({
+      name: data.name,
+      country_id: data.country_id,
+      tax_year: data.tax_year,
+      reporting_currency: data.reporting_currency,
+      multi_entity: data.multi_entity,
+      status: data.status,
+    });
   };
 
   const currentYear = new Date().getFullYear();
