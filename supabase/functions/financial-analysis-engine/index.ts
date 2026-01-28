@@ -197,7 +197,7 @@ Return JSON format:
       metadata: {
         suggestedDeduction: t.suggestedDeduction,
         aiProcessed: true,
-        model: 'gpt-4o-mini'
+        model: 'gpt-4o'
       }
     }));
 
