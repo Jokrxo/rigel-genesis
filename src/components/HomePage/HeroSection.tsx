@@ -16,13 +16,13 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col items-center gap-6 px-4 pt-10 pb-24">
         <h1 className="text-4xl md:text-6xl font-bold text-center text-primary-foreground">
-          Streamline Your Business Finances with Rigel
+          Streamline Your Business Finances with Rigel <span className="text-sm align-top bg-primary/20 px-2 py-1 rounded-full">v2.0</span>
         </h1>
         <p className="text-lg md:text-2xl text-center max-w-2xl text-primary-foreground">
-          Take control of your financial future. Automate tasks, gain insights, and grow your business.
-        </p>
-        <div className="flex items-center gap-4">
-          <Link to="/register">
+            Take control of your financial future. Automate tasks, gain insights, and grow your business.
+          </p>
+          <div className="flex items-center gap-4">
+            <Link to="/register">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-300 font-semibold shadow-lg shadow-primary/20">
               Get Started Free
             </Button>
