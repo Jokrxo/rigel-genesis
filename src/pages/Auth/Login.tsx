@@ -103,6 +103,7 @@ const Login = () => {
 
             <Button
               onClick={handleFacebookLogin}
+              disabled={isLoading}
               variant="outline"
               className="w-full justify-center gap-2 py-6 border-border hover:bg-accent text-black"
             >
@@ -117,7 +118,7 @@ const Login = () => {
 
           <div className="my-5 flex items-center">
             <Separator className="flex-1" />
-            <span className="px-3 text-xs text-muted-foreground">or</span>
+            <span className="px-3 text-xs text-black font-medium">or</span>
             <Separator className="flex-1" />
           </div>
 
@@ -131,7 +132,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
                 required
-                className="py-6 text-black"
+                className="py-6 text-black placeholder:text-gray-500"
               />
             </div>
             <div className="space-y-2">
@@ -151,7 +152,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="py-6 text-black"
+                className="py-6 text-black placeholder:text-gray-500"
               />
             </div>
             <Button
@@ -172,8 +173,8 @@ const Login = () => {
 
           <div className="mt-6 border-t border-border pt-6">
             <div className="flex items-center justify-center gap-2">
-              <QrCode className="h-4 w-4 text-muted-foreground" />
-              <Link to="/qr-code" className="text-xs text-muted-foreground hover:underline">
+              <QrCode className="h-4 w-4 text-black" />
+              <Link to="/qr-code" className="text-xs text-black hover:underline">
                 Share application via QR code
               </Link>
             </div>

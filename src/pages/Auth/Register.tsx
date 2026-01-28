@@ -121,7 +121,7 @@ const Register = () => {
 
         <div className="my-5 flex items-center">
           <Separator className="flex-1" />
-          <span className="px-3 text-xs text-muted-foreground">or</span>
+          <span className="px-3 text-xs text-black font-medium">or</span>
           <Separator className="flex-1" />
         </div>
 
@@ -134,7 +134,7 @@ const Register = () => {
               onChange={(e) => setFullName(e.target.value)}
               placeholder="John Doe"
               required
-              className="py-6 text-black"
+              className="py-6 text-black placeholder:text-gray-500"
             />
           </div>
           <div className="space-y-2">
@@ -146,7 +146,7 @@ const Register = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
               required
-              className="py-6 text-black"
+              className="py-6 text-black placeholder:text-gray-500"
             />
           </div>
           <div className="space-y-2">
@@ -158,9 +158,9 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="py-6 text-black"
+              className="py-6 text-black placeholder:text-gray-500"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-black">
               Password must be at least 8 characters long
             </p>
           </div>
@@ -197,8 +197,8 @@ const Register = () => {
 
         <div className="mt-6 border-t border-border pt-6 pb-6 px-6">
           <div className="flex items-center justify-center gap-2">
-            <QrCode className="h-4 w-4 text-muted-foreground" />
-            <Link to="/qr-code" className="text-xs text-muted-foreground hover:underline">
+            <QrCode className="h-4 w-4 text-black" />
+            <Link to="/qr-code" className="text-xs text-black hover:underline">
               Share application via QR code
             </Link>
           </div>
