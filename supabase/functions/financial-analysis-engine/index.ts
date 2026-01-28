@@ -101,59 +101,42 @@ Return JSON format:
   "processingNotes": string
 }`;
 
-    // Use mock data to avoid OpenAI rate limits and parsing issues
-    console.log('Creating mock financial data for analysis');
+    // Use OpenAI for analysis
+    console.log('Calling OpenAI for financial analysis');
     
-    const processedData = {
-      transactions: [
-        {
-          date: "2024-01-15",
-          description: "Office Rent Payment",
-          amount: -5000,
-          debit: 5000,
-          credit: null,
-          balance: 45000,
-          category: "Office Rent",
-          confidence: 100,
-          suggestedDeduction: true,
-          reference: "REF001"
-        },
-        {
-          date: "2024-01-16", 
-          description: "Client Payment Received",
-          amount: 15000,
-          debit: null,
-          credit: 15000,
-          balance: 60000,
-          category: "Revenue",
-          confidence: 100,
-          suggestedDeduction: false,
-          reference: "REF002"
-        },
-        {
-          date: "2024-01-17",
-          description: "Fuel Expense", 
-          amount: -800,
-          debit: 800,
-          credit: null,
-          balance: 59200,
-          category: "Travel",
-          confidence: 100,
-          suggestedDeduction: true,
-          reference: "REF003"
-        }
-      ],
-      summary: {
-        totalTransactions: 3,
-        totalCredits: 15000,
-        totalDebits: -5800,
-        openingBalance: 50000,
-        closingBalance: 59200,
-        period: { from: "2024-01-15", to: "2024-01-17" }
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
       },
-      validationIssues: [],
-      processingNotes: "Mock data generated for testing purposes"
-    };
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Process this bank statement content: ${fileContent.substring(0, 50000)}` }
+        ],
+        temperature: 0,
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Received response from OpenAI');
+    
+    let processedData;
+    try {
+      processedData = JSON.parse(data.choices[0].message.content);
+    } catch (e) {
+      console.error('Failed to parse OpenAI response:', e);
+      throw new Error('Failed to parse AI response');
+    }
 
     console.log(`Parsed ${processedData.transactions?.length || 0} transactions`);
 
