@@ -8,7 +8,6 @@ import { QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { emailSchema } from "@/utils/validation";
-import rigelLogo from "@/assets/rigel-logo.jpg";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 import globeImage from "@/assets/globe.jpg";
 
@@ -60,21 +59,24 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card overflow-hidden">
-        <div className="relative h-48 w-full mb-6">
+    <div className="min-h-screen w-full relative flex items-center justify-center p-4">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src={globeImage} 
+          alt="Global Financial Network" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden">
+        <div className="flex justify-center pt-8 pb-2">
           <img 
-            src={globeImage} 
-            alt="Global Financial Network" 
-            className="w-full h-full object-cover"
+            src={rigelFullLogo}
+            alt="Rigel - Powered by Stella Lumen" 
+            className="h-16 w-auto object-contain"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex items-end justify-center pb-4">
-             <img 
-              src={rigelFullLogo}
-              alt="Rigel - Powered by Stella Lumen" 
-              className="h-16 w-auto object-contain bg-white/80 rounded px-2 py-1 backdrop-blur-sm"
-            />
-          </div>
         </div>
 
         <div className="flex flex-col items-center text-center mb-6 px-6">

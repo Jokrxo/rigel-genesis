@@ -62,21 +62,24 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card overflow-hidden">
-        <div className="relative h-48 w-full mb-6">
+    <div className="min-h-screen w-full relative flex items-center justify-center p-4">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src={globeImage} 
+          alt="Global Financial Network" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden">
+        <div className="flex justify-center pt-8 pb-2">
           <img 
-            src={globeImage} 
-            alt="Global Financial Network" 
-            className="w-full h-full object-cover"
+            src={rigelFullLogo}
+            alt="Rigel - Powered by Stella Lumen" 
+            className="h-16 w-auto object-contain"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex items-end justify-center pb-4">
-             <img 
-              src={rigelFullLogo}
-              alt="Rigel - Powered by Stella Lumen" 
-              className="h-16 w-auto object-contain bg-white/80 rounded px-2 py-1 backdrop-blur-sm"
-            />
-          </div>
         </div>
 
         <div className="flex flex-col items-center text-center mb-6 px-6">
@@ -122,7 +125,7 @@ const Register = () => {
           <Separator className="flex-1" />
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4 px-6" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="name" className="text-black">Full Name</Label>
             <Input
@@ -185,14 +188,14 @@ const Register = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-black">
+        <div className="mt-6 text-center text-sm text-black px-6">
           Already have an account?{" "}
           <Link to="/login" className="text-primary hover:underline font-medium">
             Log in
           </Link>
         </div>
 
-        <div className="mt-6 border-t border-border pt-6">
+        <div className="mt-6 border-t border-border pt-6 pb-6 px-6">
           <div className="flex items-center justify-center gap-2">
             <QrCode className="h-4 w-4 text-muted-foreground" />
             <Link to="/qr-code" className="text-xs text-muted-foreground hover:underline">
