@@ -4,27 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Control } from "react-hook-form";
-
-interface SupplierFormData {
-  name: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  vat_number?: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  province?: string;
-  postal_code?: string;
-  country?: string;
-  payment_terms?: number;
-  credit_limit?: number;
-  status: string;
-  notes?: string;
-}
+import { SupplierFormValues } from "./SupplierForm";
 
 interface SupplierFormFieldsProps {
-  control: Control<SupplierFormData>;
+  control: Control<SupplierFormValues>;
 }
 
 export const SupplierFormFields = ({ control }: SupplierFormFieldsProps) => {

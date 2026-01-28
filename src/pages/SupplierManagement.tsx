@@ -5,6 +5,8 @@ import { SupplierTable } from "@/components/SupplierManagement/SupplierTable";
 import { SupplierHeader } from "@/components/SupplierManagement/SupplierHeader";
 import { SupplierSearch } from "@/components/SupplierManagement/SupplierSearch";
 import { SupplierForm } from "@/components/SupplierManagement/SupplierForm";
+import { ViewSupplierDialog } from "@/components/SupplierManagement/ViewSupplierDialog";
+import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 
@@ -28,7 +30,11 @@ const SupplierManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<LocalSupplier | null>(null);
+  const [viewingSupplier, setViewingSupplier] = useState<LocalSupplier | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingSupplier, setDeletingSupplier] = useState<LocalSupplier | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -114,14 +120,28 @@ const SupplierManagement = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteSupplier = async (id: string) => {
+  const handleViewSupplier = (supplier: LocalSupplier) => {
+    setViewingSupplier(supplier);
+    setIsViewOpen(true);
+  };
+
+  const handleDeleteSupplier = (supplier: LocalSupplier) => {
+    setDeletingSupplier(supplier);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingSupplier) return;
+
     try {
-      setSuppliers(prev => prev.filter(supplier => supplier.id !== id));
+      setSuppliers(prev => prev.filter(s => s.id !== deletingSupplier.id));
       
       toast({
         title: "Success",
         description: "Supplier deleted successfully",
       });
+      setIsDeleteOpen(false);
+      setDeletingSupplier(null);
     } catch (error) {
       console.error("Error deleting supplier:", error);
       toast({
@@ -187,6 +207,7 @@ const SupplierManagement = () => {
         <SupplierTable
           suppliers={filteredSuppliers}
           loading={loading}
+          onView={handleViewSupplier}
           onEdit={handleEditSupplier}
           onDelete={handleDeleteSupplier}
         />
@@ -196,6 +217,20 @@ const SupplierManagement = () => {
           onClose={() => setIsFormOpen(false)}
           onSuccess={handleFormSuccess}
           editingSupplier={editingSupplier}
+        />
+
+        <ViewSupplierDialog
+          open={isViewOpen}
+          onClose={() => setIsViewOpen(false)}
+          supplier={viewingSupplier}
+        />
+
+        <DeleteConfirmationDialog
+          open={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Supplier"
+          description={`Are you sure you want to delete ${deletingSupplier?.name}? This action cannot be undone.`}
         />
       </div>
       <Chatbot />

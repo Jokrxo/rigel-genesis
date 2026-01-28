@@ -70,6 +70,8 @@ const queryClient = new QueryClient({
   },
 });
 
+import { Chatbot } from "@/components/Shared/Chatbot";
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -80,6 +82,7 @@ const App = () => (
               <ErrorBoundary>
                 <Toaster />
                 <Sonner />
+                <Chatbot />
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />

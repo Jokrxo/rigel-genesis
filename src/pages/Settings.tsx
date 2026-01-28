@@ -12,10 +12,16 @@ import { Chatbot } from "@/components/Shared/Chatbot";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTheme } from "@/hooks/useTheme";
+import { useLanguage, Language } from "@/hooks/useLanguage";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import globe from "@/assets/globe.jpg";
 
 const Settings = () => {
   const { mode, setMode } = useTheme();
+  const { language, setLanguage } = useLanguage();
+  const [timezone, setTimezone] = useLocalStorage<string>('app-timezone', 'africa/johannesburg');
+  const [currency, setCurrency] = useLocalStorage<string>('app-currency', 'zar');
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -58,7 +64,7 @@ const Settings = () => {
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="language">Language</Label>
-                    <Select defaultValue="en">
+                    <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
                       <SelectTrigger id="language">
                         <SelectValue placeholder="Select language" />
                       </SelectTrigger>
@@ -71,7 +77,7 @@ const Settings = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="timezone">Timezone</Label>
-                    <Select defaultValue="africa/johannesburg">
+                    <Select value={timezone} onValueChange={setTimezone}>
                       <SelectTrigger id="timezone">
                         <SelectValue placeholder="Select timezone" />
                       </SelectTrigger>
@@ -83,7 +89,7 @@ const Settings = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="currency">Default Currency</Label>
-                    <Select defaultValue="zar">
+                    <Select value={currency} onValueChange={setCurrency}>
                       <SelectTrigger id="currency">
                         <SelectValue placeholder="Select currency" />
                       </SelectTrigger>
@@ -98,6 +104,7 @@ const Settings = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
 
           <TabsContent value="notifications">
             <Card>

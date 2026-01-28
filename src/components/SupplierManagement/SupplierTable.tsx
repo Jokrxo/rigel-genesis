@@ -18,11 +18,12 @@ interface Supplier {
 interface SupplierTableProps {
   suppliers: Supplier[];
   loading: boolean;
+  onView: (supplier: Supplier) => void;
   onEdit: (supplier: Supplier) => void;
-  onDelete: (id: string) => void;
+  onDelete: (supplier: Supplier) => void;
 }
 
-export const SupplierTable = ({ suppliers, loading, onEdit, onDelete }: SupplierTableProps) => {
+export const SupplierTable = ({ suppliers, loading, onView, onEdit, onDelete }: SupplierTableProps) => {
   const getStatusBadge = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     const statusColors = {
       active: "default" as const,
@@ -76,7 +77,12 @@ export const SupplierTable = ({ suppliers, loading, onEdit, onDelete }: Supplier
                 </TableCell>
                 <TableCell className="no-print">
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" title="View">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      title="View"
+                      onClick={() => onView(supplier)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -91,7 +97,7 @@ export const SupplierTable = ({ suppliers, loading, onEdit, onDelete }: Supplier
                       variant="ghost" 
                       size="icon" 
                       title="Delete"
-                      onClick={() => onDelete(supplier.id)}
+                      onClick={() => onDelete(supplier)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

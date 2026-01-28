@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ExportControls } from "@/components/Dashboard/ExportControls";
+import { useFinancialData } from "@/hooks/useFinancialData";
 
 // Report type definitions
 interface BaseReport {
@@ -51,6 +52,7 @@ interface DefaultReport extends BaseReport {
 type GeneratedReport = FinancialOverviewReport | TaxSummaryReport | AssetRegisterReport | DefaultReport | null;
 
 const ReportsGenerator = () => {
+  const { getIncomeStatementData, getBalanceSheetData, assets } = useFinancialData();
   const [reportType, setReportType] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
@@ -81,62 +83,96 @@ const ReportsGenerator = () => {
     }
 
     try {
-      const reportData = generateEmptyReport(reportType);
+      const start = dateFrom || new Date(new Date().getFullYear(), 0, 1);
+      const end = dateTo || new Date();
+      
+      const incomeData = getIncomeStatementData(start, end);
+      
+      let reportData: GeneratedReport = null;
+      
+      const baseData: BaseReport = {
+        reportType,
+        generatedDate: new Date().toISOString(),
+        dateFrom: start.toISOString(),
+        dateTo: end.toISOString(),
+      };
+
+      switch (reportType) {
+        case 'financial-overview':
+          reportData = {
+            ...baseData,
+            reportType: 'financial-overview',
+            totalRevenue: incomeData.revenue,
+            totalExpenses: incomeData.expenses,
+            netProfit: incomeData.netProfit,
+            grossProfitMargin: incomeData.revenue ? (incomeData.grossProfit / incomeData.revenue) * 100 : 0,
+            categories: Object.entries(incomeData.expensesByCategory).map(([name, amount]) => ({ name, amount }))
+          };
+          break;
+        case 'income-statement':
+          // For now, redirect or just show overview data
+           reportData = {
+            ...baseData,
+            reportType: 'financial-overview', // Reuse for now or create specific type
+            totalRevenue: incomeData.revenue,
+            totalExpenses: incomeData.expenses,
+            netProfit: incomeData.netProfit,
+            grossProfitMargin: incomeData.revenue ? (incomeData.grossProfit / incomeData.revenue) * 100 : 0,
+            categories: Object.entries(incomeData.expensesByCategory).map(([name, amount]) => ({ name, amount }))
+          };
+          break;
+        case 'balance-sheet':
+           const balanceData = getBalanceSheetData(end);
+           // Create a simple representation for the generator view, detailed view is in the specific page
+           reportData = {
+            ...baseData,
+            message: `Balance Sheet Generated. Total Assets: R ${balanceData.assets.total.toLocaleString()}, Total Equity: R ${balanceData.equity.total.toLocaleString()}`,
+            data: [balanceData]
+          };
+          break;
+        case 'tax-summary':
+          reportData = {
+            ...baseData,
+            reportType: 'tax-summary',
+            totalVAT: 0,
+            incomeTax: incomeData.taxExpenses,
+            provisionalTax: 0,
+            payeDeducted: 0,
+            totalTaxLiability: incomeData.taxExpenses
+          };
+          break;
+        case 'asset-register':
+          reportData = {
+            ...baseData,
+            reportType: 'asset-register',
+            assets: assets.map(a => ({
+                name: a.name,
+                cost: a.purchase_price,
+                depreciation: a.purchase_price * (a.depreciation_rate / 100), // Annual depreciation estimate
+                bookValue: a.current_value
+            }))
+          };
+          break;
+        default:
+          reportData = {
+            ...baseData,
+            message: 'No data available for this report type. Please ensure data is imported.',
+            data: []
+          };
+      }
+
       setGeneratedReport(reportData);
       toast({
         title: "Report Generated",
         description: `${reportType.replace('_', ' ').toUpperCase()} report generated successfully`,
       });
     } catch (error) {
+      console.error(error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate report. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-
-  const generateEmptyReport = (type: string): GeneratedReport => {
-    const baseData: BaseReport = {
-      reportType: type,
-      generatedDate: new Date().toISOString(),
-      dateFrom: dateFrom?.toISOString(),
-      dateTo: dateTo?.toISOString(),
-    };
-
-    switch (type) {
-      case 'financial-overview':
-        return {
-          ...baseData,
-          reportType: 'financial-overview',
-          totalRevenue: 0,
-          totalExpenses: 0,
-          netProfit: 0,
-          grossProfitMargin: 0,
-          categories: []
-        };
-      case 'tax-summary':
-        return {
-          ...baseData,
-          reportType: 'tax-summary',
-          totalVAT: 0,
-          incomeTax: 0,
-          provisionalTax: 0,
-          payeDeducted: 0,
-          totalTaxLiability: 0,
-        };
-      case 'asset-register':
-        return {
-          ...baseData,
-          reportType: 'asset-register',
-          assets: []
-        };
-      default:
-        return {
-          ...baseData,
-          message: 'No data available for this report type. Please ensure data is imported.',
-          data: []
-        };
     }
   };
 
@@ -349,12 +385,31 @@ const renderReportContent = (report: GeneratedReport) => {
       );
     default:
       const defaultReport = report as DefaultReport;
+      const reportLinks: Record<string, string> = {
+        'balance-sheet': '/reports/balance-sheet',
+        'income-statement': '/reports/income-statement',
+        'cash-flow': '/reports/cash-flow',
+        'equity': '/reports/equity',
+        'notes': '/reports/notes',
+      };
+      
+      const link = reportLinks[report.reportType];
+
       return (
         <div className="text-center py-12">
           <p className="text-muted-foreground text-lg">{defaultReport.message}</p>
-          <p className="text-sm text-muted-foreground mt-3">
-            This report type is being developed. More detailed content will be available soon.
-          </p>
+          {link && (
+            <div className="mt-6">
+              <Button onClick={() => window.location.href = link}>
+                View Full Standard Report
+              </Button>
+            </div>
+          )}
+          {!link && (
+            <p className="text-sm text-muted-foreground mt-3">
+              This report type is being developed. More detailed content will be available soon.
+            </p>
+          )}
         </div>
       );
   }

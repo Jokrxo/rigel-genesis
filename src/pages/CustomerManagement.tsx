@@ -5,13 +5,15 @@ import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Plus, Search, Edit, Trash2, Printer, Download, FileText, DollarSign } from "lucide-react";
+import { Users, Plus, Search, Edit, Trash2, Printer, Download, FileText, DollarSign, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 import { CustomerForm } from "@/components/CustomerManagement/CustomerForm";
+import { ViewCustomerDialog } from "@/components/CustomerManagement/ViewCustomerDialog";
+import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { Chatbot } from "@/components/Shared/Chatbot";
 
 interface Customer {
@@ -35,7 +37,11 @@ const CustomerManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -74,20 +80,34 @@ const CustomerManagement = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteCustomer = async (id: string) => {
+  const handleViewCustomer = (customer: Customer) => {
+    setViewingCustomer(customer);
+    setIsViewOpen(true);
+  };
+
+  const handleDeleteCustomer = (customer: Customer) => {
+    setDeletingCustomer(customer);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingCustomer) return;
+
     try {
       const { error } = await supabase
         .from('customers')
         .delete()
-        .eq('id', id);
+        .eq('id', deletingCustomer.id);
 
       if (error) throw error;
 
-      setCustomers(prev => prev.filter(customer => customer.id !== id));
+      setCustomers(prev => prev.filter(customer => customer.id !== deletingCustomer.id));
       toast({
         title: "Success",
         description: "Customer deleted successfully",
       });
+      setIsDeleteOpen(false);
+      setDeletingCustomer(null);
     } catch (error) {
       console.error('Error deleting customer:', error);
       toast({
@@ -291,6 +311,13 @@ const CustomerManagement = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
+                              onClick={() => handleViewCustomer(customer)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
                               onClick={() => handleEditCustomer(customer)}
                             >
                               <Edit className="h-4 w-4" />
@@ -298,7 +325,7 @@ const CustomerManagement = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => handleDeleteCustomer(customer.id)}
+                              onClick={() => handleDeleteCustomer(customer)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -318,6 +345,20 @@ const CustomerManagement = () => {
           onClose={() => setIsFormOpen(false)}
           onSuccess={handleFormSuccess}
           editingCustomer={editingCustomer}
+        />
+        
+        <ViewCustomerDialog
+          open={isViewOpen}
+          onClose={() => setIsViewOpen(false)}
+          customer={viewingCustomer}
+        />
+
+        <DeleteConfirmationDialog
+          open={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Customer"
+          description={`Are you sure you want to delete ${deletingCustomer?.name}? This action cannot be undone.`}
         />
       </div>
       <Chatbot />

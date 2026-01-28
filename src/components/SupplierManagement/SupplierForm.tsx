@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -8,23 +10,25 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierFormFields } from "./SupplierFormFields";
 
-interface SupplierFormData {
-  name: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  vat_number?: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  province?: string;
-  postal_code?: string;
-  country?: string;
-  payment_terms?: number;
-  credit_limit?: number;
-  status: string;
-  notes?: string;
-}
+const supplierSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  vat_number: z.string().optional(),
+  address_line1: z.string().optional(),
+  address_line2: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  postal_code: z.string().optional(),
+  country: z.string().default("South Africa"),
+  payment_terms: z.coerce.number().min(0, "Payment terms must be positive"),
+  credit_limit: z.coerce.number().min(0, "Credit limit must be positive"),
+  status: z.string().default("active"),
+  notes: z.string().optional(),
+});
+
+export type SupplierFormValues = z.infer<typeof supplierSchema>;
 
 export interface Supplier {
   id: string;
@@ -58,7 +62,8 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<SupplierFormData>({
+  const form = useForm<SupplierFormValues>({
+    resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -118,7 +123,7 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
     }
   }, [editingSupplier, form]);
 
-  const onSubmit = async (data: SupplierFormData) => {
+  const onSubmit = async (data: SupplierFormValues) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();

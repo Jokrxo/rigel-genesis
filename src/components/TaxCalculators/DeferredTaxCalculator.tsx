@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectSelector } from '../DeferredTaxCalculator/components/ProjectSelector';
@@ -11,6 +12,7 @@ import { DeferredTaxProject } from '../DeferredTaxCalculator/types';
 type ViewMode = 'list' | 'create' | 'dashboard';
 
 const DeferredTaxCalculator = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedProject, setSelectedProject] = useState<DeferredTaxProject | null>(null);
   
@@ -23,17 +25,54 @@ const DeferredTaxCalculator = () => {
     deleteProject,
   } = useDeferredTaxData();
 
+  // Handle deep linking to specific project
+  const projectIdParam = searchParams.get('projectId');
+
+  useEffect(() => {
+    if (projectIdParam && projects.length > 0 && !selectedProject) {
+      const found = projects.find(p => p.id === projectIdParam);
+      if (found) {
+        setSelectedProject(found);
+        setViewMode('dashboard');
+      }
+    } else if (!projectIdParam && viewMode === 'dashboard') {
+      // If URL param is removed but we are in dashboard, go back to list
+      setSelectedProject(null);
+      setViewMode('list');
+    }
+  }, [projectIdParam, projects, selectedProject, viewMode]);
+
   const handleCreateProject = async (projectData: any) => {
     const project = await createProject(projectData);
     if (project) {
       setSelectedProject(project as DeferredTaxProject);
       setViewMode('dashboard');
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.set("projectId", project.id);
+        return newParams;
+      });
     }
   };
 
   const handleSelectProject = (project: DeferredTaxProject) => {
     setSelectedProject(project);
     setViewMode('dashboard');
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("projectId", project.id);
+      return newParams;
+    });
+  };
+
+  const handleBack = () => {
+    setSelectedProject(null);
+    setViewMode('list');
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.delete("projectId");
+      return newParams;
+    });
   };
 
   const renderContent = () => {
@@ -51,10 +90,7 @@ const DeferredTaxCalculator = () => {
         return selectedProject ? (
           <DeferredTaxDashboard
             project={selectedProject}
-            onBack={() => {
-              setSelectedProject(null);
-              setViewMode('list');
-            }}
+            onBack={handleBack}
           />
         ) : null;
       

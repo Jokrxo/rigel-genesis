@@ -35,6 +35,18 @@ const partyTypes = [
   { value: "internal", label: "Internal" },
 ];
 
+import { UseFormReturn } from "react-hook-form";
+import { TransactionFormValues } from "./TransactionFormMain";
+
+interface TransactionFieldsProps {
+  form: UseFormReturn<TransactionFormValues>;
+  lockedTransactionTypes: string[];
+  companyProfile: CompanyProfile | null;
+  customers: any[];
+  suppliers: any[];
+  watchedPartyType: string | undefined;
+}
+
 export function TransactionFields({
   form,
   lockedTransactionTypes,
@@ -42,7 +54,7 @@ export function TransactionFields({
   customers,
   suppliers,
   watchedPartyType,
-}: any) {
+}: TransactionFieldsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField

@@ -30,6 +30,8 @@ export const defaultProfile: CompanyProfile = {
   registrationNumber: "2020/123456/07",
   vatNumber: "4560123456",
   foundedDate: "2020-01-15",
+  ownership: "pty_ltd",
+  inventorySystem: "periodic",
   address: {
     street: "123 Financial Avenue",
     city: "Cape Town",

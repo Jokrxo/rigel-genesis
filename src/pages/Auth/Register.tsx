@@ -8,8 +8,8 @@ import { QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { emailSchema, passwordSchema, displayNameSchema } from "@/utils/validation";
 import { useToast } from "@/hooks/use-toast";
-import rigelLogo from "@/assets/rigel-logo.jpg";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
+import globeImage from "@/assets/globe.jpg";
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
@@ -63,25 +63,36 @@ const Register = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <div className="flex flex-col items-center text-center mb-6">
+      <div className="auth-card overflow-hidden">
+        <div className="relative h-48 w-full mb-6">
           <img 
-            src={rigelFullLogo}
-            alt="Rigel - Powered by Stella Lumen" 
-            className="h-40 w-auto mb-4 object-contain"
+            src={globeImage} 
+            alt="Global Financial Network" 
+            className="w-full h-full object-cover"
           />
-          <h2 className="text-2xl font-bold text-foreground">Create an account</h2>
-          <p className="mt-2 text-sm text-muted-foreground text-justify max-w-sm mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex items-end justify-center pb-4">
+             <img 
+              src={rigelFullLogo}
+              alt="Rigel - Powered by Stella Lumen" 
+              className="h-16 w-auto object-contain bg-white/80 rounded px-2 py-1 backdrop-blur-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center text-center mb-6 px-6">
+          <h2 className="text-2xl font-bold text-black">Create an account</h2>
+          <p className="mt-2 text-sm text-black text-justify max-w-sm mx-auto">
             Join Rigel to manage your finances with our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
 
-        <div className="mt-8 space-y-3">
-          <Button
-            onClick={handleGoogleLogin}
-            variant="outline"
-            className="w-full justify-center gap-2 py-6 border-border hover:bg-accent"
-          >
+        <div className="px-6 pb-6">
+          <div className="space-y-3">
+            <Button
+              onClick={handleGoogleLogin}
+              variant="outline"
+              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent text-black"
+            >
             <img 
               src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
               alt="Google" 
@@ -112,18 +123,18 @@ const Register = () => {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name" className="text-black">Full Name</Label>
             <Input
               id="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="John Doe"
               required
-              className="py-6"
+              className="py-6 text-black"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email" className="text-black">Email address</Label>
             <Input
               id="email"
               type="email"
@@ -131,11 +142,11 @@ const Register = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
               required
-              className="py-6"
+              className="py-6 text-black"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-black">Password</Label>
             <Input
               id="password"
               type="password"
@@ -143,14 +154,14 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="py-6"
+              className="py-6 text-black"
             />
             <p className="text-xs text-muted-foreground">
               Password must be at least 8 characters long
             </p>
           </div>
           <div className="space-y-2">
-            <Label className="flex items-start gap-2 text-sm">
+            <Label className="flex items-start gap-2 text-sm text-black">
               <Input type="checkbox" className="mt-0.5 h-4 w-4" required />
               <span className="text-justify">
                 I agree to the{" "}
@@ -173,7 +184,7 @@ const Register = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
+        <div className="mt-6 text-center text-sm text-black">
           Already have an account?{" "}
           <Link to="/login" className="text-primary hover:underline font-medium">
             Log in

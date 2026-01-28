@@ -4,13 +4,16 @@ import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Package, Plus, Search, Edit, Trash2, Printer, Download, AlertTriangle } from "lucide-react";
+import { Package, Plus, Search, Edit, Trash2, Printer, Download, AlertTriangle, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { ViewProductDialog } from "@/components/InventoryManagement/ViewProductDialog";
+import { ProductFormDialog } from "@/components/InventoryManagement/ProductFormDialog";
+import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 
 interface Product {
   id: string;
@@ -28,11 +31,37 @@ interface Product {
   created_at: string;
 }
 
+interface ProductFormData {
+  name: string;
+  description: string;
+  sku: string;
+  category: string;
+  unit_price: number;
+  cost_price: number;
+  quantity_on_hand: number;
+  reorder_level: number;
+  unit_of_measure: string;
+  is_active: boolean;
+  tax_rate: number;
+}
+
 const InventoryManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+
+  // Dialog states
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -56,6 +85,101 @@ const InventoryManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewProduct = (product: Product) => {
+    setViewingProduct(product);
+    setIsViewOpen(true);
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditOpen(true);
+  };
+
+  const handleDeleteProduct = (product: Product) => {
+    setDeletingProduct(product);
+    setIsDeleteOpen(true);
+  };
+
+  const handleCreateProduct = async (data: ProductFormData) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .insert([data]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product created successfully",
+      });
+      fetchProducts();
+      setIsCreateOpen(false);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateProduct = async (data: ProductFormData) => {
+    if (!editingProduct) return;
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update(data)
+        .eq('id', editingProduct.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      });
+      fetchProducts();
+      setIsEditOpen(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingProduct) return;
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', deletingProduct.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      });
+      fetchProducts();
+      setIsDeleteOpen(false);
+      setDeletingProduct(null);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      });
     }
   };
 
@@ -103,7 +227,7 @@ const InventoryManagement = () => {
               <Download className="mr-2 h-4 w-4" />
               Export JSON
             </Button>
-            <Button>
+            <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Product
             </Button>
@@ -201,10 +325,25 @@ const InventoryManagement = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleViewProduct(product)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditProduct(product)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteProduct(product)}
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -219,6 +358,35 @@ const InventoryManagement = () => {
           </CardContent>
         </Card>
       </div>
+
+      <ViewProductDialog
+        open={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        product={viewingProduct}
+      />
+
+      <ProductFormDialog
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSubmit={handleCreateProduct}
+        editingProduct={null}
+      />
+
+      <ProductFormDialog
+        open={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        onSubmit={handleUpdateProduct}
+        editingProduct={editingProduct}
+      />
+
+      <DeleteConfirmationDialog
+        open={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Product"
+        description={`Are you sure you want to delete ${deletingProduct?.name}? This action cannot be undone.`}
+      />
+
       <Chatbot />
     </MainLayout>
   );

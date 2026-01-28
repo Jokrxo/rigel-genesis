@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Country, DeferredTaxProject } from '../types';
 
 interface ProjectFormProps {
@@ -16,6 +28,17 @@ interface ProjectFormProps {
   isEditing?: boolean;
 }
 
+const projectSchema = z.object({
+  name: z.string().min(1, "Project Name is required"),
+  country_id: z.string().min(1, "Country is required"),
+  tax_year: z.coerce.number().int().min(2000).max(2100),
+  reporting_currency: z.string().min(1, "Currency is required"),
+  multi_entity: z.boolean().default(false),
+  status: z.enum(['draft', 'active', 'archived']).default('draft'),
+});
+
+type ProjectFormValues = z.infer<typeof projectSchema>;
+
 export const ProjectForm: React.FC<ProjectFormProps> = ({
   countries,
   onSubmit,
@@ -23,22 +46,20 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   initialData,
   isEditing = false,
 }) => {
-  const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    country_id: initialData?.country_id || '',
-    tax_year: initialData?.tax_year || new Date().getFullYear(),
-    reporting_currency: initialData?.reporting_currency || 'ZAR',
-    multi_entity: initialData?.multi_entity || false,
-    status: initialData?.status || 'draft' as const,
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      name: initialData?.name || '',
+      country_id: initialData?.country_id || '',
+      tax_year: initialData?.tax_year || new Date().getFullYear(),
+      reporting_currency: initialData?.reporting_currency || 'ZAR',
+      multi_entity: initialData?.multi_entity || false,
+      status: initialData?.status || 'draft',
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name || !formData.country_id) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    onSubmit(formData);
+  const handleSubmit = (data: ProjectFormValues) => {
+    onSubmit(data);
   };
 
   const currentYear = new Date().getFullYear();
@@ -76,119 +97,133 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Project Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., ABC Company - 2024 Deferred Tax"
-                required
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., ABC Company - 2024 Deferred Tax" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="country">Country/Jurisdiction *</Label>
-              <Select 
-                value={formData.country_id} 
-                onValueChange={(value) => setFormData({ ...formData, country_id: value })}
-              >
-                <SelectTrigger id="country">
-                  <SelectValue placeholder="Select country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country.id} value={country.id}>
-                      {country.name} ({country.corporate_tax_rate}% tax rate)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="tax_year">Tax Year</Label>
-                <Select 
-                  value={formData.tax_year.toString()} 
-                  onValueChange={(value) => setFormData({ ...formData, tax_year: parseInt(value) })}
-                >
-                  <SelectTrigger id="tax_year">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="currency">Reporting Currency</Label>
-                <Select 
-                  value={formData.reporting_currency} 
-                  onValueChange={(value) => setFormData({ ...formData, reporting_currency: value })}
-                >
-                  <SelectTrigger id="currency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currencies.map((currency) => (
-                      <SelectItem key={currency.code} value={currency.code}>
-                        {currency.code} - {currency.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="multi_entity">Multi-Entity Reporting</Label>
-                <p className="text-sm text-muted-foreground">
-                  Enable if you need to track deferred tax for multiple entities
-                </p>
-              </div>
-              <Switch
-                id="multi_entity"
-                checked={formData.multi_entity}
-                onCheckedChange={(checked) => setFormData({ ...formData, multi_entity: checked })}
+              <FormField
+                control={form.control}
+                name="country_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Country/Jurisdiction *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select country" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {countries.map((country) => (
+                          <SelectItem key={country.id} value={country.id}>
+                            {country.name} - {country.corporate_tax_rate * 100}%
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            {isEditing && (
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value: 'draft' | 'final' | 'archived') => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="final">Final</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="tax_year"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tax Year *</FormLabel>
+                      <Select 
+                        onValueChange={(val) => field.onChange(parseInt(val))} 
+                        defaultValue={field.value.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select tax year" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {years.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="reporting_currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reporting Currency *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {currencies.map((currency) => (
+                            <SelectItem key={currency.code} value={currency.code}>
+                              {currency.name} ({currency.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            )}
 
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" className="flex-1">
-                {isEditing ? 'Update Project' : 'Create Project'}
-              </Button>
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            </div>
-          </form>
+              <FormField
+                control={form.control}
+                name="multi_entity"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Multi-Entity Project</FormLabel>
+                      <FormDescription>
+                        Enable if this project involves multiple legal entities or business units.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {isEditing ? 'Update Project' : 'Create Project'}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

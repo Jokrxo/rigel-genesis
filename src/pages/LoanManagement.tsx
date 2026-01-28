@@ -6,25 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Plus, Calculator, Printer, Download, PiggyBank } from "lucide-react";
+import { DollarSign, Plus, Calculator, Printer, Download, PiggyBank, Edit, Trash2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Loan {
   id: string;
-  loanNumber: string;
-  borrowerName: string;
+  loan_number: string;
+  borrower_name: string;
   lender: string;
-  principalAmount: number;
-  interestRate: number;
-  termMonths: number;
-  startDate: string;
-  monthlyPayment: number;
+  principal_amount: number;
+  interest_rate: number;
+  term_months: number;
+  start_date: string;
+  monthly_payment: number;
   status: string;
-  remainingBalance: number;
+  remaining_balance: number;
 }
 
 interface AmortizationEntry {
@@ -37,57 +41,55 @@ interface AmortizationEntry {
 }
 
 const LoanManagement = () => {
+  const { user } = useAuth();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [amortizationSchedule, setAmortizationSchedule] = useState<AmortizationEntry[]>([]);
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [loanToDelete, setLoanToDelete] = useState<Loan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("loans");
   const [loanForm, setLoanForm] = useState({
-    borrowerName: "",
+    borrower_name: "",
     lender: "",
-    principalAmount: "",
-    interestRate: "",
-    termMonths: "",
-    startDate: "",
+    principal_amount: "",
+    interest_rate: "",
+    term_months: "",
+    start_date: new Date().toISOString().split('T')[0],
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchLoans();
-  }, []);
+    if (user) {
+      fetchLoans();
+    }
+  }, [user]);
 
-  const fetchLoans = () => {
-    const mockLoans: Loan[] = [
-      {
-        id: "1",
-        loanNumber: "LOAN-001",
-        borrowerName: "ABC Business Solutions",
-        lender: "First National Bank",
-        principalAmount: 500000,
-        interestRate: 11.5,
-        termMonths: 60,
-        startDate: "2024-01-01",
-        monthlyPayment: 10981.89,
-        status: "active",
-        remainingBalance: 425000,
-      },
-      {
-        id: "2",
-        loanNumber: "LOAN-002",
-        borrowerName: "Tech Innovations Ltd",
-        lender: "ABSA Bank",
-        principalAmount: 250000,
-        interestRate: 12.25,
-        termMonths: 36,
-        startDate: "2023-06-01",
-        monthlyPayment: 8341.67,
-        status: "active",
-        remainingBalance: 180000,
-      },
-    ];
-    setLoans(mockLoans);
+  const fetchLoans = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('loans')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setLoans(data || []);
+    } catch (error) {
+      console.error('Error fetching loans:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch loans",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const calculateMonthlyPayment = (principal: number, rate: number, months: number) => {
+    if (rate === 0) return principal / months;
     const monthlyRate = rate / 100 / 12;
     return (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) / 
            (Math.pow(1 + monthlyRate, months) - 1);
@@ -95,15 +97,15 @@ const LoanManagement = () => {
 
   const generateAmortizationSchedule = (loan: Loan) => {
     const schedule: AmortizationEntry[] = [];
-    let remainingBalance = loan.principalAmount;
-    const monthlyRate = loan.interestRate / 100 / 12;
+    let remainingBalance = loan.principal_amount;
+    const monthlyRate = loan.interest_rate / 100 / 12;
     
-    for (let i = 1; i <= loan.termMonths; i++) {
+    for (let i = 1; i <= loan.term_months; i++) {
       const interestPayment = remainingBalance * monthlyRate;
-      const principalPayment = loan.monthlyPayment - interestPayment;
+      const principalPayment = loan.monthly_payment - interestPayment;
       remainingBalance -= principalPayment;
       
-      const paymentDate = new Date(loan.startDate);
+      const paymentDate = new Date(loan.start_date);
       paymentDate.setMonth(paymentDate.getMonth() + i - 1);
       
       schedule.push({
@@ -111,7 +113,7 @@ const LoanManagement = () => {
         paymentDate: paymentDate.toISOString().split('T')[0],
         principalPayment,
         interestPayment,
-        totalPayment: loan.monthlyPayment,
+        totalPayment: loan.monthly_payment,
         remainingBalance: Math.max(0, remainingBalance),
       });
     }
@@ -119,63 +121,146 @@ const LoanManagement = () => {
     return schedule;
   };
 
-  const handleLoanSubmit = (e: React.FormEvent) => {
+  const handleLoanSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const principal = parseFloat(loanForm.principalAmount);
-    const rate = parseFloat(loanForm.interestRate);
-    const months = parseInt(loanForm.termMonths);
+    if (!user) return;
+
+    const principal = parseFloat(loanForm.principal_amount);
+    const rate = parseFloat(loanForm.interest_rate);
+    const months = parseInt(loanForm.term_months);
     
     const monthlyPayment = calculateMonthlyPayment(principal, rate, months);
     
-    const newLoan: Loan = {
-      id: Date.now().toString(),
-      loanNumber: `LOAN-${String(loans.length + 1).padStart(3, '0')}`,
-      borrowerName: loanForm.borrowerName,
-      lender: loanForm.lender,
-      principalAmount: principal,
-      interestRate: rate,
-      termMonths: months,
-      startDate: loanForm.startDate,
-      monthlyPayment,
-      status: "active",
-      remainingBalance: principal,
-    };
-    
-    setLoans([...loans, newLoan]);
+    try {
+      if (selectedLoan) {
+        // Update existing loan
+        const { error } = await supabase
+          .from('loans')
+          .update({
+            borrower_name: loanForm.borrower_name,
+            lender: loanForm.lender,
+            principal_amount: principal,
+            interest_rate: rate,
+            term_months: months,
+            start_date: loanForm.start_date,
+            monthly_payment: monthlyPayment,
+          })
+          .eq('id', selectedLoan.id);
+
+        if (error) throw error;
+        toast({ title: "Success", description: "Loan updated successfully" });
+      } else {
+        // Create new loan
+        const { error } = await supabase
+          .from('loans')
+          .insert({
+            user_id: user.id,
+            loan_number: `LOAN-${Date.now().toString().slice(-6)}`,
+            borrower_name: loanForm.borrower_name,
+            lender: loanForm.lender,
+            principal_amount: principal,
+            interest_rate: rate,
+            term_months: months,
+            start_date: loanForm.start_date,
+            monthly_payment: monthlyPayment,
+            status: "active",
+            remaining_balance: principal,
+          });
+
+        if (error) throw error;
+        toast({ title: "Success", description: "Loan added successfully" });
+      }
+      
+      fetchLoans();
+      setLoanForm({
+        borrower_name: "",
+        lender: "",
+        principal_amount: "",
+        interest_rate: "",
+        term_months: "",
+        start_date: new Date().toISOString().split('T')[0],
+      });
+      setShowLoanForm(false);
+      setSelectedLoan(null);
+    } catch (error) {
+      console.error('Error saving loan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save loan",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditLoan = (loan: Loan) => {
+    setSelectedLoan(loan);
     setLoanForm({
-      borrowerName: "",
-      lender: "",
-      principalAmount: "",
-      interestRate: "",
-      termMonths: "",
-      startDate: "",
+      borrower_name: loan.borrower_name,
+      lender: loan.lender,
+      principal_amount: loan.principal_amount.toString(),
+      interest_rate: loan.interest_rate.toString(),
+      term_months: loan.term_months.toString(),
+      start_date: loan.start_date,
     });
-    setShowLoanForm(false);
-    
-    toast({
-      title: "Success",
-      description: "Loan added successfully",
-    });
+    setShowLoanForm(true);
+    setActiveTab("loans");
+  };
+
+  const handleDeleteClick = (loan: Loan) => {
+    setLoanToDelete(loan);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (loanToDelete) {
+      try {
+        const { error } = await supabase
+          .from('loans')
+          .delete()
+          .eq('id', loanToDelete.id);
+
+        if (error) throw error;
+        
+        toast({ title: "Success", description: "Loan deleted successfully" });
+        fetchLoans();
+        
+        if (selectedLoan?.id === loanToDelete.id) {
+          setSelectedLoan(null);
+          setAmortizationSchedule([]);
+        }
+      } catch (error) {
+        console.error('Error deleting loan:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete loan",
+          variant: "destructive",
+        });
+      } finally {
+        setLoanToDelete(null);
+        setIsDeleteDialogOpen(false);
+      }
+    }
   };
 
   const viewAmortizationSchedule = (loan: Loan) => {
     setSelectedLoan(loan);
     const schedule = generateAmortizationSchedule(loan);
     setAmortizationSchedule(schedule);
+    setActiveTab("amortization");
   };
 
   const handlePrint = () => {
-    if (selectedLoan) {
-      printTable('amortization-table', `Amortization Schedule - ${selectedLoan.loanNumber}`);
+    if (activeTab === 'amortization' && selectedLoan) {
+      printTable('amortization-table', `Amortization Schedule - ${selectedLoan.loan_number}`);
     } else {
       printTable('loans-table', 'Loans Summary');
     }
   };
 
   const handleExportCSV = () => {
-    if (selectedLoan && amortizationSchedule.length > 0) {
+    if (activeTab === 'amortization' && selectedLoan && amortizationSchedule.length > 0) {
       const headers = ['Payment #', 'Date', 'Principal', 'Interest', 'Total Payment', 'Balance'];
-      exportToCSV(amortizationSchedule, `amortization_${selectedLoan.loanNumber}`, headers);
+      exportToCSV(amortizationSchedule, `amortization_${selectedLoan.loan_number}`, headers);
     } else {
       const headers = ['Loan Number', 'Borrower', 'Lender', 'Principal', 'Rate', 'Monthly Payment', 'Status'];
       exportToCSV(loans, 'loans_summary', headers);
@@ -183,8 +268,8 @@ const LoanManagement = () => {
   };
 
   const handleExportJSON = () => {
-    if (selectedLoan && amortizationSchedule.length > 0) {
-      exportToJSON(amortizationSchedule, `amortization_${selectedLoan.loanNumber}`);
+    if (activeTab === 'amortization' && selectedLoan && amortizationSchedule.length > 0) {
+      exportToJSON(amortizationSchedule, `amortization_${selectedLoan.loan_number}`);
     } else {
       exportToJSON(loans, 'loans_summary');
     }
@@ -211,14 +296,25 @@ const LoanManagement = () => {
               <Download className="mr-2 h-4 w-4" />
               Export JSON
             </Button>
-            <Button onClick={() => setShowLoanForm(true)}>
+            <Button onClick={() => {
+              setSelectedLoan(null);
+              setLoanForm({
+                borrower_name: "",
+                lender: "",
+                principal_amount: "",
+                interest_rate: "",
+                term_months: "",
+                start_date: new Date().toISOString().split('T')[0],
+              });
+              setShowLoanForm(true);
+            }}>
               <Plus className="mr-2 h-4 w-4" />
               New Loan
             </Button>
           </div>
         </div>
 
-        <Tabs defaultValue="loans" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="loans">Loan Register</TabsTrigger>
             <TabsTrigger value="amortization">Amortization Schedule</TabsTrigger>
@@ -228,7 +324,7 @@ const LoanManagement = () => {
             {showLoanForm && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Add New Loan</CardTitle>
+                  <CardTitle>{selectedLoan ? 'Edit Loan' : 'Add New Loan'}</CardTitle>
                   <CardDescription>Enter loan details to calculate payments</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -237,8 +333,8 @@ const LoanManagement = () => {
                       <Label htmlFor="borrowerName">Borrower Name</Label>
                       <Input
                         id="borrowerName"
-                        value={loanForm.borrowerName}
-                        onChange={(e) => setLoanForm({...loanForm, borrowerName: e.target.value})}
+                        value={loanForm.borrower_name}
+                        onChange={(e) => setLoanForm({...loanForm, borrower_name: e.target.value})}
                         required
                       />
                     </div>
@@ -252,34 +348,34 @@ const LoanManagement = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="principalAmount">Principal Amount (R)</Label>
+                      <Label htmlFor="principal">Principal Amount (R)</Label>
                       <Input
-                        id="principalAmount"
+                        id="principal"
                         type="number"
                         step="0.01"
-                        value={loanForm.principalAmount}
-                        onChange={(e) => setLoanForm({...loanForm, principalAmount: e.target.value})}
+                        value={loanForm.principal_amount}
+                        onChange={(e) => setLoanForm({...loanForm, principal_amount: e.target.value})}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="interestRate">Interest Rate (%)</Label>
+                      <Label htmlFor="rate">Interest Rate (%)</Label>
                       <Input
-                        id="interestRate"
+                        id="rate"
                         type="number"
                         step="0.01"
-                        value={loanForm.interestRate}
-                        onChange={(e) => setLoanForm({...loanForm, interestRate: e.target.value})}
+                        value={loanForm.interest_rate}
+                        onChange={(e) => setLoanForm({...loanForm, interest_rate: e.target.value})}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="termMonths">Term (Months)</Label>
+                      <Label htmlFor="months">Term (Months)</Label>
                       <Input
-                        id="termMonths"
+                        id="months"
                         type="number"
-                        value={loanForm.termMonths}
-                        onChange={(e) => setLoanForm({...loanForm, termMonths: e.target.value})}
+                        value={loanForm.term_months}
+                        onChange={(e) => setLoanForm({...loanForm, term_months: e.target.value})}
                         required
                       />
                     </div>
@@ -288,16 +384,14 @@ const LoanManagement = () => {
                       <Input
                         id="startDate"
                         type="date"
-                        value={loanForm.startDate}
-                        onChange={(e) => setLoanForm({...loanForm, startDate: e.target.value})}
+                        value={loanForm.start_date}
+                        onChange={(e) => setLoanForm({...loanForm, start_date: e.target.value})}
                         required
                       />
                     </div>
-                    <div className="md:col-span-2 flex gap-2">
-                      <Button type="submit">Add Loan</Button>
-                      <Button type="button" variant="outline" onClick={() => setShowLoanForm(false)}>
-                        Cancel
-                      </Button>
+                    <div className="md:col-span-2 flex justify-end gap-2 mt-4">
+                      <Button type="button" variant="outline" onClick={() => setShowLoanForm(false)}>Cancel</Button>
+                      <Button type="submit">{selectedLoan ? 'Update Loan' : 'Save Loan'}</Button>
                     </div>
                   </form>
                 </CardContent>
@@ -306,112 +400,156 @@ const LoanManagement = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PiggyBank className="h-5 w-5" />
-                  Active Loans ({loans.length})
-                </CardTitle>
+                <CardTitle>Active Loans</CardTitle>
+                <CardDescription>Overview of all registered loans</CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-4">Loading loans...</div>
+                ) : (
                   <Table id="loans-table">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Loan Number</TableHead>
                         <TableHead>Borrower</TableHead>
                         <TableHead>Lender</TableHead>
-                        <TableHead>Principal</TableHead>
-                        <TableHead>Rate</TableHead>
-                        <TableHead>Monthly Payment</TableHead>
-                        <TableHead>Remaining Balance</TableHead>
+                        <TableHead className="text-right">Principal</TableHead>
+                        <TableHead className="text-right">Rate</TableHead>
+                        <TableHead className="text-right">Monthly Payment</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loans.map((loan) => (
                         <TableRow key={loan.id}>
-                          <TableCell className="font-mono">{loan.loanNumber}</TableCell>
-                          <TableCell className="font-medium">{loan.borrowerName}</TableCell>
+                          <TableCell className="font-medium">{loan.loan_number}</TableCell>
+                          <TableCell>{loan.borrower_name}</TableCell>
                           <TableCell>{loan.lender}</TableCell>
-                          <TableCell>R{loan.principalAmount.toLocaleString()}</TableCell>
-                          <TableCell>{loan.interestRate}%</TableCell>
-                          <TableCell>R{loan.monthlyPayment.toLocaleString()}</TableCell>
-                          <TableCell>R{loan.remainingBalance.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">R {loan.principal_amount.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">{loan.interest_rate}%</TableCell>
+                          <TableCell className="text-right">R {loan.monthly_payment.toLocaleString()}</TableCell>
                           <TableCell>
-                            <Badge variant={loan.status === "active" ? "default" : "secondary"}>
+                            <Badge variant={loan.status === 'active' ? 'default' : 'secondary'}>
                               {loan.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => viewAmortizationSchedule(loan)}
-                            >
-                              <Calculator className="h-4 w-4 mr-1" />
-                              Schedule
-                            </Button>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => viewAmortizationSchedule(loan)} title="View Schedule">
+                                <Calculator className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleEditLoan(loan)} title="Edit">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(loan)} title="Delete">
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
+                      {loans.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                            No loans found. Create your first loan to get started.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="amortization" className="space-y-4">
-            {selectedLoan ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Amortization Schedule - {selectedLoan.loanNumber}</CardTitle>
-                  <CardDescription>
-                    {selectedLoan.borrowerName} | Principal: R{selectedLoan.principalAmount.toLocaleString()} 
-                    | Rate: {selectedLoan.interestRate}% | Term: {selectedLoan.termMonths} months
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto max-h-96">
-                    <Table id="amortization-table">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Payment #</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Principal</TableHead>
-                          <TableHead>Interest</TableHead>
-                          <TableHead>Total Payment</TableHead>
-                          <TableHead>Balance</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {amortizationSchedule.map((entry) => (
-                          <TableRow key={entry.paymentNumber}>
-                            <TableCell>{entry.paymentNumber}</TableCell>
-                            <TableCell>{entry.paymentDate}</TableCell>
-                            <TableCell>R{entry.principalPayment.toFixed(2)}</TableCell>
-                            <TableCell>R{entry.interestPayment.toFixed(2)}</TableCell>
-                            <TableCell>R{entry.totalPayment.toFixed(2)}</TableCell>
-                            <TableCell>R{entry.remainingBalance.toFixed(2)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+          <TabsContent value="amortization">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="space-y-4 flex-1">
+                  <div>
+                    <CardTitle>Amortization Schedule</CardTitle>
+                    <CardDescription>
+                      {selectedLoan 
+                        ? `Schedule for ${selectedLoan.loan_number} (${selectedLoan.borrower_name})`
+                        : "Select a loan to view its amortization schedule"}
+                    </CardDescription>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <DollarSign className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Select a loan from the register to view its amortization schedule</p>
-                </CardContent>
-              </Card>
-            )}
+                  <div className="w-full max-w-sm">
+                    <Select 
+                      value={selectedLoan?.id} 
+                      onValueChange={(value) => {
+                        const loan = loans.find(l => l.id === value);
+                        if (loan) viewAmortizationSchedule(loan);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a loan to view schedule" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loans.map((loan) => (
+                          <SelectItem key={loan.id} value={loan.id}>
+                            {loan.loan_number} - {loan.borrower_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {selectedLoan && (
+                  <Badge variant="outline" className="text-lg ml-4">
+                    R {selectedLoan.monthly_payment.toLocaleString()} / month
+                  </Badge>
+                )}
+              </CardHeader>
+              <CardContent>
+                {selectedLoan ? (
+                  <Table id="amortization-table">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Payment #</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Principal</TableHead>
+                        <TableHead className="text-right">Interest</TableHead>
+                        <TableHead className="text-right">Total Payment</TableHead>
+                        <TableHead className="text-right">Balance</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {amortizationSchedule.map((entry) => (
+                        <TableRow key={entry.paymentNumber}>
+                          <TableCell>{entry.paymentNumber}</TableCell>
+                          <TableCell>{entry.paymentDate}</TableCell>
+                          <TableCell className="text-right">R {entry.principalPayment.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                          <TableCell className="text-right">R {entry.interestPayment.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                          <TableCell className="text-right">R {entry.totalPayment.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                          <TableCell className="text-right">R {entry.remainingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Calculator className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>Please select a loan from the Loan Register to view the schedule.</p>
+                    <Button variant="outline" className="mt-4" onClick={() => setActiveTab("loans")}>
+                      Go to Loan Register
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
+
+        <DeleteConfirmationDialog 
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+          title="Delete Loan"
+          description={`Are you sure you want to delete loan ${loanToDelete?.loan_number}? This action cannot be undone.`}
+        />
       </div>
-      <Chatbot />
     </MainLayout>
   );
 };

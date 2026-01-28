@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Plus, Printer, Download, Calculator, CreditCard } from "lucide-react";
+import { Users, Plus, Printer, Download, Calculator, CreditCard, Eye, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { ViewEmployeeDialog } from "@/components/EmployeeManagement/ViewEmployeeDialog";
+import { EmployeeFormDialog } from "@/components/EmployeeManagement/EmployeeFormDialog";
+import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 
 interface Employee {
   id: string;
@@ -48,21 +51,20 @@ interface PayrollEntry {
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [payrollEntries, setPayrollEntries] = useState<PayrollEntry[]>([]);
+  
+  // Dialog states
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
+  
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+
   const [showPayrollForm, setShowPayrollForm] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
-  const [employeeForm, setEmployeeForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    position: "",
-    department: "",
-    hireDate: "",
-    grossSalary: "",
-    taxNumber: "",
-    bankAccount: "",
-  });
+  
   const [payrollForm, setPayrollForm] = useState({
     employeeId: "",
     payPeriod: "",
@@ -117,43 +119,67 @@ const EmployeeManagement = () => {
     return Math.min(grossSalary * 0.01, 177.12);
   };
 
-  const handleEmployeeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newEmployee: Employee = {
-      id: Date.now().toString(),
-      employeeNumber: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
-      firstName: employeeForm.firstName,
-      lastName: employeeForm.lastName,
-      email: employeeForm.email,
-      phone: employeeForm.phone,
-      position: employeeForm.position,
-      department: employeeForm.department,
-      hireDate: employeeForm.hireDate,
-      grossSalary: parseFloat(employeeForm.grossSalary),
-      taxNumber: employeeForm.taxNumber,
-      bankAccount: employeeForm.bankAccount,
-      status: "active",
-    };
+  const handleViewEmployee = (employee: Employee) => {
+    setViewingEmployee(employee);
+    setIsViewOpen(true);
+  };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setShowEmployeeForm(true);
+  };
+
+  const handleDeleteEmployee = (id: string) => {
+    const employee = employees.find(e => e.id === id);
+    if (employee) {
+      setDeletingEmployee(employee);
+      setIsDeleteOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingEmployee) {
+      setEmployees(employees.filter(e => e.id !== deletingEmployee.id));
+      setIsDeleteOpen(false);
+      setDeletingEmployee(null);
+      toast({
+        title: "Success",
+        description: "Employee deleted successfully",
+      });
+    }
+  };
+
+  const handleEmployeeSubmit = (data: any) => {
+    if (editingEmployee) {
+      // Update existing employee
+      const updatedEmployees = employees.map(emp => 
+        emp.id === editingEmployee.id 
+          ? { ...emp, ...data, grossSalary: Number(data.grossSalary) }
+          : emp
+      );
+      setEmployees(updatedEmployees);
+      toast({
+        title: "Success",
+        description: "Employee updated successfully",
+      });
+    } else {
+      // Create new employee
+      const newEmployee: Employee = {
+        id: Date.now().toString(),
+        employeeNumber: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
+        ...data,
+        grossSalary: Number(data.grossSalary),
+        status: "active",
+      };
+      setEmployees([...employees, newEmployee]);
+      toast({
+        title: "Success",
+        description: "Employee added successfully",
+      });
+    }
     
-    setEmployees([...employees, newEmployee]);
-    setEmployeeForm({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      position: "",
-      department: "",
-      hireDate: "",
-      grossSalary: "",
-      taxNumber: "",
-      bankAccount: "",
-    });
     setShowEmployeeForm(false);
-    
-    toast({
-      title: "Success",
-      description: "Employee added successfully",
-    });
+    setEditingEmployee(null);
   };
 
   const handlePayrollSubmit = (e: React.FormEvent) => {
@@ -270,123 +296,38 @@ const EmployeeManagement = () => {
 
           <TabsContent value="employees" className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => setShowEmployeeForm(true)}>
+              <Button onClick={() => {
+                setEditingEmployee(null);
+                setShowEmployeeForm(true);
+              }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Employee
               </Button>
             </div>
 
-            {showEmployeeForm && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Add New Employee</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleEmployeeSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={employeeForm.firstName}
-                        onChange={(e) => setEmployeeForm({...employeeForm, firstName: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={employeeForm.lastName}
-                        onChange={(e) => setEmployeeForm({...employeeForm, lastName: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={employeeForm.email}
-                        onChange={(e) => setEmployeeForm({...employeeForm, email: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={employeeForm.phone}
-                        onChange={(e) => setEmployeeForm({...employeeForm, phone: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="position">Position</Label>
-                      <Input
-                        id="position"
-                        value={employeeForm.position}
-                        onChange={(e) => setEmployeeForm({...employeeForm, position: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="department">Department</Label>
-                      <Input
-                        id="department"
-                        value={employeeForm.department}
-                        onChange={(e) => setEmployeeForm({...employeeForm, department: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hireDate">Hire Date</Label>
-                      <Input
-                        id="hireDate"
-                        type="date"
-                        value={employeeForm.hireDate}
-                        onChange={(e) => setEmployeeForm({...employeeForm, hireDate: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="grossSalary">Gross Salary (R)</Label>
-                      <Input
-                        id="grossSalary"
-                        type="number"
-                        step="0.01"
-                        value={employeeForm.grossSalary}
-                        onChange={(e) => setEmployeeForm({...employeeForm, grossSalary: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="taxNumber">Tax Number</Label>
-                      <Input
-                        id="taxNumber"
-                        value={employeeForm.taxNumber}
-                        onChange={(e) => setEmployeeForm({...employeeForm, taxNumber: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="bankAccount">Bank Account</Label>
-                      <Input
-                        id="bankAccount"
-                        value={employeeForm.bankAccount}
-                        onChange={(e) => setEmployeeForm({...employeeForm, bankAccount: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="md:col-span-2 flex gap-2">
-                      <Button type="submit">Add Employee</Button>
-                      <Button type="button" variant="outline" onClick={() => setShowEmployeeForm(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            )}
+            <EmployeeFormDialog
+              open={showEmployeeForm}
+              onClose={() => {
+                setShowEmployeeForm(false);
+                setEditingEmployee(null);
+              }}
+              onSubmit={handleEmployeeSubmit}
+              editingEmployee={editingEmployee}
+            />
+
+            <ViewEmployeeDialog
+              open={isViewOpen}
+              onClose={() => setIsViewOpen(false)}
+              employee={viewingEmployee}
+            />
+
+            <DeleteConfirmationDialog
+              open={isDeleteOpen}
+              onClose={() => setIsDeleteOpen(false)}
+              onConfirm={handleConfirmDelete}
+              title="Delete Employee"
+              description={`Are you sure you want to delete ${deletingEmployee?.firstName} ${deletingEmployee?.lastName}? This action cannot be undone.`}
+            />
 
             <Card>
               <CardHeader>
@@ -408,6 +349,7 @@ const EmployeeManagement = () => {
                         <TableHead>Hire Date</TableHead>
                         <TableHead>Gross Salary</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -426,6 +368,31 @@ const EmployeeManagement = () => {
                             <Badge variant={employee.status === "active" ? "default" : "secondary"}>
                               {employee.status}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleViewEmployee(employee)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditEmployee(employee)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteEmployee(employee.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

@@ -7,6 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,6 +79,41 @@ export const BasicInfoSection = ({ profile, handleChange }: BasicInfoSectionProp
               value={profile.vatNumber}
               onChange={handleChange}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ownership">Form of Ownership</Label>
+            <Select
+              value={profile.ownership}
+              onValueChange={(value) => handleChange({ target: { name: 'ownership', value } })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select ownership" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sole">Sole Proprietorship</SelectItem>
+                <SelectItem value="partnership">Partnership</SelectItem>
+                <SelectItem value="llc">LLC</SelectItem>
+                <SelectItem value="pty_ltd">Private Company (Pty Ltd)</SelectItem>
+                <SelectItem value="soe">State Owned Entity (SOE)</SelectItem>
+                <SelectItem value="corp">Corporation</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="inventorySystem">Inventory System</Label>
+            <Select
+              value={profile.inventorySystem}
+              onValueChange={(value) => handleChange({ target: { name: 'inventorySystem', value } })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select system" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="periodic">Periodic (Cost of Sales calc)</SelectItem>
+                <SelectItem value="perpetual">Perpetual (Running Balance)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="description">Company Description</Label>

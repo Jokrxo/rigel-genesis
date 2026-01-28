@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -14,16 +16,18 @@ import { TransactionFields } from "./TransactionFields";
 import { PartySelectionFields } from "./PartySelectionFields";
 import { FormActions } from "./FormActions";
 
-export interface TransactionFormData {
-  date: Date;
-  amount: number;
-  description: string;
-  type: string;
-  category: string;
-  reference?: string;
-  party_type?: string;
-  party_id?: string;
-}
+const transactionSchema = z.object({
+  date: z.date({ required_error: "Date is required" }),
+  amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
+  description: z.string().min(1, "Description is required"),
+  type: z.string().min(1, "Type is required"),
+  category: z.string().min(1, "Category is required"),
+  reference: z.string().optional(),
+  party_type: z.string().optional(),
+  party_id: z.string().optional(),
+});
+
+export type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 interface TransactionFormProps {
   open: boolean;
@@ -39,7 +43,8 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
   const companyProfile = useCompanyProfile(open);
   const [lockedTransactionTypes, setLockedTransactionTypes] = useState(false);
   
-  const form = useForm<TransactionFormData>({
+  const form = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionSchema),
     defaultValues: {
       date: new Date(),
       amount: 0,
@@ -95,7 +100,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
     }
   };
 
-  const onSubmit = async (data: TransactionFormData) => {
+  const onSubmit = async (data: TransactionFormValues) => {
     setLoading(true);
     try {
       const {
@@ -109,6 +114,12 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
         amount: Math.abs(data.amount),
         date: data.date.toISOString(),
         description: data.description,
+        category: data.category,
+        reference_number: data.reference,
+        metadata: {
+          party_type: data.party_type,
+          party_id: data.party_id
+        }
       };
 
       const res = await apiFetch('/api/transactions', {

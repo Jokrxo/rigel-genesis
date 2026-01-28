@@ -12,6 +12,14 @@ enum OwnershipForm {
   partnership
   llc
   corp
+  pty_ltd
+  soe
+  other
+}
+
+enum InventorySystem {
+  periodic
+  perpetual
 }
 
 enum AccountType {
@@ -31,8 +39,16 @@ enum DisposalMethod {
 model Entity {
   id           String         @id @default(uuid())
   name         String
+  registrationNumber String?  @map("registration_number")
+  vatNumber    String?        @map("vat_number")
+  foundedDate  DateTime?      @map("founded_date")
+  description  String?
   address      String?
   ownership    OwnershipForm
+  inventorySystem InventorySystem @default(periodic) @map("inventory_system")
+  contactInfo  Json?          @map("contact_info")
+  bankInfo     Json?          @map("bank_info")
+  logoUrl      String?        @map("logo_url")
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 

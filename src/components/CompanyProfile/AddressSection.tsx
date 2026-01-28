@@ -9,6 +9,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CompanyProfile } from "./types";
 
 interface AddressSectionProps {
@@ -18,7 +25,7 @@ interface AddressSectionProps {
     section?: string,
     field?: string
   ) => void;
-  handleProvinceChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleProvinceChange: (value: string) => void;
 }
 
 export const AddressSection = ({ profile, handleChange, handleProvinceChange }: AddressSectionProps) => {
@@ -65,23 +72,22 @@ export const AddressSection = ({ profile, handleChange, handleProvinceChange }: 
           </div>
           <div className="space-y-2">
             <Label htmlFor="province">Province</Label>
-            <select
-              id="province"
-              name="province"
-              className="financial-input"
-              value={profile.address.province}
-              onChange={handleProvinceChange}
-            >
-              <option value="Eastern Cape">Eastern Cape</option>
-              <option value="Free State">Free State</option>
-              <option value="Gauteng">Gauteng</option>
-              <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-              <option value="Limpopo">Limpopo</option>
-              <option value="Mpumalanga">Mpumalanga</option>
-              <option value="North West">North West</option>
-              <option value="Northern Cape">Northern Cape</option>
-              <option value="Western Cape">Western Cape</option>
-            </select>
+            <Select value={profile.address.province} onValueChange={handleProvinceChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select province" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Eastern Cape">Eastern Cape</SelectItem>
+                <SelectItem value="Free State">Free State</SelectItem>
+                <SelectItem value="Gauteng">Gauteng</SelectItem>
+                <SelectItem value="KwaZulu-Natal">KwaZulu-Natal</SelectItem>
+                <SelectItem value="Limpopo">Limpopo</SelectItem>
+                <SelectItem value="Mpumalanga">Mpumalanga</SelectItem>
+                <SelectItem value="North West">North West</SelectItem>
+                <SelectItem value="Northern Cape">Northern Cape</SelectItem>
+                <SelectItem value="Western Cape">Western Cape</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="country">Country</Label>

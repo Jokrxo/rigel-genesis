@@ -8,6 +8,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CompanyProfile } from "./types";
 
 interface BankingSectionProps {
@@ -17,8 +24,8 @@ interface BankingSectionProps {
     section?: string,
     field?: string
   ) => void;
-  handleBankChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  handleAccountTypeChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleBankChange: (value: string) => void;
+  handleAccountTypeChange: (value: string) => void;
 }
 
 export const BankingSection = ({ 
@@ -39,37 +46,35 @@ export const BankingSection = ({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="bank">Bank Name</Label>
-            <select
-              id="bank"
-              name="bank"
-              className="financial-input"
-              value={profile.bankInfo.bank}
-              onChange={handleBankChange}
-            >
-              <option value="ABSA">ABSA</option>
-              <option value="Capitec Bank">Capitec Bank</option>
-              <option value="First National Bank">First National Bank</option>
-              <option value="Nedbank">Nedbank</option>
-              <option value="Standard Bank">Standard Bank</option>
-              <option value="Investec">Investec</option>
-              <option value="Discovery Bank">Discovery Bank</option>
-              <option value="TymeBank">TymeBank</option>
-            </select>
+            <Select value={profile.bankInfo.bank} onValueChange={handleBankChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select bank" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ABSA">ABSA</SelectItem>
+                <SelectItem value="Capitec Bank">Capitec Bank</SelectItem>
+                <SelectItem value="First National Bank">First National Bank</SelectItem>
+                <SelectItem value="Nedbank">Nedbank</SelectItem>
+                <SelectItem value="Standard Bank">Standard Bank</SelectItem>
+                <SelectItem value="Investec">Investec</SelectItem>
+                <SelectItem value="Discovery Bank">Discovery Bank</SelectItem>
+                <SelectItem value="TymeBank">TymeBank</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="accountType">Account Type</Label>
-            <select
-              id="accountType"
-              name="accountType"
-              className="financial-input"
-              value={profile.bankInfo.accountType}
-              onChange={handleAccountTypeChange}
-            >
-              <option value="Current Account">Current Account</option>
-              <option value="Business Account">Business Account</option>
-              <option value="Savings Account">Savings Account</option>
-              <option value="Cheque Account">Cheque Account</option>
-            </select>
+            <Select value={profile.bankInfo.accountType} onValueChange={handleAccountTypeChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select account type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Current Account">Current Account</SelectItem>
+                <SelectItem value="Business Account">Business Account</SelectItem>
+                <SelectItem value="Savings Account">Savings Account</SelectItem>
+                <SelectItem value="Cheque Account">Cheque Account</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="accountNumber">Account Number</Label>

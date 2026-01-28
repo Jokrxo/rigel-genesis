@@ -53,7 +53,7 @@ const pricingTiers: PricingTier[] = [
   {
     name: "Gold",
     description: "Comprehensive solution for established businesses",
-    price: "899",
+    price: "550",
     currency: "R",
     billingCycle: "/month",
     features: [

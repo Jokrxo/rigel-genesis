@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -10,22 +12,24 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-interface CustomerFormData {
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  vat_number: string;
-  address_line1: string;
-  address_line2: string;
-  city: string;
-  province: string;
-  postal_code: string;
-  country: string;
-  payment_terms: number;
-  credit_limit: number;
-  notes: string;
-}
+const customerSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  vat_number: z.string().optional(),
+  address_line1: z.string().optional(),
+  address_line2: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  postal_code: z.string().optional(),
+  country: z.string().default("South Africa"),
+  payment_terms: z.coerce.number().min(0, "Payment terms must be positive"),
+  credit_limit: z.coerce.number().min(0, "Credit limit must be positive"),
+  notes: z.string().optional(),
+});
+
+type CustomerFormValues = z.infer<typeof customerSchema>;
 
 interface Customer {
   id: string;
@@ -62,7 +66,8 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<CustomerFormData>({
+  const form = useForm<CustomerFormValues>({
+    resolver: zodResolver(customerSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -119,7 +124,7 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
     }
   }, [editingCustomer, form]);
 
-  const onSubmit = async (data: CustomerFormData) => {
+  const onSubmit = async (data: CustomerFormValues) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();

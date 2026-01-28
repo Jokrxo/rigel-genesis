@@ -7,11 +7,14 @@ import type { Supplier } from "@/components/SupplierManagement/SupplierForm";
 
 type Customer = Database["public"]["Tables"]["customers"]["Row"];
 
+import { UseFormReturn } from "react-hook-form";
+import { TransactionFormValues } from "./TransactionFormMain";
+
 interface PartySelectionFieldsProps {
-  form: any; // You may further type this if you know the form type
+  form: UseFormReturn<TransactionFormValues>;
   customers: Customer[];
   suppliers: Supplier[];
-  watchedPartyType: string;
+  watchedPartyType: string | undefined;
 }
 
 const partyTypes = [

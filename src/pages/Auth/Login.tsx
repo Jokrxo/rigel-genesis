@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { emailSchema } from "@/utils/validation";
 import rigelLogo from "@/assets/rigel-logo.jpg";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
+import globeImage from "@/assets/globe.jpg";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -60,108 +61,120 @@ const Login = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <div className="flex flex-col items-center text-center mb-6">
+      <div className="auth-card overflow-hidden">
+        <div className="relative h-48 w-full mb-6">
           <img 
-            src={rigelFullLogo}
-            alt="Rigel - Powered by Stella Lumen" 
-            className="h-40 w-auto mb-4 object-contain"
+            src={globeImage} 
+            alt="Global Financial Network" 
+            className="w-full h-full object-cover"
           />
-          <h2 className="text-2xl font-bold text-foreground">Welcome to Rigel</h2>
-          <p className="mt-2 text-sm text-muted-foreground text-justify max-w-sm mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex items-end justify-center pb-4">
+             <img 
+              src={rigelFullLogo}
+              alt="Rigel - Powered by Stella Lumen" 
+              className="h-16 w-auto object-contain bg-white/80 rounded px-2 py-1 backdrop-blur-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center text-center mb-6 px-6">
+          <h2 className="text-2xl font-bold text-black">Welcome to Rigel</h2>
+          <p className="mt-2 text-sm text-black text-justify max-w-sm mx-auto">
             Log in to your account to continue using our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
 
-        <div className="mt-8 space-y-3">
-          <Button
-            onClick={handleGoogleLogin}
-            variant="outline"
-            className="w-full justify-center gap-2 py-6 border-border hover:bg-accent"
-          >
-            <img 
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-              alt="Google" 
-              className="h-5 w-5 mr-2" 
-            />
-            <span>Continue with Google</span>
-          </Button>
+        <div className="px-6 pb-6">
+          <div className="space-y-3">
+            <Button
+              onClick={handleGoogleLogin}
+              variant="outline"
+              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent text-black"
+            >
+              <img 
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                alt="Google" 
+                className="h-5 w-5 mr-2" 
+              />
+              <span>Continue with Google</span>
+            </Button>
 
-          <Button
-            onClick={handleFacebookLogin}
-            variant="outline"
-            className="w-full justify-center gap-2 py-6 border-border hover:bg-accent"
-          >
-            <div className="h-5 w-5 mr-2 bg-[#1877F3] rounded-full flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-            </div>
-            <span>Continue with Facebook</span>
-          </Button>
-        </div>
-
-        <div className="my-5 flex items-center">
-          <Separator className="flex-1" />
-          <span className="px-3 text-xs text-muted-foreground">or</span>
-          <Separator className="flex-1" />
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
-              required
-              className="py-6"
-            />
+            <Button
+              onClick={handleFacebookLogin}
+              variant="outline"
+              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent text-black"
+            >
+              <div className="h-5 w-5 mr-2 bg-[#1877F3] rounded-full flex items-center justify-center">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </div>
+              <span>Continue with Facebook</span>
+            </Button>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link
-                to="/forgot-password"
-                className="text-xs text-primary hover:underline"
-              >
-                Forgot password?
+
+          <div className="my-5 flex items-center">
+            <Separator className="flex-1" />
+            <span className="px-3 text-xs text-muted-foreground">or</span>
+            <Separator className="flex-1" />
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-black">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                required
+                className="py-6 text-black"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-black">Password</Label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="py-6 text-black"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Log in"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-black">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-primary hover:underline font-medium">
+              Create an account
+            </Link>
+          </div>
+
+          <div className="mt-6 border-t border-border pt-6">
+            <div className="flex items-center justify-center gap-2">
+              <QrCode className="h-4 w-4 text-muted-foreground" />
+              <Link to="/qr-code" className="text-xs text-muted-foreground hover:underline">
+                Share application via QR code
               </Link>
             </div>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="py-6"
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg"
-            disabled={isLoading}
-          >
-            {isLoading ? "Logging in..." : "Log in"}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-sm">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-primary hover:underline font-medium">
-            Create an account
-          </Link>
-        </div>
-
-        <div className="mt-6 border-t border-border pt-6">
-          <div className="flex items-center justify-center gap-2">
-            <QrCode className="h-4 w-4 text-muted-foreground" />
-            <Link to="/qr-code" className="text-xs text-muted-foreground hover:underline">
-              Share application via QR code
-            </Link>
           </div>
         </div>
       </div>
