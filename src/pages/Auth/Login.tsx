@@ -80,8 +80,8 @@ const Login = () => {
         </div>
 
         <div className="flex flex-col items-center text-center mb-6 px-6">
-          <h2 className="text-2xl font-bold text-black">Welcome to Rigel</h2>
-          <p className="mt-2 text-sm text-black text-justify max-w-sm mx-auto">
+          <h2 className="text-2xl font-bold text-gray-900">Welcome to Rigel</h2>
+          <p className="mt-2 text-sm text-gray-700 leading-relaxed text-justify max-w-sm mx-auto">
             Log in to your account to continue using our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
@@ -91,7 +91,7 @@ const Login = () => {
             <Button
               onClick={handleGoogleLogin}
               variant="outline"
-              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent text-black"
+              className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50 text-gray-800 font-medium"
             >
               <img 
                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
@@ -105,7 +105,7 @@ const Login = () => {
               onClick={handleFacebookLogin}
               disabled={isLoading}
               variant="outline"
-              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent text-black"
+              className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50 text-gray-800 font-medium"
             >
               <div className="h-5 w-5 mr-2 bg-[#1877F3] rounded-full flex items-center justify-center">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
@@ -118,13 +118,13 @@ const Login = () => {
 
           <div className="my-5 flex items-center">
             <Separator className="flex-1" />
-            <span className="px-3 text-xs text-black font-medium">or</span>
+            <span className="px-3 text-xs text-gray-600 font-medium">or</span>
             <Separator className="flex-1" />
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-black">Email address</Label>
+              <Label htmlFor="email" className="text-gray-800 font-medium">Email address</Label>
               <Input
                 id="email"
                 type="email"
@@ -132,15 +132,15 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
                 required
-                className="py-6 text-black placeholder:text-gray-500"
+                className="py-6 text-gray-900 placeholder:text-gray-400 bg-white border-gray-300"
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-black">Password</Label>
+                <Label htmlFor="password" className="text-gray-800 font-medium">Password</Label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-primary hover:underline font-medium"
                 >
                   Forgot password?
                 </Link>
@@ -152,7 +152,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="py-6 text-black placeholder:text-gray-500"
+                className="py-6 text-gray-900 placeholder:text-gray-400 bg-white border-gray-300"
               />
             </div>
             <Button
@@ -164,17 +164,17 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-black">
+          <div className="mt-6 text-center text-sm text-gray-700">
             Don't have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline font-medium">
+            <Link to="/register" className="text-primary hover:underline font-semibold">
               Create an account
             </Link>
           </div>
 
-          <div className="mt-6 border-t border-border pt-6">
+          <div className="mt-6 border-t border-gray-200 pt-6">
             <div className="flex items-center justify-center gap-2">
-              <QrCode className="h-4 w-4 text-black" />
-              <Link to="/qr-code" className="text-xs text-black hover:underline">
+              <QrCode className="h-4 w-4 text-gray-600" />
+              <Link to="/qr-code" className="text-xs text-gray-600 hover:underline font-medium">
                 Share application via QR code
               </Link>
             </div>
