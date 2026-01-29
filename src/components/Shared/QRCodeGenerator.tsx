@@ -8,7 +8,7 @@ import { QrCode, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const QRCodeGenerator = () => {
-  const [url, setUrl] = useState("https://www.sa-financial-insight.com/register");
+  const [url, setUrl] = useState("https://id-preview--9d33a385-d161-4bcf-98f9-695c6e48f732.lovable.app/");
   const [qrCodeImage, setQrCodeImage] = useState("");
   const { toast } = useToast();
   const qrImageRef = useRef<HTMLImageElement>(null);

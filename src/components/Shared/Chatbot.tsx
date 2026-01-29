@@ -109,7 +109,10 @@ export const Chatbot = () => {
           <Button 
             size="sm" 
             className="flex items-center gap-2"
-            onClick={() => window.open("tel:0739882190")}
+            onClick={() => {
+              window.open("tel:0739882190");
+              setContactOptions(false);
+            }}
           >
             <Phone size={16} />
             <span>Call</span>
@@ -117,7 +120,10 @@ export const Chatbot = () => {
           <Button 
             size="sm" 
             className="flex items-center gap-2"
-            onClick={() => window.open("https://wa.me/27739882190")}
+            onClick={() => {
+              window.open("https://wa.me/27739882190");
+              setContactOptions(false);
+            }}
           >
             <MessageSquare size={16} />
             <span>WhatsApp</span>
@@ -125,7 +131,10 @@ export const Chatbot = () => {
           <Button 
             size="sm" 
             className="flex items-center gap-2"
-            onClick={() => window.open("mailto:luthando@stella-lumen.com")}
+            onClick={() => {
+              window.open("mailto:luthando@stella-lumen.com");
+              setContactOptions(false);
+            }}
           >
             <Mail size={16} />
             <span>Email</span>

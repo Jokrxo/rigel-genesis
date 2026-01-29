@@ -7,7 +7,6 @@ const QRCode = () => {
   return (
     <MainLayout>
       <QRCodeGenerator />
-      <Chatbot />
     </MainLayout>
   );
 };
