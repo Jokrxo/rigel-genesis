@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { apiFetch } from '@/api/client'
+import { transactionsApi } from "@/lib/transactions-api";
 import { CompanyProfile } from "@/components/CompanyProfile/types";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import { getTransactionTypesForOwnership } from "../hooks/useTransactionTypesForOwnership";
@@ -122,17 +122,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
         }
       };
 
-      const res = await apiFetch('/api/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const t = await res.json().catch(() => ({}));
-        throw new Error(t.error || 'Failed to create transaction');
-      }
-
-      const result = await res.json();
+      const result = await transactionsApi.create(payload);
       toast({ title: 'Transaction recorded', description: `Journal created: Debit ${result.suggested.debit.name}, Credit ${result.suggested.credit.name}` });
       form.reset();
       onSuccess();
