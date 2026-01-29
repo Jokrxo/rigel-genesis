@@ -240,6 +240,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithGithub = async () => {
+    try {
+      setLoading(true);
+      const redirectUrl = `${window.location.origin}/dashboard`;
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Redirecting to GitHub",
+        description: "Please complete the login process",
+      });
+    } catch (error: any) {
+      toast({
+        title: "GitHub login failed",
+        description: error.message || "Could not login with GitHub",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
