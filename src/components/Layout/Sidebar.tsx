@@ -47,226 +47,29 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Financial Analysis",
-    href: "/financial-analysis",
-    icon: TrendingUp,
-  },
-  {
-    title: "Import Statement",
-    href: "/import-statement",
-    icon: Upload,
-  },
-  {
-    title: "Transactions",
-    icon: CreditCard,
-    children: [
-      {
-        title: "Transaction Processing",
-        href: "/transaction-processing",
-        icon: FileText,
-      },
-      {
-        title: "Bank Movements",
-        href: "/bank-movements",
-        icon: TrendingUp,
-      },
-      {
-        title: "Director Transactions",
-        href: "/director-transactions",
-        icon: UserCheck,
-      },
-    ],
-  },
-  {
-    title: "Sales & Purchases",
-    icon: Users,
-    children: [
-      {
-        title: "Customers",
-        href: "/customers",
-        icon: Users,
-      },
-      {
-        title: "Suppliers",
-        href: "/suppliers",
-        icon: Truck,
-      },
-      {
-        title: "Documents",
-        href: "/documents",
-        icon: FileText,
-      },
-    ],
-  },
-  {
-    title: "Operations",
-    icon: Package,
-    children: [
-      {
-        title: "Inventory",
-        href: "/inventory",
-        icon: Package,
-      },
-      {
-        title: "Projects",
-        href: "/projects",
-        icon: Target,
-      },
-    ],
-  },
-  {
-    title: "Assets & Loans",
-    icon: Building2,
-    children: [
-      {
-        title: "Assets",
-        href: "/asset-management",
-        icon: Building2,
-      },
-      {
-        title: "Loans",
-        href: "/loan-management",
-        icon: CreditCard,
-      },
-      {
-        title: "Investments",
-        href: "/investments",
-        icon: PiggyBank,
-      },
-    ],
-  },
-  {
-    title: "Payroll",
-    icon: Briefcase,
-    children: [
-      {
-        title: "Employees",
-        href: "/employee-management",
-        icon: Briefcase,
-      },
-      {
-        title: "Payroll Run",
-        href: "/payroll-management",
-        icon: Calculator,
-      },
-    ],
-  },
-  {
-    title: "Tax Management",
-    icon: Calculator,
-    children: [
-      {
-        title: "Tax Dashboard",
-        href: "/tax-dashboard",
-        icon: LayoutDashboard,
-      },
-      {
-        title: "Tax Calculators",
-        href: "/tax-calculators",
-        icon: Calculator,
-      },
-    ],
-  },
-  {
-    title: "Financial Reports",
-    icon: BarChart3,
-    children: [
-      {
-        title: "Balance Sheet",
-        href: "/reports/balance-sheet",
-        icon: FileText,
-      },
-      {
-        title: "Income Statement",
-        href: "/reports/income-statement",
-        icon: FileText,
-      },
-      {
-        title: "Cash Flow",
-        href: "/reports/cash-flow",
-        icon: FileText,
-      },
-      {
-        title: "Equity",
-        href: "/reports/equity",
-        icon: FileText,
-      },
-      {
-        title: "Notes",
-        href: "/reports/notes",
-        icon: FileText,
-      },
-      {
-        title: "Trial Balance",
-        href: "/trial-balance",
-        icon: BarChart3,
-      },
-      {
-        title: "Monthly Reports",
-        href: "/monthly-reports",
-        icon: Calendar,
-      },
-      {
-        title: "Accounting Cycle",
-        href: "/accounting-cycle",
-        icon: FolderOpen,
-      },
-    ],
-  },
-  {
-    title: "General Ledger",
-    icon: BookOpen,
-    children: [
-      {
-        title: "View Ledger",
-        href: "/general-ledger",
-        icon: BookOpen,
-      },
-      {
-        title: "Ledger Posting",
-        href: "/general-ledger/posting",
-        icon: FileText,
-      },
-      {
-        title: "Journal Entries",
-        href: "/journal-entries",
-        icon: BookOpen,
-      },
-    ],
-  },
-  {
-    title: "AI Features",
-    href: "/ai-features",
-    icon: Sparkles,
-  },
-  {
     title: "Settings",
     icon: Settings,
     children: [
       {
-        title: "Company Profile",
-        href: "/company-profile",
-        icon: Building2,
-      },
-      {
-        title: "User Profile",
-        href: "/profile",
+        title: "Profile",
         icon: User,
-      },
-      {
-        title: "Sign-Up Wizard",
-        href: "/signup-wizard",
-        icon: FolderOpen,
-      },
-      {
-        title: "Pricing",
-        href: "/pricing",
-        icon: DollarSign,
+        children: [
+          {
+            title: "Sign-up Wizard",
+            href: "/signup-wizard",
+            icon: FolderOpen,
+          },
+          {
+            title: "Import Statement",
+            href: "/import-statement",
+            icon: Upload,
+          },
+          {
+            title: "Company Profile",
+            href: "/company-profile",
+            icon: Building2,
+          },
+        ],
       },
       {
         title: "QR Code",
@@ -278,7 +81,199 @@ const navItems: NavItem[] = [
         href: "/help",
         icon: HelpCircle,
       },
+      {
+        title: "App Settings",
+        href: "/settings",
+        icon: Settings,
+      },
     ],
+  },
+  {
+    title: "Financial Reports",
+    icon: BarChart3,
+    children: [
+      {
+        title: "Financial Dashboard",
+        icon: LayoutDashboard,
+        children: [
+          {
+            title: "Bank Balance Movement",
+            href: "/bank-movements",
+            icon: TrendingUp,
+          },
+          {
+            title: "Tax Dashboard",
+            href: "/tax-dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            title: "Financial Analysis",
+            href: "/financial-analysis",
+            icon: TrendingUp,
+          },
+        ],
+      },
+      {
+        title: "Reports Summary",
+        href: "/reports",
+        icon: FileText,
+      },
+      {
+        title: "Balance Sheet",
+        href: "/reports/balance-sheet",
+        icon: FileText,
+      },
+      {
+        title: "Income Statement",
+        href: "/reports/income-statement",
+        icon: FileText,
+      },
+      {
+        title: "Cash Flow Statement",
+        href: "/reports/cash-flow",
+        icon: FileText,
+      },
+      {
+        title: "Statement of Changes in Equity",
+        href: "/reports/equity",
+        icon: FileText,
+      },
+      {
+        title: "Notes to Financial Statements",
+        href: "/reports/notes",
+        icon: FileText,
+      },
+      {
+        title: "Trial Balance",
+        href: "/trial-balance",
+        icon: BarChart3,
+      },
+      {
+        title: "General Ledger",
+        icon: BookOpen,
+        children: [
+          {
+            title: "Ledger Posting",
+            href: "/general-ledger/posting",
+            icon: FileText,
+          },
+        ],
+      },
+      {
+        title: "Tax Management",
+        icon: Calculator,
+        children: [
+          {
+            title: "Tax Calculators",
+            href: "/tax-calculators",
+            icon: Calculator,
+          },
+        ],
+      },
+      {
+        title: "Transaction Processing",
+        icon: CreditCard,
+        children: [
+          {
+            title: "Supplier Management",
+            href: "/suppliers",
+            icon: Truck,
+          },
+          {
+            title: "Revenue",
+            icon: DollarSign,
+            children: [
+              {
+                title: "Customer Management",
+                href: "/customers",
+                icon: Users,
+              },
+              {
+                title: "Document Management",
+                href: "/documents",
+                icon: FileText,
+              },
+            ],
+          },
+          {
+            title: "Asset Management",
+            href: "/asset-management",
+            icon: Building2,
+          },
+          {
+            title: "Loan Management",
+            href: "/loan-management",
+            icon: CreditCard,
+          },
+          {
+            title: "Investments",
+            href: "/investments",
+            icon: PiggyBank,
+          },
+          {
+            title: "Payroll",
+            icon: Briefcase,
+            children: [
+              {
+                title: "Employee Management",
+                href: "/employee-management",
+                icon: Briefcase,
+              },
+              {
+                title: "Payroll Management",
+                href: "/payroll-management",
+                icon: Calculator,
+              },
+            ],
+          },
+          {
+            title: "Director’s Transactions",
+            href: "/director-transactions",
+            icon: UserCheck,
+          },
+          {
+            title: "Inventory Management",
+            href: "/inventory",
+            icon: Package,
+          },
+          {
+            title: "Project Management",
+            href: "/projects",
+            icon: Target,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Monthly Reports",
+    href: "/monthly-reports",
+    icon: Calendar,
+  },
+  {
+    title: "Trial Balance",
+    href: "/trial-balance",
+    icon: BarChart3,
+  },
+  {
+    title: "Pricing",
+    href: "/pricing",
+    icon: DollarSign,
+  },
+  {
+    title: "AI Features",
+    href: "/ai-features",
+    icon: Sparkles,
+  },
+  {
+    title: "Accounting Cycle",
+    href: "/accounting-cycle",
+    icon: FolderOpen,
+  },
+  {
+    title: "Journal Entries",
+    href: "/journal-entries",
+    icon: BookOpen,
   },
 ];
 
