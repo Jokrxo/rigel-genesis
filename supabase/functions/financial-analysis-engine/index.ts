@@ -272,8 +272,8 @@ Return JSON format:
       })
       .eq('id', fileId);
 
-    // Generate financial statements in background  
-    EdgeRuntime.waitUntil(generateFinancialStatements(supabase, userId, fileId, processedData));
+    // Generate financial statements in background (fire and forget)
+    generateFinancialStatements(supabase, userId, fileId, processedData).catch(console.error);
 
     return new Response(
       JSON.stringify({
@@ -286,11 +286,12 @@ Return JSON format:
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in financial-analysis-engine:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: errorMessage,
         success: false 
       }),
       { 
