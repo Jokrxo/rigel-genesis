@@ -61,6 +61,14 @@ const Register = () => {
     }
   };
 
+  const handleGithubLogin = async () => {
+    try {
+      await loginWithGithub();
+    } catch (error) {
+      // Error is handled in useAuth
+    }
+  };
+
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center p-4">
       {/* Background Image with Overlay */}
