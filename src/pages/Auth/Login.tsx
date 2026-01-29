@@ -89,7 +89,7 @@ const Login = () => {
 
         <div className="flex flex-col items-center text-center mb-6 px-6">
           <h2 className="text-2xl font-bold text-gray-900">Welcome to Rigel</h2>
-          <p className="mt-2 text-sm text-gray-700 leading-relaxed text-justify max-w-sm mx-auto">
+          <p className="mt-2 text-base text-gray-800 leading-relaxed text-center max-w-sm mx-auto">
             Log in to your account to continue using our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
@@ -146,7 +146,7 @@ const Login = () => {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-800 font-medium">Email address</Label>
+              <Label htmlFor="email" className="text-gray-900 font-semibold">Email address</Label>
               <Input
                 id="email"
                 type="email"
@@ -159,7 +159,7 @@ const Login = () => {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-gray-800 font-medium">Password</Label>
+                <Label htmlFor="password" className="text-gray-900 font-semibold">Password</Label>
                 <Link
                   to="/forgot-password"
                   className="text-xs text-primary hover:underline font-medium"

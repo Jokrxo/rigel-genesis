@@ -47,6 +47,11 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
     title: "Settings",
     icon: Settings,
     children: [

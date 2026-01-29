@@ -92,7 +92,7 @@ const Register = () => {
 
         <div className="flex flex-col items-center text-center mb-6 px-6">
           <h2 className="text-2xl font-bold text-gray-900">Create an account</h2>
-          <p className="mt-2 text-sm text-gray-700 leading-relaxed text-justify max-w-sm mx-auto">
+          <p className="mt-2 text-base text-gray-800 leading-relaxed text-center max-w-sm mx-auto">
             Join Rigel to manage your finances with our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
@@ -171,7 +171,7 @@ const Register = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-800 font-medium">Password</Label>
+            <Label htmlFor="password" className="text-gray-900 font-semibold">Password</Label>
             <Input
               id="password"
               type="password"
