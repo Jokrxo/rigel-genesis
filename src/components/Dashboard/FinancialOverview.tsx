@@ -9,101 +9,92 @@ import ExpenseBreakdownChart from "./FinancialOverview/ExpenseBreakdownChart";
 import IncomeBreakdownChart from "./FinancialOverview/IncomeBreakdownChart";
 import { ExportControls } from "./ExportControls";
 import { formatCurrency } from "@/utils/exportUtils";
+import { useFinancialData } from "@/hooks/useFinancialData";
 
-const monthlyData = [
-  { month: "Jan", income: 15000, expenses: 12000 },
-  { month: "Feb", income: 16500, expenses: 12500 },
-  { month: "Mar", income: 14000, expenses: 13000 },
-  { month: "Apr", income: 18000, expenses: 12800 },
-  { month: "May", income: 19500, expenses: 13500 },
-  { month: "Jun", income: 21000, expenses: 14000 },
-];
+interface MonthlyData {
+  month: string;
+  income: number;
+  expenses: number;
+}
 
-const expenseBreakdown = [
-  { name: "Rent", value: 3500, color: "#0088FE" },
-  { name: "Salaries", value: 5500, color: "#00C49F" },
-  { name: "Utilities", value: 1200, color: "#FFBB28" },
-  { name: "Marketing", value: 2300, color: "#FF8042" },
-  { name: "Supplies", value: 1800, color: "#8884d8" },
-];
-
-const incomeBreakdown = [
-  { name: "Product Sales", value: 12000, color: "#8884d8" },
-  { name: "Services", value: 6000, color: "#82ca9d" },
-  { name: "Consulting", value: 3000, color: "#ffc658" },
-];
+interface BreakdownData {
+  name: string;
+  value: number;
+  color: string;
+}
 
 export const FinancialOverview = () => {
   const [chartType] = useState<'line' | 'bar'>('line');
-  const [dashboardData, setDashboardData] = useState({
-    totalRevenue: 0,
-    totalExpenses: 0,
+  const { getBalanceSheetData, getIncomeStatementData, getBankBalance } = useFinancialData();
+  const [financialMetrics, setFinancialMetrics] = useState({
+    totalAssets: 0,
+    totalLiabilities: 0,
+    totalEquity: 0,
+    operatingExpenses: 0,
+    bankBalance: 0,
     netProfit: 0,
-    totalFiles: 0,
-    totalTransactions: 0,
-    totalIssues: 0
+    totalRevenue: 0
   });
 
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [expenseBreakdown, setExpenseBreakdown] = useState<BreakdownData[]>([]);
+  const [incomeBreakdown, setIncomeBreakdown] = useState<BreakdownData[]>([]);
+
   useEffect(() => {
-    fetchDashboardData();
-    
-    // Set up real-time subscription for dashboard updates
-    const channel = supabase
-      .channel('dashboard-updates')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'files'
-      }, () => {
-        fetchDashboardData();
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'transactions'
-      }, () => {
-        fetchDashboardData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_file_overview');
+    const fetchData = async () => {
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
       
-      if (error) {
-        console.error('Error fetching dashboard data:', error);
-        return;
-      }
+      const balanceSheet = getBalanceSheetData(today);
+      const incomeStatement = getIncomeStatementData(startOfYear, today);
+      const currentBankBalance = getBankBalance();
 
-      // Aggregate all the data
-      const aggregated = data.reduce((acc: any, file: any) => {
-        acc.totalRevenue += Math.abs(file.total_credits || 0);
-        acc.totalExpenses += Math.abs(file.total_debits || 0);
-        acc.totalFiles += 1;
-        acc.totalTransactions += file.transaction_count || 0;
-        acc.totalIssues += file.issues_count || 0;
-        return acc;
-      }, {
-        totalRevenue: 0,
-        totalExpenses: 0,
-        totalFiles: 0,
-        totalTransactions: 0,
-        totalIssues: 0
+      setFinancialMetrics({
+        totalAssets: balanceSheet.assets.total,
+        totalLiabilities: balanceSheet.liabilities.total,
+        totalEquity: balanceSheet.equity.total,
+        operatingExpenses: incomeStatement.expenses,
+        bankBalance: currentBankBalance,
+        netProfit: incomeStatement.netProfit,
+        totalRevenue: incomeStatement.revenue
       });
 
-      aggregated.netProfit = aggregated.totalRevenue - aggregated.totalExpenses;
+      // Generate Monthly Data (Last 6 months)
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          const monthName = d.toLocaleString('default', { month: 'short' });
+          const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+          const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+          
+          const monthData = getIncomeStatementData(startOfMonth, endOfMonth);
+          months.push({
+              month: monthName,
+              income: monthData.revenue,
+              expenses: monthData.expenses
+          });
+      }
+      setMonthlyData(months);
       
-      setDashboardData(aggregated);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    }
-  };
-  
+      // Placeholder breakdown data (In a real app, this would be fetched from GL categories)
+      setExpenseBreakdown([
+          { name: "Rent", value: incomeStatement.expenses * 0.3, color: "#0088FE" },
+          { name: "Salaries", value: incomeStatement.expenses * 0.4, color: "#00C49F" },
+          { name: "Utilities", value: incomeStatement.expenses * 0.1, color: "#FFBB28" },
+          { name: "Marketing", value: incomeStatement.expenses * 0.1, color: "#FF8042" },
+          { name: "Other", value: incomeStatement.expenses * 0.1, color: "#8884d8" },
+      ]);
+      
+      setIncomeBreakdown([
+          { name: "Sales", value: incomeStatement.revenue * 0.8, color: "#8884d8" },
+          { name: "Services", value: incomeStatement.revenue * 0.2, color: "#82ca9d" },
+      ]);
+    };
+
+    fetchData();
+  }, [getBalanceSheetData, getIncomeStatementData, getBankBalance]);
+
   const handlePrintReport = () => {
     window.print();
   };
@@ -128,10 +119,10 @@ export const FinancialOverview = () => {
   // Prepare data for export
   const exportData = {
     summary: {
-      totalRevenue: 124500,
-      totalExpenses: 78300,
-      netProfit: 46200,
-      taxLiability: 12936
+      totalRevenue: financialMetrics.totalRevenue,
+      totalExpenses: financialMetrics.operatingExpenses,
+      netProfit: financialMetrics.netProfit,
+      taxLiability: 0 // Placeholder
     },
     monthlyData,
     expenseBreakdown,
@@ -139,13 +130,14 @@ export const FinancialOverview = () => {
   };
 
   const csvData = {
-    headers: ["Month", "Income", "Expenses", "Net"],
-    rows: monthlyData.map(item => [
-      item.month,
-      item.income,
-      item.expenses,
-      item.income - item.expenses
-    ]),
+    headers: ["Metric", "Value"],
+    rows: [
+      ["Total Assets", financialMetrics.totalAssets],
+      ["Total Liabilities", financialMetrics.totalLiabilities],
+      ["Total Equity", financialMetrics.totalEquity],
+      ["Operating Expenses", financialMetrics.operatingExpenses],
+      ["Net Profit", financialMetrics.netProfit]
+    ],
     filename: "financial_overview.csv"
   };
 
@@ -171,28 +163,34 @@ export const FinancialOverview = () => {
         </div>
       </div>
       
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
-          title="Total Revenue"
-          value={`R ${dashboardData.totalRevenue.toLocaleString()}`}
-          change={12.5}
+          title="Total Assets"
+          value={`R ${financialMetrics.totalAssets.toLocaleString()}`}
+          change={0}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
-          title="Total Expenses"
-          value={`R ${dashboardData.totalExpenses.toLocaleString()}`}
-          change={5.2}
+          title="Total Liabilities"
+          value={`R ${financialMetrics.totalLiabilities.toLocaleString()}`}
+          change={0}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
-          title="Net Profit"
-          value={`R ${dashboardData.netProfit.toLocaleString()}`}
-          change={8.7}
+          title="Total Equity"
+          value={`R ${financialMetrics.totalEquity.toLocaleString()}`}
+          change={0}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
-          title="Files Processed"
-          value={dashboardData.totalFiles.toString()}
+          title="Operating Expenses"
+          value={`R ${financialMetrics.operatingExpenses.toLocaleString()}`}
+          change={0}
+          icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
+        />
+         <StatCard
+          title="Bank Balance"
+          value={`R ${financialMetrics.bankBalance.toLocaleString()}`}
           change={0}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />

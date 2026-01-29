@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,26 +80,22 @@ const PayrollManagement = () => {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchEmployees();
-    fetchPayrollEntries();
-    generatePayslips();
-  }, []);
-
-  const fetchEmployees = () => {
+  const fetchEmployees = useCallback(() => {
     // This would be replaced with actual API call
     setEmployees([]);
-  };
+  }, []);
 
-  const fetchPayrollEntries = () => {
+  const fetchPayrollEntries = useCallback(() => {
     // This would be replaced with actual API call
     setPayrollEntries([]);
-  };
+  }, []);
 
-  const generatePayslips = () => {
+  const generatePayslips = useCallback(() => {
     // Generate payslips from payroll entries
-    const generatedPayslips: PayslipData[] = payrollEntries.map(entry => {
-      const employee = employees.find(emp => emp.id === entry.employeeId);
+    const generatedPayslips = payrollEntries.map(entry => {
+      const employee = employees.find(e => e.id === entry.employeeId);
+      const totalDeductions = entry.payeTax + entry.uif + entry.medicalAid + entry.pensionFund;
+      
       return {
         id: entry.id,
         employeeId: entry.employeeId,
@@ -113,13 +109,19 @@ const PayrollManagement = () => {
         uif: entry.uif,
         medicalAid: entry.medicalAid,
         pensionFund: entry.pensionFund,
-        totalDeductions: entry.payeTax + entry.uif + entry.medicalAid + entry.pensionFund,
+        totalDeductions,
         netSalary: entry.netSalary,
-        processedDate: entry.processedDate,
+        processedDate: entry.processedDate
       };
     });
     setPayslips(generatedPayslips);
-  };
+  }, [payrollEntries, employees]);
+
+  useEffect(() => {
+    fetchEmployees();
+    fetchPayrollEntries();
+    generatePayslips();
+  }, [fetchEmployees, fetchPayrollEntries, generatePayslips]);
 
   const calculateSouthAfricanTax = (grossSalary: number) => {
     // Simplified PAYE tax calculation for South Africa (2024 tax year)

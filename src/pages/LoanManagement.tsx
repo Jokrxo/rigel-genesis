@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,13 +60,7 @@ const LoanManagement = () => {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (user) {
-      fetchLoans();
-    }
-  }, [user]);
-
-  const fetchLoans = async () => {
+  const fetchLoans = useCallback(async () => {
     try {
       setLoading(true);
       // Use localStorage since loans table doesn't exist in DB
@@ -84,7 +78,13 @@ const LoanManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (user) {
+      fetchLoans();
+    }
+  }, [user, fetchLoans]);
 
   const saveLoans = (newLoans: Loan[]) => {
     localStorage.setItem('rigel_loans', JSON.stringify(newLoans));

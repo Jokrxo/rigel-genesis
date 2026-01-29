@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Moon, Sun, Monitor, Palette } from "lucide-react";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme, ThemeName, ThemeMode, ThemePalette, THEMES } from "@/hooks/useTheme";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,19 +15,19 @@ import {
 export function ThemeToggle() {
   const { setMode, setPalette, theme, themes, isLoading, mode } = useTheme();
 
-  const curatedBasic: [string, any][] = [['light', themes.light], ['dark', themes.dark], ['system', themes.system]];
-  const colorGroup: [string, any][] = [
+  const curatedBasic: [ThemeName, typeof THEMES[ThemeName]][] = [['light', themes.light], ['dark', themes.dark], ['system', themes.system]];
+  const colorGroup: [ThemeName, typeof THEMES[ThemeName]][] = [
     ['blue', themes.blue], ['green', themes.green], ['purple', themes.purple],
     ['orange', themes.orange], ['red', themes.red], ['pink', themes.pink],
     ['yellow', themes.yellow], ['cyan', themes.cyan], ['lime', themes.lime],
   ];
-  const neutralGroup: [string, any][] = [
+  const neutralGroup: [ThemeName, typeof THEMES[ThemeName]][] = [
     ['slate', themes.slate], ['zinc', themes.zinc], ['neutral', themes.neutral], ['stone', themes.stone]
   ];
-  const natureGroup: [string, any][] = [
+  const natureGroup: [ThemeName, typeof THEMES[ThemeName]][] = [
     ['emerald', themes.emerald], ['teal', themes.teal], ['sky', themes.sky]
   ];
-  const vibrantGroup: [string, any][] = [
+  const vibrantGroup: [ThemeName, typeof THEMES[ThemeName]][] = [
     ['indigo', themes.indigo], ['violet', themes.violet], ['fuchsia', themes.fuchsia], ['rose', themes.rose], ['amber', themes.amber]
   ];
 
@@ -44,7 +44,7 @@ export function ThemeToggle() {
     }
   };
 
-  const renderThemeGroup = (themeEntries: [string, any][], title: string) => {
+  const renderThemeGroup = (themeEntries: [ThemeName, typeof THEMES[ThemeName]][], title: string) => {
     if (themeEntries.length === 0) return null;
     
     return (
@@ -56,8 +56,8 @@ export function ThemeToggle() {
           <DropdownMenuItem 
             key={themeKey}
             onClick={() => {
-              if (['light','dark','system'].includes(themeKey)) setMode(themeKey as any)
-              else setPalette(themeKey as any)
+              if (['light','dark','system'].includes(themeKey)) setMode(themeKey as ThemeMode)
+              else setPalette(themeKey as ThemePalette)
             }} 
             className="cursor-pointer flex items-center justify-between"
           >
@@ -80,9 +80,9 @@ export function ThemeToggle() {
       if ((event.metaKey || event.ctrlKey) && event.key === 'j') {
         event.preventDefault();
         // Cycle through basic modes: light -> dark -> system
-        if (mode === 'light') setMode('dark' as any);
-        else if (mode === 'dark') setMode('system' as any);
-        else setMode('light' as any);
+        if (mode === 'light') setMode('dark' as ThemeMode);
+        else if (mode === 'dark') setMode('system' as ThemeMode);
+        else setMode('light' as ThemeMode);
       }
     };
 

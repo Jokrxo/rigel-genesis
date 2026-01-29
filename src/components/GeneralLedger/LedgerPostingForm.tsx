@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { journalApi, JournalLine } from "@/lib/journal-api";
 
 export const LedgerPostingForm = () => {
   const { toast } = useToast();
@@ -47,13 +48,29 @@ export const LedgerPostingForm = () => {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const line: JournalLine = {
+        id: Date.now().toString(),
+        accountId: formData.account,
+        description: formData.description,
+        debit: Number(formData.debit) || 0,
+        credit: Number(formData.credit) || 0
+      };
+
+      const entry = {
+        date: date ? format(date, "yyyy-MM-dd") : new Date().toISOString().split('T')[0],
+        reference: formData.reference,
+        description: formData.description,
+        lines: [line]
+      };
+
+      await journalApi.createEntry(entry);
+
       toast({
         title: "Success",
-        description: "Transaction posted to General Ledger successfully.",
+        description: "Transaction saved as Draft. Note: Entry requires balancing before posting.",
       });
+      
       // Reset form
       setFormData({
         account: "",
@@ -63,7 +80,16 @@ export const LedgerPostingForm = () => {
         credit: "",
       });
       setDate(new Date());
-    }, 1500);
+    } catch (error) {
+      console.error("Failed to post transaction", error);
+      toast({
+        title: "Error",
+        description: "Failed to post transaction",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

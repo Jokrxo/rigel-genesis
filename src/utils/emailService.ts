@@ -41,9 +41,9 @@ export async function sendWelcomeEmail({
 
     // console.log('Welcome email sent:', data);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Exception sending welcome email:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -57,7 +57,7 @@ export async function sendVerificationEmail({
   verificationCode,
 }: SendVerificationEmailParams): Promise<{ success: boolean; error?: string; code?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke('send-verification-email', {
+    const { data, error } = await supabase.functions.invoke<{ verificationCode: string }>('send-verification-email', {
       body: {
         userName,
         email,
@@ -71,14 +71,13 @@ export async function sendVerificationEmail({
       return { success: false, error: error.message };
     }
 
-    // console.log('Verification email sent:', data);
     return {
       success: true,
       code: data?.verificationCode,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Exception sending verification email:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -100,8 +99,8 @@ export async function sendPasswordResetEmail(
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Exception sending password reset email:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }

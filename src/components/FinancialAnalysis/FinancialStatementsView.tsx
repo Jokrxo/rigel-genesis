@@ -11,8 +11,8 @@ interface FinancialStatement {
   statement_type: string;
   period_start: string;
   period_end: string;
-  statement_data: any;
-  ratios: any;
+  statement_data: Record<string, unknown>;
+  ratios: Record<string, unknown>;
   generated_at: string;
 }
 

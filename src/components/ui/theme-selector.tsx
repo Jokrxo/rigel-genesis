@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
-import { useTheme, THEMES, ThemeName } from '@/hooks/useTheme';
+import { useTheme, THEMES, ThemeName, ThemeMode, ThemePalette } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,10 +26,10 @@ export function ThemeSelector() {
 
   const handleThemeSelect = (themeName: ThemeName) => {
     if (['light', 'dark', 'system'].includes(themeName)) {
-      setMode(themeName as any);
+      setMode(themeName as ThemeMode);
       toast({ title: 'Mode Changed', description: `Switched to ${themes[themeName].name}` });
     } else {
-      setPalette(themeName as any);
+      setPalette(themeName as ThemePalette);
       const variant = mode === 'dark' ? 'dark' : 'light';
       toast({ title: 'Theme Changed', description: `Switched to ${themes[themeName].name} (${variant})` });
     }

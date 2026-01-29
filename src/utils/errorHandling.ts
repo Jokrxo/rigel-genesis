@@ -12,7 +12,7 @@ export class AppError extends Error {
     message: string,
     public code?: string,
     public statusCode?: number,
-    public context?: Record<string, any>
+    public context?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -62,7 +62,7 @@ function formatPostgresError(error: PostgrestError): string {
 /**
  * Logs errors to console in development, sends to monitoring service in production
  */
-export function logError(error: unknown, context?: Record<string, any>) {
+export function logError(error: unknown, context?: Record<string, unknown>) {
   const errorInfo = {
     message: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
@@ -82,7 +82,7 @@ export function logError(error: unknown, context?: Record<string, any>) {
 /**
  * Wraps async functions with error handling
  */
-export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
+export function withErrorHandling<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   errorCallback?: (error: unknown) => void
 ): T {

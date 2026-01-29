@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,57 +40,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
   
   const { toast } = useToast();
 
-  const fetchProjectData = async () => {
-    setLoading(true);
-    try {
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('deferred_tax_categories')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('created_at');
 
-      if (categoriesError) throw categoriesError;
-
-      // Fetch tax losses
-      const { data: lossesData, error: lossesError } = await supabase
-        .from('tax_loss_carry_forwards')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('created_at');
-
-      if (lossesError) throw lossesError;
-      
-      // Fetch movements
-      const { data: movementsData, error: movementsError } = await supabase
-        .from('deferred_tax_movements')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('movement_date', { ascending: false });
-        
-      if (movementsError) {
-          console.warn("Movements table might not exist or error fetching:", movementsError);
-      }
-
-      setCategories((categoriesData || []) as DeferredTaxCategory[]);
-      setTaxLosses((lossesData || []) as TaxLossCarryForward[]);
-      setMovements((movementsData || []) as DeferredTaxMovement[]);
-
-      // Calculate summary
-      calculateSummary((categoriesData || []) as DeferredTaxCategory[], (lossesData || []) as TaxLossCarryForward[]);
-    } catch (error) {
-      console.error('Error fetching project data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load project data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateSummary = (cats: DeferredTaxCategory[], losses: TaxLossCarryForward[]) => {
+  const calculateSummary = useCallback((cats: DeferredTaxCategory[], losses: TaxLossCarryForward[]) => {
     const totalDTA = cats.reduce((sum, cat) => sum + cat.deferred_tax_asset, 0) +
                      losses.reduce((sum, loss) => sum + loss.deferred_tax_asset, 0);
     const totalDTL = cats.reduce((sum, cat) => sum + cat.deferred_tax_liability, 0);
@@ -140,11 +91,61 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       by_category: byCategory,
       by_entity: byEntity,
     });
-  };
+  }, [project.multi_entity]);
+
+  const fetchProjectData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Fetch categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('deferred_tax_categories')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('created_at');
+
+      if (categoriesError) throw categoriesError;
+
+      // Fetch tax losses
+      const { data: lossesData, error: lossesError } = await supabase
+        .from('tax_loss_carry_forwards')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('created_at');
+
+      if (lossesError) throw lossesError;
+      
+      // Fetch movements
+      const { data: movementsData, error: movementsError } = await supabase
+        .from('deferred_tax_movements')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('movement_date', { ascending: false });
+        
+      if (movementsError) {
+          console.warn("Movements table might not exist or error fetching:", movementsError);
+      }
+
+      setCategories((categoriesData || []) as DeferredTaxCategory[]);
+      setTaxLosses((lossesData || []) as TaxLossCarryForward[]);
+      setMovements((movementsData || []) as DeferredTaxMovement[]);
+
+      // Calculate summary
+      calculateSummary((categoriesData || []) as DeferredTaxCategory[], (lossesData || []) as TaxLossCarryForward[]);
+    } catch (error) {
+      console.error('Error fetching project data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load project data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [project.id, toast, calculateSummary]);
 
   useEffect(() => {
     fetchProjectData();
-  }, [project.id]);
+  }, [fetchProjectData]);
 
   const handleAddCategory = async (data: Omit<DeferredTaxCategory, 'id' | 'created_at' | 'updated_at' | 'project_id'>) => {
     try {

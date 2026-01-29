@@ -31,7 +31,7 @@ const TaxCalculators = () => {
     if (tabParam && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
-  }, [tabParam]);
+  }, [tabParam, activeTab]);
 
   return (
     <MainLayout>

@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const taxConfig = await prisma.taxConfig.findUnique({ where: { entityId: body.entityId } })
     let vatAmount: number | null = null
-    if (mapping.taxRule && (mapping.taxRule as any)?.applyVAT === true && taxConfig) {
+    if (mapping.taxRule && (mapping.taxRule as { applyVAT: boolean } | null)?.applyVAT === true && taxConfig) {
       vatAmount = Number(body.amount) * Number(taxConfig.vatRate)
       const vatAccountDebit = await prisma.chartOfAccount.findFirst({ where: { entityId: body.entityId, code: '6001' } }) // Expense placeholder
       const vatAccountCredit = await prisma.chartOfAccount.findFirst({ where: { entityId: body.entityId, code: '2001' } }) // Liability VAT payable

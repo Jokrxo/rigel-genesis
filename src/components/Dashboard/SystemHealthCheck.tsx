@@ -20,7 +20,7 @@ export const SystemHealthCheck = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const runSystemChecks = async () => {
+  const runSystemChecks = useCallback(async () => {
     setIsRunning(true);
     setChecks([]);
 
@@ -145,7 +145,7 @@ export const SystemHealthCheck = () => {
       setChecks([...checkItems]);
       setIsRunning(false);
     }, 2000);
-  };
+  }, [navigate]);
 
   const getStatusIcon = (status: SystemCheck['status']) => {
     switch (status) {
@@ -173,7 +173,7 @@ export const SystemHealthCheck = () => {
 
   useEffect(() => {
     runSystemChecks();
-  }, []);
+  }, [runSystemChecks]);
 
   return (
     <Card className="w-full">

@@ -8,6 +8,7 @@ import { QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { emailSchema } from "@/utils/validation";
+import { ZodError } from "zod";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 import globeImage from "@/assets/globe.jpg";
 
@@ -35,8 +36,8 @@ const Login = () => {
       emailSchema.parse(email);
       
       await login(email, password);
-    } catch (error: any) {
-      if (error.errors) {
+    } catch (error: unknown) {
+      if (error instanceof ZodError) {
         // Zod validation error
         toast({
           title: "Validation Error",
@@ -79,23 +80,45 @@ const Login = () => {
       </div>
 
       <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden">
-        <div className="flex justify-center pt-8 pb-2">
+        <div className="flex justify-center pt-10 pb-4">
           <img 
             src={rigelFullLogo}
             alt="Rigel - Powered by Stella Lumen" 
-            className="h-16 w-auto object-contain"
+            className="h-48 w-auto object-contain transition-transform duration-300 hover:scale-105"
           />
         </div>
 
-        <div className="flex flex-col items-center text-center mb-6 px-6">
-          <h2 className="text-2xl font-bold text-gray-900">Welcome to Rigel</h2>
-          <p className="mt-2 text-base text-gray-800 leading-relaxed text-center max-w-sm mx-auto">
+        <div className="flex flex-col items-center text-center mb-8 px-6">
+          <h2 className="text-3xl font-bold text-gray-900">Welcome to Rigel</h2>
+          <p className="mt-3 text-lg text-gray-800 leading-relaxed text-center max-w-sm mx-auto">
             Log in to your account to continue using our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
 
         <div className="px-6 pb-6">
           <div className="space-y-3">
+            <Button
+              onClick={() => {
+                toast({
+                  title: "Cloud Demo Access",
+                  description: "Entering sandbox environment...",
+                });
+                // Mock login for demo
+                login("demo@rigel.co.za", "demo123"); 
+              }}
+              variant="default"
+              className="w-full justify-center gap-2 py-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg shadow-md mb-4"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud"><path d="M17.5 19c0-1.7-1.3-3-3-3h-1.1c-.1-1.2-.6-2.3-1.5-3.1-1-.9-2.3-1.4-3.6-1.4-2.8 0-5 2.2-5 5 0 .3 0 .5.1.8-2 1.1-3.3 3.1-3.3 5.4 0 3.3 2.7 6 6 6h11.9c2.5 0 4.5-2 4.5-4.5s-2-4.5-4.5-4.5z"/></svg>
+              <span>Try Cloud Demo</span>
+            </Button>
+            
+            <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="flex-shrink-0 mx-4 text-gray-500 text-xs">OR LOGIN WITH</span>
+                <div className="flex-grow border-t border-gray-300"></div>
+            </div>
+
             <Button
               onClick={handleGoogleLogin}
               variant="outline"
@@ -127,7 +150,7 @@ const Login = () => {
               onClick={handleGithubLogin}
               disabled={isLoading}
               variant="outline"
-              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent text-black"
+              className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50 text-gray-800 font-medium"
             >
               <div className="h-5 w-5 mr-2 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

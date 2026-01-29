@@ -5,8 +5,26 @@ import { Badge } from '@/components/ui/badge';
 import { Search, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { generateAuditReport } from '@/utils/buttonAudit';
 
+interface AuditIssue {
+  buttonText?: string;
+  linkText?: string;
+  issues: string[];
+}
+
+interface AuditCategory {
+  total: number;
+  working?: number;
+  issues: AuditIssue[];
+}
+
+interface AuditResults {
+  buttonAudit: AuditCategory;
+  navigationAudit: AuditCategory;
+  recommendations: string[];
+}
+
 export const AuditPanel = () => {
-  const [auditResults, setAuditResults] = useState<any>(null);
+  const [auditResults, setAuditResults] = useState<AuditResults | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 
   const runAudit = async () => {
@@ -62,7 +80,7 @@ export const AuditPanel = () => {
                 </div>
                 {auditResults.buttonAudit.issues.length > 0 && (
                   <div className="space-y-1">
-                    {auditResults.buttonAudit.issues.slice(0, 3).map((issue: any, index: number) => (
+                    {auditResults.buttonAudit.issues.slice(0, 3).map((issue, index) => (
                       <div key={index} className="text-xs bg-red-50 p-2 rounded">
                         <div className="font-medium">{issue.buttonText}</div>
                         <div className="text-red-600">{issue.issues.join(', ')}</div>
@@ -83,7 +101,7 @@ export const AuditPanel = () => {
                 </div>
                 {auditResults.navigationAudit.issues.length > 0 && (
                   <div className="space-y-1">
-                    {auditResults.navigationAudit.issues.slice(0, 3).map((issue: any, index: number) => (
+                    {auditResults.navigationAudit.issues.slice(0, 3).map((issue, index) => (
                       <div key={index} className="text-xs bg-red-50 p-2 rounded">
                         <div className="font-medium">{issue.linkText}</div>
                         <div className="text-red-600">{issue.issues.join(', ')}</div>

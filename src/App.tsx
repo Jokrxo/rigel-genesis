@@ -47,8 +47,14 @@ import PayrollManagement from "./pages/PayrollManagement";
 import FinancialAnalysis from "./pages/FinancialAnalysis";
 import SignupWizard from "./pages/SignupWizard";
 import TaxDashboard from "./pages/TaxDashboard";
+import BankReconciliation from "./pages/BankReconciliation";
+import BudgetManagement from "./pages/BudgetManagement";
+import ChartOfAccounts from "./pages/ChartOfAccounts";
 import TrialBalance from "./pages/TrialBalance";
 import AccountingCycle from "./pages/AccountingCycle";
+import CommunityPage from "./pages/Community/Index";
+import ImpairmentModule from "./pages/Impairment/Index";
+import PayrollReports from "./pages/Reports/PayrollReports";
 
 import BalanceSheet from "./pages/FinancialReports/BalanceSheet";
 import IncomeStatement from "./pages/FinancialReports/IncomeStatement";
@@ -71,18 +77,25 @@ const queryClient = new QueryClient({
 });
 
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { CookieConsent } from "@/components/Shared/CookieConsent";
+import { RatingModal } from "@/components/Shared/RatingModal";
+import { TutorialProvider } from "@/components/Tutorial/TutorialContext";
+import ToolsSupport from "./pages/ToolsSupport";
 
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
+          <TutorialProvider>
           <BrowserRouter>
             <AuthProvider>
               <ErrorBoundary>
                 <Toaster />
                 <Sonner />
                 <Chatbot />
+                <CookieConsent />
+                <RatingModal />
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
@@ -125,7 +138,14 @@ const App = () => (
                   <Route path="/financial-analysis" element={<ProtectedRoute><FinancialAnalysis /></ProtectedRoute>} />
                   <Route path="/tax-dashboard" element={<ProtectedRoute><TaxDashboard /></ProtectedRoute>} />
                   <Route path="/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
+                  <Route path="/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
+                  <Route path="/budget-management" element={<ProtectedRoute><BudgetManagement /></ProtectedRoute>} />
+                  <Route path="/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
                   <Route path="/accounting-cycle" element={<ProtectedRoute><AccountingCycle /></ProtectedRoute>} />
+                  <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+                  <Route path="/impairment" element={<ProtectedRoute><ImpairmentModule /></ProtectedRoute>} />
+                  <Route path="/reports/payroll" element={<ProtectedRoute><PayrollReports /></ProtectedRoute>} />
+                  <Route path="/tools-support" element={<ProtectedRoute><ToolsSupport /></ProtectedRoute>} />
                   <Route path="/reports/balance-sheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
                   <Route path="/reports/income-statement" element={<ProtectedRoute><IncomeStatement /></ProtectedRoute>} />
                   <Route path="/reports/cash-flow" element={<ProtectedRoute><CashFlowStatement /></ProtectedRoute>} />
@@ -142,6 +162,7 @@ const App = () => (
               </ErrorBoundary>
             </AuthProvider>
           </BrowserRouter>
+          </TutorialProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

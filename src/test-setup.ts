@@ -42,7 +42,7 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     useNavigate: () => vi.fn(),
     useLocation: () => ({ pathname: '/' }),
-    Link: ({ children, to, ...props }: any) => ({ 
+    Link: ({ children, to, ...props }: { children: React.ReactNode; to: string; [key: string]: unknown }) => ({ 
       $$typeof: Symbol.for('react.element'), 
       type: 'a', 
       props: { href: to, children, ...props }, 
@@ -54,10 +54,10 @@ vi.mock('react-router-dom', async () => {
 
 // Mock chart components
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'chart', children }, key: null, ref: null }),
-  BarChart: ({ children }: any) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'bar-chart', children }, key: null, ref: null }),
-  PieChart: ({ children }: any) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'pie-chart', children }, key: null, ref: null }),
-  LineChart: ({ children }: any) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'line-chart', children }, key: null, ref: null }),
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'chart', children }, key: null, ref: null }),
+  BarChart: ({ children }: { children: React.ReactNode }) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'bar-chart', children }, key: null, ref: null }),
+  PieChart: ({ children }: { children: React.ReactNode }) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'pie-chart', children }, key: null, ref: null }),
+  LineChart: ({ children }: { children: React.ReactNode }) => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'line-chart', children }, key: null, ref: null }),
   Bar: () => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'bar' }, key: null, ref: null }),
   Pie: () => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'pie' }, key: null, ref: null }),
   Line: () => ({ $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'line' }, key: null, ref: null }),

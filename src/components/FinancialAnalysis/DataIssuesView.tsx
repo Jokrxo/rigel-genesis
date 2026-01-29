@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -29,15 +29,7 @@ export const DataIssuesView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchIssues();
-  }, []);
-
-  useEffect(() => {
-    filterIssues();
-  }, [issues, severityFilter, statusFilter]);
-
-  const fetchIssues = async () => {
+  const fetchIssues = useCallback(async () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('data_issues')
@@ -51,9 +43,9 @@ export const DataIssuesView = () => {
 
     setIssues(data || []);
     setIsLoading(false);
-  };
+  }, []);
 
-  const filterIssues = () => {
+  const filterIssues = useCallback(() => {
     let filtered = issues;
 
     if (severityFilter !== "all") {
@@ -65,7 +57,15 @@ export const DataIssuesView = () => {
     }
 
     setFilteredIssues(filtered);
-  };
+  }, [issues, severityFilter, statusFilter]);
+
+  useEffect(() => {
+    fetchIssues();
+  }, [fetchIssues]);
+
+  useEffect(() => {
+    filterIssues();
+  }, [filterIssues]);
 
   const updateIssueStatus = async (issueId: string, status: string, notes?: string) => {
     const { error } = await supabase

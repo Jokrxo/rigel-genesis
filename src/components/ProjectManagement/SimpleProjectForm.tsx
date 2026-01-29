@@ -100,7 +100,7 @@ export const SimpleProjectForm = ({ onSubmit, onCancel }: SimpleProjectFormProps
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+              <Select value={formData.status} onValueChange={(value: 'planning' | 'active' | 'completed' | 'on-hold') => setFormData({ ...formData, status: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>

@@ -24,7 +24,7 @@ function seedAccounts(ownership: OwnershipForm) {
   return variant.map((a, i) => ({ id: `acc-${i}`, ...a }))
 }
 
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
 }
 

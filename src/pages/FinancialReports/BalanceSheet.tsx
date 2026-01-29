@@ -53,6 +53,11 @@ const BalanceSheet = () => {
   const totalCurrentLiabilities = calculateTotal(data.liabilities.current);
   const totalEquityAndLiabilities = totalEquity + totalNonCurrentLiabilities + totalCurrentLiabilities;
 
+  const formatCurrency = (value: number) => {
+    const absValue = Math.abs(value);
+    const formatted = `R ${absValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return value < 0 ? `(${formatted})` : formatted;
+  };
 
   return (
     <MainLayout>
@@ -81,12 +86,12 @@ const BalanceSheet = () => {
                 {data.assets.nonCurrent.map((item, i) => (
                   <TableRow key={i}>
                     <TableCell className="pl-8">{item.name}</TableCell>
-                    <TableCell className="text-right">R {item.value.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold">
                   <TableCell className="pl-8">Total non-current assets</TableCell>
-                  <TableCell className="text-right">R {totalNonCurrentAssets.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totalNonCurrentAssets)}</TableCell>
                 </TableRow>
 
                 <TableRow className="bg-muted/50">
@@ -95,17 +100,17 @@ const BalanceSheet = () => {
                 {data.assets.current.map((item, i) => (
                   <TableRow key={i}>
                     <TableCell className="pl-8">{item.name}</TableCell>
-                    <TableCell className="text-right">R {item.value.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold">
                   <TableCell className="pl-8">Total current assets</TableCell>
-                  <TableCell className="text-right">R {totalCurrentAssets.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totalCurrentAssets)}</TableCell>
                 </TableRow>
 
                 <TableRow className="bg-primary/10 text-lg font-bold">
                   <TableCell>Total Assets</TableCell>
-                  <TableCell className="text-right">R {totalAssets.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totalAssets)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -125,12 +130,12 @@ const BalanceSheet = () => {
                 {data.equity.map((item, i) => (
                   <TableRow key={i}>
                     <TableCell className="pl-8">{item.name}</TableCell>
-                    <TableCell className="text-right">R {item.value.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold">
                   <TableCell className="pl-8">Total equity</TableCell>
-                  <TableCell className="text-right">R {totalEquity.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totalEquity)}</TableCell>
                 </TableRow>
 
                 <TableRow className="bg-muted/50">
@@ -139,12 +144,12 @@ const BalanceSheet = () => {
                 {data.liabilities.nonCurrent.map((item, i) => (
                   <TableRow key={i}>
                     <TableCell className="pl-8">{item.name}</TableCell>
-                    <TableCell className="text-right">R {item.value.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold">
                   <TableCell className="pl-8">Total non-current liabilities</TableCell>
-                  <TableCell className="text-right">R {totalNonCurrentLiabilities.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totalNonCurrentLiabilities)}</TableCell>
                 </TableRow>
 
                 <TableRow className="bg-muted/50">
@@ -153,17 +158,17 @@ const BalanceSheet = () => {
                 {data.liabilities.current.map((item, i) => (
                   <TableRow key={i}>
                     <TableCell className="pl-8">{item.name}</TableCell>
-                    <TableCell className="text-right">R {item.value.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold">
                   <TableCell className="pl-8">Total current liabilities</TableCell>
-                  <TableCell className="text-right">R {totalCurrentLiabilities.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totalCurrentLiabilities)}</TableCell>
                 </TableRow>
 
                 <TableRow className="bg-primary/10 text-lg font-bold">
                   <TableCell>Total Equity and Liabilities</TableCell>
-                  <TableCell className="text-right">R {totalEquityAndLiabilities.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totalEquityAndLiabilities)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

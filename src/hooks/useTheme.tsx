@@ -40,8 +40,8 @@ export const THEMES = {
 } as const;
 
 export type ThemeName = keyof typeof THEMES;
-type ThemeMode = 'light' | 'dark' | 'system';
-type ThemePalette = Exclude<ThemeName, 'light' | 'dark' | 'system'>;
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemePalette = Exclude<ThemeName, 'light' | 'dark' | 'system'>;
 
 interface ThemeContextType {
   theme: ThemeName;
@@ -78,7 +78,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           .single();
           
         if (error) {
-          // console.log('Profile not found, will create on theme change');
           const localTheme = (localStorage.getItem('financial-theme') as ThemeName) || 'system';
           const localMode = (localStorage.getItem('financial-mode') as ThemeMode) || (localTheme === 'dark' ? 'dark' : 'system');
           const localPalette = (localStorage.getItem('financial-palette') as ThemePalette | null) || (['light','dark','system'].includes(localTheme) ? null : (localTheme as ThemePalette));
@@ -119,7 +118,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const applyTheme = (themeName: ThemeName, modeOverride?: ThemeMode, paletteOverride?: ThemePalette | null) => {
+  const applyTheme = useCallback((themeName: ThemeName, modeOverride?: ThemeMode, paletteOverride?: ThemePalette | null) => {
     const root = document.documentElement;
     
     // Remove all theme classes
@@ -143,7 +142,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (effectivePalette) {
       root.classList.add(`theme-${effectivePalette}`);
     }
-  };
+  }, [mode, palette]);
 
   const setTheme = async (newTheme: ThemeName) => {
     try {
@@ -257,7 +256,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         return () => mediaQuery.removeEventListener('change', handleChange);
       }
     }
-  }, [theme, mode, palette, isLoading]);
+  }, [theme, mode, palette, isLoading, applyTheme]);
 
   // Listen for auth state changes to reinitialize theme
   useEffect(() => {

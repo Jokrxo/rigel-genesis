@@ -5,7 +5,6 @@ import { Footer } from "./Footer";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Phone, MessageSquare, Mail } from "lucide-react";
-import { FloatingContactPanel } from "@/components/Shared/FloatingContactPanel";
 import { SkipToMain } from "@/components/Shared/SkipToMain";
 
 interface MainLayoutProps {
@@ -25,9 +24,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       {/* Main background pattern with professional gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-background to-muted/30 pointer-events-none z-0" />
       
-      {/* Floating contact panel */}
-      <FloatingContactPanel />
-
       <div className="flex flex-1 relative z-10">
         <Sidebar isOpen={sidebarOpen} />
         <div
@@ -67,11 +63,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 alt="Financial data visualization"
                 className="h-12 w-auto object-cover rounded-lg shadow-lg border border-blue-200 sm:h-16"
                 onError={(e) => {
-                  // console.log("Header image failed to load");
                   e.currentTarget.src = "/placeholder.svg";
                 }}
                 onLoad={() => {
-                  // console.log("Header image loaded successfully")
                 }}
               />
             </div>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,7 @@ export const PredictiveAnalytics = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
-  const generatePredictions = async () => {
+  const generatePredictions = useCallback(async () => {
     setIsAnalyzing(true);
 
     try {
@@ -59,12 +59,12 @@ export const PredictiveAnalytics = () => {
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     // Auto-generate predictions on component mount
     generatePredictions();
-  }, []);
+  }, [generatePredictions]);
 
   const getRiskIcon = (type: string) => {
     switch (type) {

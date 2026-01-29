@@ -19,7 +19,7 @@ export default function SignupWizard() {
   const [address, setAddress] = useState('')
   const [ownership, setOwnership] = useState<OwnershipForm>('sole')
   const [inventorySystem, setInventorySystem] = useState<'periodic' | 'perpetual'>('periodic')
-  const [preview, setPreview] = useState<any[]>([])
+  const [preview, setPreview] = useState<unknown[]>([])
   const { toast } = useToast()
 
   const handleCreateEntity = async () => {

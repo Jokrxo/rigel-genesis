@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,15 +50,7 @@ const DocumentManagement = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
-
-  useEffect(() => {
-    filterDocuments();
-  }, [documents, searchTerm, statusFilter, typeFilter]);
-
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
       // Mock data for now since the documents table structure may not match
@@ -104,16 +96,16 @@ const DocumentManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterDocuments = () => {
+  const filterDocuments = useCallback(() => {
     let filtered = [...documents];
 
     if (searchTerm) {
       filtered = filtered.filter(
         (doc) =>
           doc.document_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          doc.document_type.toLowerCase().includes(searchTerm.toLowerCase())
+          (doc.notes && doc.notes.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -126,7 +118,15 @@ const DocumentManagement = () => {
     }
 
     setFilteredDocuments(filtered);
-  };
+  }, [documents, searchTerm, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  useEffect(() => {
+    filterDocuments();
+  }, [filterDocuments]);
 
   const handleCreateDocument = () => {
     setEditingDocument(null);

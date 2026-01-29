@@ -82,7 +82,26 @@ export const auditNavigation = (): NavigationAuditResult[] => {
     
     if (href.startsWith('/') && !href.includes('http')) {
       // Check if route exists in our app
-      const hasValidRoute = true; // TODO: Implement route validation
+      const validRoutes = [
+        '/', '/login', '/register', '/verify-email', '/verification-success',
+        '/forgot-password', '/reset-password', '/features', '/signup-wizard',
+        '/pricing', '/terms', '/privacy', '/qr-code', '/dashboard',
+        '/import-statement', '/asset-management', '/documents', '/customers',
+        '/inventory', '/suppliers', '/projects', '/bank-movements',
+        '/director-transactions', '/loan-management', '/employee-management',
+        '/payroll-management', '/investments', '/transaction-processing',
+        '/company-profile', '/help', '/reports', '/profile', '/settings',
+        '/tax-calculators', '/ai-features', '/financial-analysis',
+        '/tax-dashboard', '/trial-balance', '/bank-reconciliation',
+        '/budget-management', '/chart-of-accounts', '/accounting-cycle',
+        '/community', '/impairment', '/reports/payroll', '/tools-support',
+        '/reports/balance-sheet', '/reports/income-statement',
+        '/reports/cash-flow', '/reports/equity', '/reports/notes',
+        '/general-ledger', '/general-ledger/posting', '/monthly-reports',
+        '/journal-entries'
+      ];
+      
+      const hasValidRoute = validRoutes.some(route => href === route || href.startsWith(`${route}/`));
       
       results.push({
         linkText,

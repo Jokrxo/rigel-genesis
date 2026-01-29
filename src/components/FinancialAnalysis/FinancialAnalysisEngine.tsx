@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -21,7 +21,7 @@ interface FileData {
   file_url: string;
   processing_status: string;
   upload_date: string;
-  processing_metadata?: any;
+  processing_metadata?: Record<string, unknown>;
   transaction_count: number;
   total_debits: number;
   total_credits: number;
@@ -34,7 +34,7 @@ interface AnalysisResult {
   success: boolean;
   fileId: string;
   transactionsProcessed: number;
-  summary: any;
+  summary: Record<string, unknown>;
   validationIssues: string[];
 }
 
@@ -86,9 +86,9 @@ export const FinancialAnalysisEngine = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchFiles]);
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       const { data, error } = await supabase.rpc('get_file_overview');
       
@@ -104,9 +104,14 @@ export const FinancialAnalysisEngine = () => {
 
       setFiles(data || []);
     } catch (error) {
-      console.error('Error fetching files:', error);
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
-  };
+  }, [toast]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -229,7 +234,7 @@ export const FinancialAnalysisEngine = () => {
 
       // Process with AI engine
       setProcessingProgress(80);
-      const response = await supabase.functions.invoke('financial-analysis-engine', {
+      const response = await supabase.functions.invoke<AnalysisResult>('financial-analysis-engine', {
         body: {
           fileId: fileRecord.id,
           fileContent,

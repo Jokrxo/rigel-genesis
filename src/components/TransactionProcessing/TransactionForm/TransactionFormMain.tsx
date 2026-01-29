@@ -38,8 +38,8 @@ interface TransactionFormProps {
 export function TransactionForm({ open, onClose, onSuccess }: TransactionFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<{ id: string; name: string; company: string | null }[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string; company: string | null }[]>([]);
   const companyProfile = useCompanyProfile(open);
   const [lockedTransactionTypes, setLockedTransactionTypes] = useState<string[]>([]);
   
@@ -73,7 +73,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
         }
       }
     }
-  }, [open, companyProfile]);
+  }, [open, companyProfile, form]);
 
   const fetchCustomers = async () => {
     try {

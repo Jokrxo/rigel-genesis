@@ -149,7 +149,7 @@ const EmployeeManagement = () => {
     }
   };
 
-  const handleEmployeeSubmit = (data: any) => {
+  const handleEmployeeSubmit = (data: Omit<Employee, 'id' | 'employeeNumber' | 'status'> & { grossSalary: number | string }) => {
     if (editingEmployee) {
       // Update existing employee
       const updatedEmployees = employees.map(emp => 

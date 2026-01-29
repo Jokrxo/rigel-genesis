@@ -8,7 +8,7 @@ export interface TransactionPayload {
   description: string;
   category: string;
   reference_number?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SuggestedEntry {

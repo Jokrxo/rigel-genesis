@@ -9,7 +9,7 @@ export const useDeferredTaxData = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchCountries = async () => {
+  const fetchCountries = useCallback(async () => {
     const { data, error } = await supabase
       .from('countries')
       .select('*')
@@ -27,9 +27,9 @@ export const useDeferredTaxData = () => {
     }
 
     setCountries(data || []);
-  };
+  }, [toast]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     const { data, error } = await supabase
       .from('deferred_tax_projects')
       .select(`
@@ -49,7 +49,7 @@ export const useDeferredTaxData = () => {
     }
 
     setProjects((data || []) as DeferredTaxProject[]);
-  };
+  }, [toast]);
 
   const createProject = async (projectData: Omit<DeferredTaxProject, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -151,7 +151,7 @@ export const useDeferredTaxData = () => {
     };
 
     initializeData();
-  }, []);
+  }, [fetchCountries, fetchProjects]);
 
   return {
     projects,

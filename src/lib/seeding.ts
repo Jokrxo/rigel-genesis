@@ -48,7 +48,6 @@ export async function seedEntity(
 
   // Store chart of accounts in localStorage
   localStorage.setItem(`rigel_coa_${entityId}`, JSON.stringify(accountsToInsert));
-  console.log('Chart of accounts template prepared:', accountsToInsert.length, 'accounts');
 
   return { entity, accounts: accountsToInsert };
 }

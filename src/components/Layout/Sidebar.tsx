@@ -19,6 +19,7 @@ import {
   QrCode,
   FolderOpen,
   TrendingUp,
+  TrendingDown,
   UserCheck,
   CreditCard,
   Briefcase,
@@ -30,6 +31,7 @@ import {
   BookOpen,
   Sparkles,
   DollarSign,
+  Wrench,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
@@ -50,6 +52,37 @@ const navItems: NavItem[] = [
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Tools & Support",
+    icon: Wrench,
+    children: [
+      {
+        title: "Tools Overview",
+        href: "/tools-support",
+        icon: Wrench,
+      },
+      {
+        title: "Community",
+        href: "/community",
+        icon: Users,
+      },
+      {
+        title: "Help Center",
+        href: "/help",
+        icon: HelpCircle,
+      },
+      {
+        title: "Tax Calculators",
+        href: "/tax-calculators",
+        icon: Calculator,
+      },
+      {
+        title: "Impairment Check",
+        href: "/impairment",
+        icon: TrendingDown,
+      },
+    ],
   },
   {
     title: "Settings",
@@ -202,8 +235,19 @@ const navItems: NavItem[] = [
           },
           {
             title: "Asset Management",
-            href: "/asset-management",
             icon: Building2,
+            children: [
+                {
+                    title: "Assets List",
+                    href: "/asset-management",
+                    icon: Building2,
+                },
+                {
+                    title: "Impairment",
+                    href: "/impairment",
+                    icon: TrendingDown,
+                }
+            ]
           },
           {
             title: "Loan Management",
@@ -362,7 +406,8 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
   return (
     <>
       <div
-        className={cn(
+      id="main-sidebar"
+      className={cn(
           "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar transition-transform duration-300 ease-in-out md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}

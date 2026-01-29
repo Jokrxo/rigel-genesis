@@ -21,7 +21,7 @@ interface Transaction {
   description: string | null;
   type: string | null;
   category: string | null;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 function getTransactionIcon(type: string) {

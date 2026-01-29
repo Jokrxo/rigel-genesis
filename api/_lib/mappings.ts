@@ -60,7 +60,7 @@ export async function seedEntityChartOfAccounts(entityId: string, ownership: 'so
       entityId,
       code: a.code,
       name: a.name,
-      type: a.type as any,
+      type: a.type as string,
       balance: 0,
     }))
   })

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, HelpCircle, LogOut, Menu, Search, User, Phone } from "lucide-react";
+import { Bell, HelpCircle, LogOut, Menu, Search, User, Phone, Wrench, MessageCircle, FileText, Calculator, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { useTutorial } from "@/components/Tutorial/TutorialContext";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -23,11 +24,24 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { startTutorial } = useTutorial();
+
+  const handleStartTour = () => {
+    startTutorial([
+      { target: 'header', content: 'This is the command center. Access search, notifications, and profile settings here.' },
+      { target: '#main-sidebar', content: 'Navigate through all Rigel modules using this sidebar. Hover over icons to see more.' },
+      { target: '[role="search"]', content: 'Search for anything in the system - invoices, contacts, or reports.' },
+    ]);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // console.log("Searching for:", searchQuery);
     // Implement search functionality
+  };
+
+  const openChatbot = () => {
+    // Dispatch a custom event that Chatbot component listens to
+    window.dispatchEvent(new CustomEvent('open-chatbot'));
   };
 
   return (
@@ -72,10 +86,42 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
           <span>Contact: Luthando Zulu</span>
         </div>
         
-        <Button variant="ghost" size="icon" onClick={() => navigate("/help")} className="relative">
-          <HelpCircle className="h-5 w-5" />
-          <span className="sr-only">Help</span>
-        </Button>
+        {/* Tools and Support Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="hidden sm:flex gap-2">
+              <Wrench className="h-4 w-4" />
+              Tools & Support
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Support</DropdownMenuLabel>
+            <DropdownMenuItem onClick={handleStartTour}>
+              <Sparkles className="mr-2 h-4 w-4" /> Take a Tour
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/help")}>
+              <HelpCircle className="mr-2 h-4 w-4" /> Help Documentation
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={openChatbot}>
+              <MessageCircle className="mr-2 h-4 w-4" /> Live Chat
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/help#faq")}>
+              <FileText className="mr-2 h-4 w-4" /> FAQ
+            </DropdownMenuItem>
+             <DropdownMenuItem onClick={() => navigate("/contact")}>
+              <Phone className="mr-2 h-4 w-4" /> Contact Support
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Quick Tools</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => navigate("/tax-calculators")}>
+              <Calculator className="mr-2 h-4 w-4" /> Calculators
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/reports")}>
+              <Download className="mr-2 h-4 w-4" /> Export Data
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />

@@ -46,10 +46,10 @@ const VerifyEmail = () => {
         title: "Verification email sent",
         description: "Please check your inbox and spam folder",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to resend verification email",
+        description: error instanceof Error ? error.message : "Failed to resend verification email",
         variant: "destructive",
       });
     } finally {

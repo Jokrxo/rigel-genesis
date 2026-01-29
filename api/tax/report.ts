@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .reduce((sum, p) => sum + Number(p.debit) - Number(p.credit), 0)
 
     const taxableIncome = revenue - expenses
-    const corpTax = config?.corpTaxBracket ? computeCorpTax(taxableIncome, config.corpTaxBracket as any) : taxableIncome * 0.27
+    const corpTax = config?.corpTaxBracket ? computeCorpTax(taxableIncome, config.corpTaxBracket as { rate: number, threshold: number }[]) : taxableIncome * 0.27
 
     res.status(200).json({ vatRate, vatDue, revenue, expenses, depreciationExpense, taxableIncome, corpTax })
   } catch (err) {

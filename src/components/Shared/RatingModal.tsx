@@ -1,0 +1,134 @@
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Star } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+export const RatingModal = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const checkRatingStatus = () => {
+      // Check local storage first to avoid API spam
+      const lastPrompted = localStorage.getItem(`rating_prompt_${user?.id}`);
+      const hasRated = localStorage.getItem(`user_rated_${user?.id}`);
+
+      if (hasRated === "true") return;
+
+      // Logic: Show if never prompted, or prompted more than 7 days ago
+      const now = Date.now();
+      if (!lastPrompted || (now - parseInt(lastPrompted)) > 7 * 24 * 60 * 60 * 1000) {
+        // Delay showing the modal slightly after login
+        const timer = setTimeout(() => {
+          setIsOpen(true);
+          localStorage.setItem(`rating_prompt_${user?.id}`, now.toString());
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    if (isAuthenticated && user) {
+      checkRatingStatus();
+    }
+  }, [isAuthenticated, user]);
+
+  const handleRate = (value: number) => {
+    setRating(value);
+  };
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      toast({ title: "Rating required", description: "Please select a star rating", variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Try to save to Supabase 'user_ratings' table
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from('user_ratings' as any).insert({
+        user_id: user?.id,
+        rating,
+        feedback,
+        created_at: new Date().toISOString()
+      });
+
+      if (error) {
+        // If table doesn't exist or other error, fallback to local storage and log
+        console.warn("Could not save rating to backend (table might be missing):", error);
+        // We still consider it "success" from UI perspective to not block user
+      }
+
+      // Mark as rated locally
+      localStorage.setItem(`user_rated_${user?.id}`, "true");
+      
+      toast({ title: "Thank you!", description: "We appreciate your feedback." });
+      setIsOpen(false);
+    } catch (err) {
+      console.error("Error submitting rating:", err);
+      // Fallback success
+      localStorage.setItem(`user_rated_${user?.id}`, "true");
+      setIsOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSkip = () => {
+    setIsOpen(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center text-xl">How's your experience?</DialogTitle>
+          <DialogDescription className="text-center">
+            Rate your experience with Rigel Genesis so far. Your feedback helps us improve!
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="flex justify-center gap-2 py-6">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => handleRate(star)}
+              className="focus:outline-none transition-transform hover:scale-110"
+            >
+              <Star 
+                className={`h-8 w-8 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} 
+              />
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          <Textarea 
+            placeholder="Tell us what you think (optional)..." 
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            className="resize-none"
+          />
+          
+          <DialogFooter className="sm:justify-between gap-2">
+            <Button variant="ghost" onClick={handleSkip}>
+              Skip
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting || rating === 0}>
+              {isSubmitting ? "Submitting..." : "Submit Feedback"}
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

@@ -39,7 +39,7 @@ export const exportToCSV = (data: ExportData) => {
   }
 };
 
-export const exportToJSON = (data: any, filename: string) => {
+export const exportToJSON = (data: unknown, filename: string) => {
   try {
     const jsonContent = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });

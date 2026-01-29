@@ -195,7 +195,7 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="taskStatus">Status</Label>
-                  <Select value={taskForm.status} onValueChange={(value: any) => setTaskForm({ ...taskForm, status: value })}>
+                  <Select value={taskForm.status} onValueChange={(value: 'todo' | 'in-progress' | 'review' | 'completed') => setTaskForm({ ...taskForm, status: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -209,7 +209,7 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="taskPriority">Priority</Label>
-                  <Select value={taskForm.priority} onValueChange={(value: any) => setTaskForm({ ...taskForm, priority: value })}>
+                  <Select value={taskForm.priority} onValueChange={(value: 'low' | 'medium' | 'high') => setTaskForm({ ...taskForm, priority: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -285,7 +285,7 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
                     </TableCell>
                     <TableCell>{task.assignee}</TableCell>
                     <TableCell>
-                      <Select value={task.status} onValueChange={(value: any) => handleStatusChange(task.id, value)}>
+                      <Select value={task.status} onValueChange={(value: 'todo' | 'in-progress' | 'review' | 'completed') => handleStatusChange(task.id, value)}>
                         <SelectTrigger className="w-32">
                           <SelectValue />
                         </SelectTrigger>

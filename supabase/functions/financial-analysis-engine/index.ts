@@ -215,7 +215,7 @@ Return JSON format:
 
     // Store ML tags for categorization only if we have transactions
     if (insertedTransactions && insertedTransactions.length > 0) {
-      const mlTags = insertedTransactions.flatMap((transaction: any, index: number) => {
+      const mlTags: MLTag[] = insertedTransactions.flatMap((transaction: { id: string }, index: number) => {
         const originalTransaction = processedData.transactions[index];
         if (!originalTransaction) return [];
         
@@ -302,7 +302,28 @@ Return JSON format:
   }
 });
 
-async function generateFinancialStatements(supabase: any, userId: string, fileId: string, processedData: any) {
+interface FinancialSummary {
+  totalTransactions: number;
+  totalDebits: number;
+  totalCredits: number;
+  openingBalance: number;
+  closingBalance: number;
+  period: { from: string; to: string };
+}
+
+interface ProcessedData {
+  transactions: Transaction[];
+  summary: FinancialSummary;
+  validationIssues?: string[];
+  processingNotes?: string;
+}
+
+async function generateFinancialStatements(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  fileId: string,
+  processedData: ProcessedData
+) {
   try {
     const transactions = processedData.transactions;
     const summary = processedData.summary;
@@ -315,7 +336,7 @@ async function generateFinancialStatements(supabase: any, userId: string, fileId
       expenses: {
         operatingExpenses: transactions
           .filter((t: Transaction) => t.amount < 0 && !['Bank Charges', 'Interest'].includes(t.category))
-          .reduce((acc: any, t: Transaction) => {
+          .reduce((acc: Record<string, number>, t: Transaction) => {
             if (!acc[t.category]) acc[t.category] = 0;
             acc[t.category] += Math.abs(t.amount);
             return acc;

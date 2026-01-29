@@ -1,6 +1,6 @@
 
 import { MainLayout } from "@/components/Layout/MainLayout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,7 @@ import { AssetFormDialog, AssetFormData, Asset } from "@/components/Assets/Asset
 import { ViewAssetDialog } from "@/components/Assets/ViewAssetDialog";
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { useToast } from "@/hooks/use-toast";
-
-const STORAGE_KEY = 'rigel_assets';
+import { fixedAssetsApi, CreateFixedAsset } from "@/lib/fixed-assets-api";
 
 const AssetManagement = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -35,16 +34,22 @@ const AssetManagement = () => {
 
   const [disposalAssetId, setDisposalAssetId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAssets();
-  }, []);
-
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setAssets(JSON.parse(stored));
-      }
+      const data = await fixedAssetsApi.getAll();
+      const mappedAssets: Asset[] = data.map(a => ({
+        id: a.id,
+        name: a.name,
+        category: a.category || 'Uncategorized',
+        purchase_date: a.purchase_date,
+        purchase_price: a.cost_price,
+        current_value: a.cost_price - (a.accum_depr || 0),
+        depreciation_rate: a.depreciation_rate,
+        useful_life: a.depreciation_rate > 0 ? Math.round(100 / a.depreciation_rate) : 0,
+        location: '', // Not in DB schema yet
+        created_at: a.created_at || new Date().toISOString()
+      }));
+      setAssets(mappedAssets);
     } catch (error) {
       console.error('Error fetching assets:', error);
       toast({
@@ -55,12 +60,11 @@ const AssetManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const saveAssets = (newAssets: Asset[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newAssets));
-    setAssets(newAssets);
-  };
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
 
   const handleViewAsset = (asset: Asset) => {
     setViewingAsset(asset);
@@ -79,21 +83,19 @@ const AssetManagement = () => {
 
   const handleCreateAsset = async (data: AssetFormData) => {
     try {
-      const newAsset: Asset = {
-        id: crypto.randomUUID(),
-        name: data.name || '',
-        category: data.category || '',
-        purchase_date: data.purchase_date || new Date().toISOString().split('T')[0],
-        purchase_price: data.purchase_price || 0,
-        current_value: data.current_value || 0,
-        depreciation_rate: data.depreciation_rate || 0,
-        useful_life: data.useful_life || 0,
-        location: data.location || '',
-        created_at: new Date().toISOString(),
+      const newAsset: CreateFixedAsset = {
+        entity_id: 'demo', // Default entity
+        name: data.name,
+        category: data.category,
+        purchase_date: data.purchase_date,
+        cost_price: data.purchase_price,
+        depreciation_rate: data.depreciation_rate,
+        disposal_date: null,
+        selling_price: null
       };
 
-      const newAssets = [newAsset, ...assets];
-      saveAssets(newAssets);
+      await fixedAssetsApi.create(newAsset);
+      fetchAssets();
 
       toast({
         title: "Success",
@@ -114,20 +116,16 @@ const AssetManagement = () => {
     if (!editingAsset) return;
 
     try {
-      const updatedAssets = assets.map(a => 
-        a.id === editingAsset.id ? { 
-          ...a, 
-          name: data.name || a.name,
-          category: data.category || a.category,
-          purchase_date: data.purchase_date || a.purchase_date,
-          purchase_price: data.purchase_price ?? a.purchase_price,
-          current_value: data.current_value ?? a.current_value,
-          depreciation_rate: data.depreciation_rate ?? a.depreciation_rate,
-          useful_life: data.useful_life ?? a.useful_life,
-          location: data.location || a.location,
-        } : a
-      );
-      saveAssets(updatedAssets);
+      const updates = {
+        name: data.name,
+        category: data.category,
+        purchase_date: data.purchase_date,
+        cost_price: data.purchase_price,
+        depreciation_rate: data.depreciation_rate,
+      };
+
+      await fixedAssetsApi.update(editingAsset.id, updates);
+      fetchAssets();
 
       toast({
         title: "Success",
@@ -149,8 +147,8 @@ const AssetManagement = () => {
     if (!deletingAsset) return;
 
     try {
-      const filteredAssets = assets.filter(a => a.id !== deletingAsset.id);
-      saveAssets(filteredAssets);
+      await fixedAssetsApi.delete(deletingAsset.id);
+      fetchAssets();
 
       toast({
         title: "Success",

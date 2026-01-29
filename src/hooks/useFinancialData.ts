@@ -1,120 +1,131 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { journalApi, JournalEntry } from '@/lib/journal-api';
+import { fixedAssetsApi, FixedAsset } from '@/lib/fixed-assets-api';
 
-export interface Transaction {
-  id: string;
-  date: string;
-  amount: number;
-  type: string;
-  category: string;
-  description: string;
-  metadata: any;
-  user_id: string;
+export interface FinancialDataResult {
+  revenue: number;
+  costOfSales: number;
+  otherIncome: number;
+  expenses: number;
+  taxExpenses: number;
+  netProfit: number;
+  grossProfit: number;
+  operatingProfit: number;
+  expensesByCategory: Record<string, number>;
 }
 
-export interface Asset {
-  id: string;
-  name: string;
-  category: string;
-  purchase_date: string;
-  purchase_price: number;
-  current_value: number;
-  depreciation_rate: number;
-  useful_life: number;
-  location: string;
+export interface BalanceSheetResult {
+  assets: {
+    nonCurrent: number;
+    current: number;
+    total: number;
+  };
+  equity: {
+    shareCapital: number;
+    retainedEarnings: number;
+    total: number;
+  };
+  liabilities: {
+    nonCurrent: number;
+    current: number;
+    total: number;
+  };
 }
 
 export const useFinancialData = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [assets, setAssets] = useState<FixedAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTransactions = useCallback(async () => {
+  const fetchFinancialData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+      
+      const [journalData, assetsData] = await Promise.all([
+        journalApi.getEntries(),
+        fixedAssetsApi.getAll()
+      ]);
 
-      const { data: txData, error: txError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
+      setEntries(journalData);
+      setAssets(assetsData);
 
-      if (txError) throw txError;
-      setTransactions(txData || []);
-
-      // Assets are managed locally since no assets table exists in DB
-      // Use mock data or localStorage
-      const storedAssets = localStorage.getItem('rigel_assets');
-      if (storedAssets) {
-        try {
-          setAssets(JSON.parse(storedAssets));
-        } catch {
-          setAssets([]);
-        }
-      }
-
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching financial data:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    fetchFinancialData();
 
-  const getDepreciationExpense = (startDate: Date, endDate: Date) => {
-    const daysInPeriod = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-    const yearFraction = daysInPeriod / 365;
+    const channel = supabase
+      .channel('financial-data-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'journal_entries'
+        },
+        () => {
+          fetchFinancialData();
+        }
+      )
+      .subscribe();
 
-    return assets.reduce((total, asset) => {
-       const annualDepreciation = asset.purchase_price * (asset.depreciation_rate / 100);
-       return total + (annualDepreciation * yearFraction);
-    }, 0);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchFinancialData]);
+
+  const getAccountType = (code: string) => {
+    const prefix = code.substring(0, 1);
+    switch(prefix) {
+      case '1': return 'asset';
+      case '2': return 'liability';
+      case '3': return 'equity';
+      case '4': return 'revenue';
+      case '5': return 'cogs';
+      case '6': return 'expense';
+      default: return 'other';
+    }
   };
 
-  const getIncomeStatementData = (startDate: Date, endDate: Date) => {
-    const filtered = transactions.filter(t => {
-      const d = new Date(t.date);
-      return d >= startDate && d <= endDate;
+  const getIncomeStatementData = (startDate: Date, endDate: Date): FinancialDataResult => {
+    let revenue = 0;
+    let costOfSales = 0;
+    const otherIncome = 0;
+    let expenses = 0;
+    const taxExpenses = 0;
+    const expensesByCategory: Record<string, number> = {};
+
+    entries.forEach(entry => {
+      // Only include posted entries for financial reports
+      if (entry.status !== 'posted') return;
+
+      const entryDate = new Date(entry.date);
+      if (entryDate >= startDate && entryDate <= endDate) {
+        entry.lines.forEach(line => {
+          const type = getAccountType(line.accountId);
+          const amount = Number(line.credit) - Number(line.debit); // Revenue is Credit normal
+
+          if (type === 'revenue') revenue += amount;
+          if (type === 'cogs') costOfSales += (Number(line.debit) - Number(line.credit)); // Expense is Debit normal
+          if (type === 'expense') {
+            const expAmount = Number(line.debit) - Number(line.credit);
+            expenses += expAmount;
+            // Simple categorization by account code for now
+            const cat = line.description || 'General';
+            expensesByCategory[cat] = (expensesByCategory[cat] || 0) + expAmount;
+          }
+        });
+      }
     });
 
-    const revenue = filtered
-      .filter(t => ['income', 'donation', 'grant'].includes(t.type))
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const costOfSales = filtered
-      .filter(t => ['cost_of_sales'].includes(t.type))
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const otherIncome = filtered
-      .filter(t => ['other_income', 'interest_received'].includes(t.type))
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const expenses = filtered
-      .filter(t => ['expense', 'business_expense', 'other'].includes(t.type))
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const taxExpenses = filtered
-      .filter(t => ['tax_payment', 'vat_payment'].includes(t.type))
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const expensesByCategory: Record<string, number> = {};
-    filtered
-      .filter(t => ['expense', 'business_expense', 'other'].includes(t.type))
-      .forEach(t => {
-        const cat = t.category || 'Uncategorized';
-        expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (t.amount || 0);
-      });
-      
     return {
       revenue,
       costOfSales,
@@ -128,65 +139,117 @@ export const useFinancialData = () => {
     };
   };
 
-  const getBalanceSheetData = (asOfDate: Date) => {
-    const historicalTransactions = transactions.filter(t => new Date(t.date) <= asOfDate);
-    
-    let cashBalance = 0;
-    historicalTransactions.forEach(t => {
-        if (t.type === 'income') cashBalance += t.amount;
-        if (t.type === 'expense') cashBalance -= t.amount;
-    });
-
-    const nonCurrentAssets = assets.reduce((sum, asset) => sum + asset.current_value, 0);
-    const accountsReceivable = 0; 
-    const inventory = 0;
-
-    const totalCurrentAssets = cashBalance + accountsReceivable + inventory;
-    const totalAssets = nonCurrentAssets + totalCurrentAssets;
-
+  const getBalanceSheetData = (asOfDate: Date): BalanceSheetResult => {
+    let currentAssets = 0;
+    let nonCurrentAssets = 0;
+    let currentLiabilities = 0;
+    let nonCurrentLiabilities = 0;
+    let shareCapital = 0;
     let retainedEarnings = 0;
-    historicalTransactions.forEach(t => {
-         if (t.type === 'income') retainedEarnings += t.amount;
-         if (t.type === 'expense') retainedEarnings -= t.amount;
+
+    // Calculate from Journal Entries
+    entries.forEach(entry => {
+      // Only include posted entries
+      if (entry.status !== 'posted') return;
+
+      const entryDate = new Date(entry.date);
+      if (entryDate <= asOfDate) {
+        entry.lines.forEach(line => {
+          const type = getAccountType(line.accountId);
+          const debit = Number(line.debit);
+          const credit = Number(line.credit);
+          const netDebit = debit - credit;
+          const netCredit = credit - debit;
+
+          // 1xxx Assets
+          if (type === 'asset') {
+             // Heuristic: 1000-1499 Current, 1500-1999 Non-Current
+             if (Number(line.accountId) < 1500) {
+                 currentAssets += netDebit;
+             } else {
+                 nonCurrentAssets += netDebit;
+             }
+          }
+          // 2xxx Liabilities
+          else if (type === 'liability') {
+              // Heuristic: 2000-2499 Current, 2500-2999 Non-Current
+              if (Number(line.accountId) < 2500) {
+                  currentLiabilities += netCredit;
+              } else {
+                  nonCurrentLiabilities += netCredit;
+              }
+          }
+          // 3xxx Equity
+          else if (type === 'equity') {
+              shareCapital += netCredit;
+          }
+          // P&L items flow to Retained Earnings
+          else if (['revenue', 'cogs', 'expense'].includes(type)) {
+              retainedEarnings += netCredit; // Revenue increases Equity, Expenses decrease it
+          }
+        });
+      }
     });
-    
-    const totalDepreciation = assets.reduce((sum, asset) => sum + (asset.purchase_price - asset.current_value), 0);
-    retainedEarnings -= totalDepreciation;
 
-    const shareCapital = 100;
-    const totalEquity = shareCapital + retainedEarnings;
-
-    const currentLiabilities = 0;
-    const nonCurrentLiabilities = 0;
-    const totalLiabilities = currentLiabilities + nonCurrentLiabilities;
+    // Fallback/Augment with Fixed Assets module if GL is empty for assets
+    // This is a hybrid approach to ensure data shows up even if GL isn't fully populated manually
+    if (nonCurrentAssets === 0 && assets.length > 0) {
+        nonCurrentAssets = assets.reduce((sum, a) => sum + (a.cost_price - (a.accum_depr || 0)), 0);
+    }
 
     return {
       assets: {
         nonCurrent: nonCurrentAssets,
-        current: totalCurrentAssets,
-        total: totalAssets
+        current: currentAssets,
+        total: nonCurrentAssets + currentAssets
       },
       equity: {
         shareCapital,
         retainedEarnings,
-        total: totalEquity
+        total: shareCapital + retainedEarnings
       },
       liabilities: {
         nonCurrent: nonCurrentLiabilities,
         current: currentLiabilities,
-        total: totalLiabilities
+        total: nonCurrentLiabilities + currentLiabilities
       }
     };
   };
 
+  const getDepreciationExpense = (startDate: Date, endDate: Date) => {
+    // Calculate from Fixed Assets module
+     const daysInPeriod = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+     const yearFraction = daysInPeriod / 365;
+ 
+     return assets.reduce((total, asset) => {
+        const annualDepreciation = asset.cost_price * (asset.depreciation_rate / 100);
+        return total + (annualDepreciation * yearFraction);
+     }, 0);
+  };
+
+  const getBankBalance = (): number => {
+    let bankBalance = 0;
+    entries.forEach(entry => {
+      if (entry.status !== 'posted') return;
+      entry.lines.forEach(line => {
+        // Assuming 1000 is the main Bank account
+        if (line.accountId === '1000') {
+          bankBalance += (Number(line.debit) - Number(line.credit));
+        }
+      });
+    });
+    return bankBalance;
+  };
+
   return { 
-      transactions, 
-      assets,
-      loading, 
-      error, 
-      refresh: fetchTransactions, 
-      getIncomeStatementData, 
-      getBalanceSheetData,
-      getDepreciationExpense
+    entries, 
+    assets,
+    loading, 
+    error, 
+    refresh: fetchFinancialData, 
+    getIncomeStatementData, 
+    getBalanceSheetData,
+    getDepreciationExpense,
+    getBankBalance
   };
 };

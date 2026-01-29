@@ -42,7 +42,7 @@ const DeferredTaxCalculator = () => {
     }
   }, [projectIdParam, projects, selectedProject, viewMode]);
 
-  const handleCreateProject = async (projectData: any) => {
+  const handleCreateProject = async (projectData: Omit<DeferredTaxProject, 'id' | 'created_at' | 'updated_at'>) => {
     const project = await createProject(projectData);
     if (project) {
       setSelectedProject(project as DeferredTaxProject);

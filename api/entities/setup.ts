@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data: {
         name: body.name,
         address: body.address,
-        ownership: body.ownership as any,
+        ownership: body.ownership as "sole" | "partnership" | "llc" | "corp",
         taxConfig: {
           create: {
             vatRate: 0.15,
@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       include: { taxConfig: true }
     })
 
-    await seedEntityChartOfAccounts(entity.id, entity.ownership as any)
+    await seedEntityChartOfAccounts(entity.id, entity.ownership as "sole" | "partnership" | "llc" | "corp")
 
     const accounts = await prisma.chartOfAccount.findMany({ where: { entityId: entity.id } })
 

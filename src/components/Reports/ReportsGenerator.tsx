@@ -121,7 +121,7 @@ const ReportsGenerator = () => {
             categories: Object.entries(incomeData.expensesByCategory).map(([name, amount]) => ({ name, amount }))
           };
           break;
-        case 'balance-sheet':
+        case 'balance-sheet': {
            const balanceData = getBalanceSheetData(end);
            // Create a simple representation for the generator view, detailed view is in the specific page
            reportData = {
@@ -130,6 +130,7 @@ const ReportsGenerator = () => {
             data: [balanceData]
           };
           break;
+        }
         case 'tax-summary':
           reportData = {
             ...baseData,
@@ -295,7 +296,7 @@ const renderReportContent = (report: GeneratedReport) => {
   if (!report) return null;
   
   switch (report.reportType) {
-    case 'financial-overview':
+    case 'financial-overview': {
       const financialReport = report as FinancialOverviewReport;
       return (
         <div className="space-y-6">
@@ -330,7 +331,8 @@ const renderReportContent = (report: GeneratedReport) => {
           </div>
         </div>
       );
-    case 'tax-summary':
+    }
+    case 'tax-summary': {
       const taxReport = report as TaxSummaryReport;
       return (
         <div className="space-y-6">
@@ -355,7 +357,8 @@ const renderReportContent = (report: GeneratedReport) => {
           </div>
         </div>
       );
-    case 'asset-register':
+    }
+    case 'asset-register': {
       const assetReport = report as AssetRegisterReport;
       return (
         <div className="space-y-6">
@@ -383,7 +386,8 @@ const renderReportContent = (report: GeneratedReport) => {
           </div>
         </div>
       );
-    default:
+    }
+    default: {
       const defaultReport = report as DefaultReport;
       const reportLinks: Record<string, string> = {
         'balance-sheet': '/reports/balance-sheet',
@@ -412,6 +416,7 @@ const renderReportContent = (report: GeneratedReport) => {
           )}
         </div>
       );
+    }
   }
 };
 

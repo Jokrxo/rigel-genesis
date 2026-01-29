@@ -101,8 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Welcome back to SA Financial Insight",
       });
       navigate("/dashboard");
-    } catch (error: any) {
-      const errorMessage = error.message || "Invalid email or password";
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       toast({
         title: "Login failed",
         description: errorMessage,
@@ -167,8 +167,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         navigate("/dashboard");
       }
-    } catch (error: any) {
-      const errorMessage = error.message || "Could not create account";
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Could not create account";
       toast({
         title: "Registration failed",
         description: errorMessage,
@@ -198,10 +198,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Redirecting to Google",
         description: "Please complete the login process",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Google login failed",
-        description: error.message || "Could not login with Google",
+        description: error instanceof Error ? error.message : "Could not login with Google",
         variant: "destructive",
       });
       throw error;
@@ -228,10 +228,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Redirecting to Facebook",
         description: "Please complete the login process",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Facebook login failed",
-        description: error.message || "Could not login with Facebook",
+        description: error instanceof Error ? error.message : "Could not login with Facebook",
         variant: "destructive",
       });
       throw error;
@@ -258,10 +258,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Redirecting to GitHub",
         description: "Please complete the login process",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "GitHub login failed",
-        description: error.message || "Could not login with GitHub",
+        description: error instanceof Error ? error.message : "Could not login with GitHub",
         variant: "destructive",
       });
       throw error;
@@ -282,10 +282,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "You have been logged out successfully",
       });
       navigate("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Logout failed",
-        description: error.message || "Could not log out",
+        description: error instanceof Error ? error.message : "Could not log out",
         variant: "destructive",
       });
       throw error;
@@ -312,10 +312,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Verification email sent",
         description: "Please check your inbox",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Could not send verification email",
-        description: error.message || "Please try again later",
+        description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
       throw error;

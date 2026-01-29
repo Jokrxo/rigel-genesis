@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ interface Transaction {
   description: string | null;
   type: string | null;
   category: string | null;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 const TransactionProcessing = () => {
@@ -30,11 +30,7 @@ const TransactionProcessing = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('transactions')
@@ -57,7 +53,11 @@ const TransactionProcessing = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   const handleFormSuccess = () => {
     setIsFormOpen(false);

@@ -20,7 +20,7 @@ interface Transaction {
   reference_number?: string;
   currency: string;
   is_duplicate: boolean;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export const TransactionsView = () => {
@@ -38,44 +38,6 @@ export const TransactionsView = () => {
   useEffect(() => {
     filterTransactions();
   }, [transactions, searchTerm, categoryFilter]);
-
-  const fetchTransactions = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .order('date', { ascending: false })
-      .limit(1000);
-
-    if (error) {
-      console.error('Error fetching transactions:', error);
-      return;
-    }
-
-    setTransactions(data || []);
-    
-    // Extract unique categories
-    const uniqueCategories = Array.from(new Set(data?.map(t => t.category).filter(Boolean) || []));
-    setCategories(uniqueCategories);
-    setIsLoading(false);
-  };
-
-  const filterTransactions = () => {
-    let filtered = transactions;
-
-    if (searchTerm) {
-      filtered = filtered.filter(t => 
-        t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.reference_number?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (categoryFilter !== "all") {
-      filtered = filtered.filter(t => t.category === categoryFilter);
-    }
-
-    setFilteredTransactions(filtered);
-  };
 
   const formatCurrency = (amount: number, currency: string = 'ZAR') => {
     return new Intl.NumberFormat('en-ZA', {

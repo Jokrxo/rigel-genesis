@@ -42,8 +42,8 @@ interface TransactionFieldsProps {
   form: UseFormReturn<TransactionFormValues>;
   lockedTransactionTypes: string[];
   companyProfile: CompanyProfile | null;
-  customers: any[];
-  suppliers: any[];
+  customers: { id: string; name: string }[];
+  suppliers: { id: string; name: string }[];
   watchedPartyType: string | undefined;
 }
 
@@ -123,7 +123,7 @@ export function TransactionFields({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {getTransactionTypesForOwnership(companyProfile).map((type: any) => (
+                {getTransactionTypesForOwnership(companyProfile).map((type: { value: string; label: string }) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>

@@ -78,7 +78,7 @@ export const TaxLossForm: React.FC<TaxLossFormProps> = ({
         ...values,
         expiry_year: values.expiry_year === '' ? undefined : Number(values.expiry_year),
         utilization_probability: values.utilization_probability / 100, // Convert back to decimal
-      } as any);
+      } as unknown as Record<string, unknown>);
       
       form.reset();
       onOpenChange(false);

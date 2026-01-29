@@ -96,7 +96,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         temporary_difference: tempDiff,
         deferred_tax_asset: dta,
         deferred_tax_liability: dtl,
-      } as any);
+      } as unknown as Record<string, unknown>);
       
       form.reset();
       onOpenChange(false);
