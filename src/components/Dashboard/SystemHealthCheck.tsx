@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SystemCheck {
   name: string;
@@ -35,7 +36,6 @@ export const SystemHealthCheck = () => {
 
     // Check Authentication
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { data: { user } } = await supabase.auth.getUser();
       
       checkItems[0] = {
@@ -108,7 +108,6 @@ export const SystemHealthCheck = () => {
     // Check Supabase Connection
     setTimeout(async () => {
       try {
-        const { supabase } = await import('@/integrations/supabase/client');
         const { data, error } = await supabase.from('profiles').select('id').limit(1);
         
         checkItems[3] = {

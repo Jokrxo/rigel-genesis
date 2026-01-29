@@ -3,6 +3,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { sendWelcomeEmail } from "@/utils/emailService";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthUser {
@@ -21,6 +22,7 @@ interface AuthContextType {
   register: (email: string, password: string, displayName: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithFacebook: () => Promise<void>;
+  loginWithGithub: () => Promise<void>;
   logout: () => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
 }
@@ -142,7 +144,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (data.user && !data.session) {
         // Send welcome email after successful registration
-        const { sendWelcomeEmail } = await import("@/utils/emailService");
         await sendWelcomeEmail({
           userName: displayName,
           email: email.trim().toLowerCase(),
@@ -155,7 +156,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         navigate("/verify-email");
       } else if (data.session) {
         // Send welcome email for instant verification
-        const { sendWelcomeEmail } = await import("@/utils/emailService");
         await sendWelcomeEmail({
           userName: displayName,
           email: email.trim().toLowerCase(),
@@ -304,6 +304,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         loginWithGoogle,
         loginWithFacebook,
+        loginWithGithub,
         logout,
         sendVerificationEmail,
       }}

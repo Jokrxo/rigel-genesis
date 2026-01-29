@@ -9,8 +9,6 @@ export default {
 		"./src/**/*.{ts,tsx}",
 	],
 	safelist: [
-		// Ensure theme classes aren't purged
-		{ pattern: /^theme-/, variants: ['hover', 'focus'] },
 		'dark'
 	],
 	prefix: "",
