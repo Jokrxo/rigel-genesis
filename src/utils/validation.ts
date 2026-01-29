@@ -80,32 +80,40 @@ export const sanitizeHtml = (html: string): string => {
 
 // Input validation for SQL injection prevention
 export const sanitizeInput = (input: string): string => {
-  // Remove common SQL injection patterns
-  return input
-    .replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, (char) => {
-      switch (char) {
-        case "\0":
-          return "\\0";
-        case "\x08":
-          return "\\b";
-        case "\x09":
-          return "\\t";
-        case "\x1a":
-          return "\\z";
-        case "\n":
-          return "\\n";
-        case "\r":
-          return "\\r";
-        case '"':
-        case "'":
-        case "\\":
-        case "%":
-          return "\\" + char;
-        default:
-          return char;
-      }
-    })
-    .trim();
+  // Escape special characters without using control-character regex
+  let out = "";
+  for (let i = 0; i < input.length; i++) {
+    const c = input[i];
+    switch (c) {
+      case "\0":
+        out += "\\0";
+        break;
+      case "\b":
+        out += "\\b";
+        break;
+      case "\t":
+        out += "\\t";
+        break;
+      case "\x1a":
+        out += "\\z";
+        break;
+      case "\n":
+        out += "\\n";
+        break;
+      case "\r":
+        out += "\\r";
+        break;
+      case '"':
+      case "'":
+      case "\\":
+      case "%":
+        out += "\\" + c;
+        break;
+      default:
+        out += c;
+    }
+  }
+  return out.trim();
 };
 
 // File validation

@@ -6,52 +6,43 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Download } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useFinancialData } from '@/hooks/useFinancialData'
+import { taxApi, TaxSummary } from '@/lib/tax-api'
 
 export default function TaxDashboard() {
   const { getIncomeStatementData, getDepreciationExpense } = useFinancialData();
-  const [data, setData] = useState<any | null>({
-    vatRate: 15,
-    vatDue: 0,
-    depreciationExpense: 0,
-    taxableIncome: 0,
-    corpTax: 0
-  })
+  const [data, setData] = useState<TaxSummary | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
-    // Calculate tax data from financial records
-    const start = new Date(new Date().getFullYear(), 0, 1);
-    const end = new Date();
-    const incomeData = getIncomeStatementData(start, end);
-
-    // Get depreciation from asset register
-    const depreciationExpense = getDepreciationExpense(start, end);
-
-    // Simple estimation logic
-    // VAT Due = Output VAT (on income) - Input VAT (on expenses)
-    // For now we assume a flat rate estimation if exact tax transactions aren't tagged
-    // In a real system, we'd sum up 'tax_payment' or 'vat_payment' or specific tax line items
-    
-    // Using 15% VAT rate for estimation on taxable supplies
-    const estimatedOutputVat = incomeData.revenue * 0.15; 
-    const estimatedInputVat = incomeData.expenses * 0.15;
-    const vatDue = estimatedOutputVat - estimatedInputVat;
-
-    // Adjust taxable income for depreciation (deductible)
-    // Note: incomeData.netProfit is (Revenue - Expenses), where Expenses currently don't include depreciation unless we added it manually.
-    // So we subtract depreciationExpense from netProfit to get Taxable Income.
-    const taxableIncome = incomeData.netProfit - depreciationExpense; 
-    const corpTax = taxableIncome > 0 ? taxableIncome * 0.27 : 0; // 27% CIT rate
-
-    setData({
-      vatRate: 15,
-      vatDue: vatDue,
-      depreciationExpense: depreciationExpense,
-      taxableIncome: taxableIncome,
-      corpTax: corpTax
-    });
-
-  }, [getIncomeStatementData, getDepreciationExpense])
+    const load = async () => {
+      try {
+        const server = await taxApi.getSummary('demo')
+        setData(server)
+      } catch {
+        const start = new Date(new Date().getFullYear(), 0, 1);
+        const end = new Date();
+        const incomeData = getIncomeStatementData(start, end);
+        const depreciationExpense = getDepreciationExpense(start, end);
+        const vatRate = 15;
+        const estimatedOutputVat = incomeData.revenue * (vatRate / 100);
+        const estimatedInputVat = incomeData.expenses * (vatRate / 100);
+        const vatDue = estimatedOutputVat - estimatedInputVat;
+        const taxableIncome = incomeData.netProfit - depreciationExpense;
+        const corpTax = taxableIncome > 0 ? taxableIncome * 0.27 : 0;
+        setData({
+          vatRate,
+          vatDue,
+          depreciationExpense,
+          taxableIncome,
+          corpTax,
+          revenue: incomeData.revenue,
+          expenses: incomeData.expenses,
+        });
+        toast({ title: 'Using local estimates', description: 'Tax API unavailable, computed values locally.' })
+      }
+    }
+    load()
+  }, [getIncomeStatementData, getDepreciationExpense, toast])
 
   return (
     <MainLayout>
