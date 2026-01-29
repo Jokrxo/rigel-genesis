@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DeferredTaxProject, DeferredTaxCategory, TaxLossCarryForward, Country } from '../types';
 import { useToast } from '@/hooks/use-toast';
