@@ -82,6 +82,8 @@ import { CookieConsent } from "@/components/Shared/CookieConsent";
 import { RatingModal } from "@/components/Shared/RatingModal";
 import { TutorialProvider } from "@/components/Tutorial/TutorialContext";
 import ToolsSupport from "./pages/ToolsSupport";
+import Contact from "./pages/Contact";
+import ExportData from "./pages/ExportData";
 
 const App = () => (
   <ErrorBoundary>
