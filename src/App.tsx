@@ -94,6 +94,7 @@ const App = () => (
               <ErrorBoundary>
                 <Toaster />
                 <Sonner />
+                <FloatingContactPanel />
                 <Chatbot />
                 <CookieConsent />
                 <RatingModal />
@@ -147,6 +148,8 @@ const App = () => (
                   <Route path="/impairment" element={<ProtectedRoute><ImpairmentModule /></ProtectedRoute>} />
                   <Route path="/reports/payroll" element={<ProtectedRoute><PayrollReports /></ProtectedRoute>} />
                   <Route path="/tools-support" element={<ProtectedRoute><ToolsSupport /></ProtectedRoute>} />
+                  <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
+                  <Route path="/export-data" element={<ProtectedRoute><ExportData /></ProtectedRoute>} />
                   <Route path="/reports/balance-sheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
                   <Route path="/reports/income-statement" element={<ProtectedRoute><IncomeStatement /></ProtectedRoute>} />
                   <Route path="/reports/cash-flow" element={<ProtectedRoute><CashFlowStatement /></ProtectedRoute>} />

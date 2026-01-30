@@ -79,10 +79,10 @@ const Register = () => {
           alt="Global Financial Network" 
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-background/60 dark:bg-background/80" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden">
+      <div className="relative z-10 w-full max-w-md bg-card/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden border border-border">
         <div className="flex justify-center pt-10 pb-4">
           <img 
             src={rigelFullLogo}
@@ -92,8 +92,8 @@ const Register = () => {
         </div>
 
         <div className="flex flex-col items-center text-center mb-8 px-6">
-          <h2 className="text-3xl font-bold text-gray-900">Create an account</h2>
-          <p className="mt-3 text-lg text-gray-800 leading-relaxed text-center max-w-sm mx-auto">
+          <h2 className="text-3xl font-bold text-card-foreground">Create an account</h2>
+          <p className="mt-3 text-lg text-muted-foreground leading-relaxed text-center max-w-sm mx-auto">
             Join Rigel to manage your finances with our comprehensive financial management system designed for South African businesses.
           </p>
         </div>
@@ -104,7 +104,7 @@ const Register = () => {
               onClick={handleGoogleLogin}
               disabled={isLoading}
               variant="outline"
-              className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50 text-gray-800 font-medium"
+              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent hover:text-accent-foreground font-medium"
             >
               <img 
                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
@@ -117,7 +117,7 @@ const Register = () => {
             <Button
               onClick={handleFacebookLogin}
               variant="outline"
-              className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50 text-gray-800 font-medium"
+              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent hover:text-accent-foreground font-medium"
             >
               <div className="h-5 w-5 mr-2 bg-[#1877F3] rounded-full flex items-center justify-center">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
@@ -130,7 +130,7 @@ const Register = () => {
             <Button
               onClick={handleGithubLogin}
               variant="outline"
-              className="w-full justify-center gap-2 py-6 border-gray-300 hover:bg-gray-50 text-gray-800 font-medium"
+              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent hover:text-accent-foreground font-medium"
             >
               <div className="h-5 w-5 mr-2 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -143,24 +143,24 @@ const Register = () => {
 
           <div className="my-5 flex items-center">
             <Separator className="flex-1" />
-            <span className="px-3 text-xs text-gray-600 font-medium">or</span>
+            <span className="px-3 text-xs text-muted-foreground font-medium">or</span>
             <Separator className="flex-1" />
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-900 font-semibold">Full Name</Label>
+              <Label htmlFor="name" className="text-card-foreground font-semibold">Full Name</Label>
               <Input
                 id="name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="John Doe"
                 required
-                className="py-6 text-gray-900 placeholder:text-gray-400 bg-white border-gray-300"
+                className="py-6 text-card-foreground placeholder:text-muted-foreground bg-background border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-900 font-semibold">Email address</Label>
+              <Label htmlFor="email" className="text-card-foreground font-semibold">Email address</Label>
               <Input
                 id="email"
                 type="email"
@@ -168,11 +168,11 @@ const Register = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
                 required
-                className="py-6 text-gray-900 placeholder:text-gray-400 bg-white border-gray-300"
+                className="py-6 text-card-foreground placeholder:text-muted-foreground bg-background border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-900 font-semibold">Password</Label>
+              <Label htmlFor="password" className="text-card-foreground font-semibold">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -180,15 +180,15 @@ const Register = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="py-6 text-gray-900 placeholder:text-gray-400 bg-white border-gray-300"
+                className="py-6 text-card-foreground placeholder:text-muted-foreground bg-background border-border"
               />
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Password must be at least 8 characters long
               </p>
             </div>
             <div className="space-y-2">
-              <Label className="flex items-start gap-2 text-sm text-gray-700">
-                <Input type="checkbox" className="mt-0.5 h-4 w-4" required />
+              <Label className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Input type="checkbox" className="mt-0.5 h-4 w-4 border-border" required />
                 <span className="text-justify leading-relaxed">
                   I agree to the{" "}
                   <Link to="/terms" className="text-primary hover:underline font-medium">
@@ -210,17 +210,17 @@ const Register = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-700">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link to="/login" className="text-primary hover:underline font-semibold">
               Log in
             </Link>
           </div>
 
-          <div className="mt-6 border-t border-gray-200 pt-6">
+          <div className="mt-6 border-t border-border pt-6">
             <div className="flex items-center justify-center gap-2">
-              <QrCode className="h-4 w-4 text-gray-600" />
-              <Link to="/qr-code" className="text-xs text-gray-600 hover:underline font-medium">
+              <QrCode className="h-4 w-4 text-muted-foreground" />
+              <Link to="/qr-code" className="text-xs text-muted-foreground hover:underline font-medium">
                 Share application via QR code
               </Link>
             </div>

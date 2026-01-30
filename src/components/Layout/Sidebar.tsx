@@ -34,6 +34,11 @@ import {
   Wrench,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
 
 interface SidebarProps {
@@ -52,37 +57,6 @@ const navItems: NavItem[] = [
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-  },
-  {
-    title: "Tools & Support",
-    icon: Wrench,
-    children: [
-      {
-        title: "Tools Overview",
-        href: "/tools-support",
-        icon: Wrench,
-      },
-      {
-        title: "Community",
-        href: "/community",
-        icon: Users,
-      },
-      {
-        title: "Help Center",
-        href: "/help",
-        icon: HelpCircle,
-      },
-      {
-        title: "Tax Calculators",
-        href: "/tax-calculators",
-        icon: Calculator,
-      },
-      {
-        title: "Impairment Check",
-        href: "/impairment",
-        icon: TrendingDown,
-      },
-    ],
   },
   {
     title: "Settings",
@@ -324,6 +298,37 @@ const navItems: NavItem[] = [
     href: "/journal-entries",
     icon: BookOpen,
   },
+  {
+    title: "Tools & Support",
+    icon: Wrench,
+    children: [
+      {
+        title: "Tools Overview",
+        href: "/tools-support",
+        icon: Wrench,
+      },
+      {
+        title: "Community",
+        href: "/community",
+        icon: Users,
+      },
+      {
+        title: "Help Center",
+        href: "/help",
+        icon: HelpCircle,
+      },
+      {
+        title: "Tax Calculators",
+        href: "/tax-calculators",
+        icon: Calculator,
+      },
+      {
+        title: "Impairment Check",
+        href: "/impairment",
+        icon: TrendingDown,
+      },
+    ],
+  },
 ];
 
 export const Sidebar = ({ isOpen }: SidebarProps) => {
@@ -344,35 +349,57 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
     );
   };
 
+  const getBackgroundClass = (depth: number, isActive: boolean, isExpanded: boolean) => {
+    if (isActive) return "bg-primary/15 text-primary font-semibold shadow-sm border border-primary/20";
+    if (isExpanded) return "bg-primary/10 text-primary border border-primary/20";
+    
+    switch (depth) {
+        case 0: return "hover:bg-primary/10 hover:text-primary";
+        case 1: return "bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground";
+        case 2: return "bg-muted/50 hover:bg-muted/70 text-muted-foreground hover:text-foreground";
+        default: return "hover:bg-primary/10";
+    }
+  };
+
   const renderNavItem = (item: NavItem, depth: number = 0) => {
     const isActive = item.href === location.pathname;
     const hasChildren = item.children && item.children.length > 0;
     const isGroupActive = hasChildren ? checkIsActive(item.children!) : false;
     const isExpanded = expandedItems.includes(item.title) || isGroupActive;
+    
+    const bgClass = getBackgroundClass(depth, isActive, isExpanded);
 
     if (hasChildren) {
       return (
           <Collapsible key={item.title} open={isExpanded} onOpenChange={() => toggleExpanded(item.title)}>
             <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
-                  "hover:bg-primary/10 hover:text-primary",
-                  "transition-all duration-200",
-                  "rounded-lg",
-                  depth > 0 && "ml-4",
-                  isGroupActive && "bg-primary/10 text-primary border border-primary/20"
-                )}
-              >
-                <item.icon className="h-5 w-5 shrink-0" />
-                <span className="truncate flex-1">{item.title}</span>
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 shrink-0 transition-transform" />
-                )}
-              </Button>
+                <div className="w-full"> {/* Wrapper for Tooltip */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
+                          "transition-all duration-200",
+                          "rounded-lg",
+                          depth > 0 && "ml-4",
+                          bgClass
+                        )}
+                      >
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        <span className="truncate flex-1">{item.title}</span>
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 shrink-0 transition-transform" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 shrink-0 transition-transform" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>{item.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 ml-2 mt-1">
               {item.children?.map(child => renderNavItem(child, depth + 1))}
@@ -382,24 +409,30 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
     }
 
     return (
-      <Button
-        key={item.title}
-        variant="ghost"
-        className={cn(
-          "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
-          "hover:bg-primary/10 hover:text-primary",
-          "transition-all duration-200",
-          "rounded-lg",
-          isActive && "bg-primary/15 text-primary font-semibold shadow-sm border border-primary/20",
-          depth > 0 && "ml-4"
-        )}
-        asChild
-      >
-        <Link to={item.href || "#"} aria-current={isActive ? "page" : undefined}>
-          <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
-          <span className="truncate">{item.title}</span>
-        </Link>
-      </Button>
+      <Tooltip key={item.title}>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full justify-start gap-3 px-3 py-2.5 text-left font-medium",
+              "transition-all duration-200",
+              "rounded-lg",
+              bgClass,
+              isActive && "bg-primary/15 text-primary font-semibold shadow-sm border border-primary/20",
+              depth > 0 && "ml-4"
+            )}
+            asChild
+          >
+            <Link to={item.href || "#"} aria-current={isActive ? "page" : undefined}>
+              <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
+              <span className="truncate">{item.title}</span>
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+            <p>{item.title}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -408,7 +441,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
       <div
       id="main-sidebar"
       className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar transition-transform duration-300 ease-in-out md:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 w-72 bg-sidebar transition-transform duration-300 ease-in-out md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

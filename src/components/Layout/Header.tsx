@@ -28,9 +28,9 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
 
   const handleStartTour = () => {
     startTutorial([
-      { target: 'header', content: 'This is the command center. Access search, notifications, and profile settings here.' },
-      { target: '#main-sidebar', content: 'Navigate through all Rigel modules using this sidebar. Hover over icons to see more.' },
-      { target: '[role="search"]', content: 'Search for anything in the system - invoices, contacts, or reports.' },
+      { target: 'header', content: 'This is the command center. Access search, notifications, and profile settings here.', position: 'bottom' },
+      { target: '#main-sidebar', content: 'Navigate through all Rigel modules using this sidebar. Hover over icons to see more.', position: 'right' },
+      { target: '[role="search"]', content: 'Search for anything in the system - invoices, contacts, or reports.', position: 'bottom' },
     ]);
   };
 

@@ -5,7 +5,7 @@ import { Phone, MessageSquare, Mail } from "lucide-react";
 export const FloatingContactPanel: React.FC = () => {
   return (
     <div 
-      className="fixed bottom-6 right-24 z-50 flex items-center gap-3"
+      className="fixed bottom-7 right-24 z-40 flex items-center gap-3"
       aria-label="Contact options panel"
     >
       <Button

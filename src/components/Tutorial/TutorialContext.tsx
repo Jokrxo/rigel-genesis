@@ -59,57 +59,94 @@ export const TutorialProvider = ({ children }: { children: React.ReactNode }) =>
       if (targetEl) {
         const rect = targetEl.getBoundingClientRect();
         setPosition({
-          top: rect.top + window.scrollY,
-          left: rect.left + window.scrollX,
+          top: rect.top,
+          left: rect.left,
           width: rect.width,
           height: rect.height
         });
         
         // Scroll to element if needed
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
       }
     };
 
     updatePosition();
     window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition);
     
     // Give time for UI to settle
     const timer = setTimeout(updatePosition, 500);
 
     return () => {
       window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition);
       clearTimeout(timer);
     };
   }, [active, currentStepIndex, steps]);
+
+  const currentStep = steps[currentStepIndex];
+  const placement = currentStep?.position || 'bottom';
+
+  // Calculate popover styles based on placement
+  const getPopoverStyles = () => {
+    const baseStyles: React.CSSProperties = { position: 'absolute' };
+    
+    switch (placement) {
+      case 'top':
+        return {
+          ...baseStyles,
+          bottom: window.innerHeight - position.top + 12,
+          left: position.left + position.width / 2,
+          transform: 'translateX(-50%)'
+        };
+      case 'bottom':
+        return {
+          ...baseStyles,
+          top: position.top + position.height + 12,
+          left: position.left + position.width / 2,
+          transform: 'translateX(-50%)'
+        };
+      case 'left':
+        return {
+          ...baseStyles,
+          top: position.top + position.height / 2,
+          right: window.innerWidth - position.left + 12,
+          transform: 'translateY(-50%)'
+        };
+      case 'right':
+        return {
+          ...baseStyles,
+          top: position.top + 100, // Offset from top instead of centering for sidebar
+          left: position.left + position.width + 12,
+          transform: 'translateY(0)'
+        };
+      default:
+        return {
+          ...baseStyles,
+          top: position.top + position.height + 12,
+          left: position.left
+        };
+    }
+  };
 
   return (
     <TutorialContext.Provider value={{ startTutorial, active, currentStepIndex, nextStep, stopTutorial }}>
       {children}
       {active && steps[currentStepIndex] && (
         <div className="fixed inset-0 z-50 pointer-events-none">
-          {/* Backdrop with hole */}
-          <div className="absolute inset-0 bg-black/50 transition-all duration-300" style={{
-            clipPath: `polygon(
-              0% 0%, 
-              0% 100%, 
-              0% ${position.top}px, 
-              ${position.left}px ${position.top}px, 
-              ${position.left}px ${position.top + position.height}px, 
-              ${position.left + position.width}px ${position.top + position.height}px, 
-              ${position.left + position.width}px ${position.top}px, 
-              100% ${position.top}px, 
-              100% 100%, 
-              100% 0%
-            )`
-            // Note: Clip-path approach for "hole" is tricky with complex shapes, 
-            // simpler approach is using 4 divs around the target or a massive box-shadow.
-            // For simplicity in this prototype, we'll just use a floating card and no dark backdrop 
-            // or a simple semi-transparent overlay that doesn't block clicks on target (pointer-events-none)
-          }}></div>
+          {/* 4-div Mask Approach */}
+          <div className="absolute top-0 left-0 w-full bg-black/50 transition-all duration-300" 
+               style={{ height: position.top }} />
+          <div className="absolute left-0 w-full bg-black/50 transition-all duration-300" 
+               style={{ top: position.top + position.height, bottom: 0 }} />
+          <div className="absolute left-0 bg-black/50 transition-all duration-300" 
+               style={{ top: position.top, height: position.height, width: position.left }} />
+          <div className="absolute right-0 bg-black/50 transition-all duration-300" 
+               style={{ top: position.top, height: position.height, left: position.left + position.width }} />
           
           {/* Highlight Box */}
           <div 
-            className="absolute border-2 border-primary rounded-md transition-all duration-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
+            className="absolute border-2 border-primary rounded-md transition-all duration-300 shadow-[0_0_0_4px_rgba(var(--primary),0.2)]"
             style={{
               top: position.top - 4,
               left: position.left - 4,
@@ -121,11 +158,8 @@ export const TutorialProvider = ({ children }: { children: React.ReactNode }) =>
 
           {/* Pointer/Popover */}
           <div 
-             className="absolute pointer-events-auto bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border w-64 animate-in zoom-in-95 duration-200"
-             style={{
-                 top: position.top + position.height + 12,
-                 left: position.left
-             }}
+             className="pointer-events-auto bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border w-80 animate-in zoom-in-95 duration-200"
+             style={getPopoverStyles()}
           >
              <div className="flex justify-between items-start mb-2">
                  <h4 className="font-semibold text-sm">Step {currentStepIndex + 1}/{steps.length}</h4>
@@ -134,7 +168,10 @@ export const TutorialProvider = ({ children }: { children: React.ReactNode }) =>
                  </button>
              </div>
              <p className="text-sm mb-4">{steps[currentStepIndex].content}</p>
-             <div className="flex justify-end">
+             <div className="flex justify-end gap-2">
+                 <Button variant="outline" size="sm" onClick={stopTutorial}>
+                     Skip
+                 </Button>
                  <Button size="sm" onClick={nextStep}>
                      {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}
                  </Button>
