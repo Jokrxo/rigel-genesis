@@ -2,18 +2,14 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import React from "react";
-import type { Database } from "@/integrations/supabase/types";
-import type { Supplier } from "@/components/SupplierManagement/SupplierForm";
-
-type Customer = Database["public"]["Tables"]["customers"]["Row"];
 
 import { UseFormReturn } from "react-hook-form";
 import { TransactionFormValues } from "./TransactionFormMain";
 
 interface PartySelectionFieldsProps {
   form: UseFormReturn<TransactionFormValues>;
-  customers: Customer[];
-  suppliers: Supplier[];
+  customers: { id: string; name: string; company: string }[];
+  suppliers: { id: string; name: string; company: string }[];
   watchedPartyType: string | undefined;
 }
 

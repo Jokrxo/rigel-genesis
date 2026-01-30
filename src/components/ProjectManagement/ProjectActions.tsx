@@ -59,11 +59,33 @@ export const ProjectActions = ({
 
   const handleExportCSV = () => {
     const headers = ['Name', 'Client', 'Status', 'Budget', 'Spent', 'Manager', 'Start Date', 'End Date'];
-    exportToCSV(projects, 'projects', headers);
+    const projectRecords = projects.map(p => ({
+      name: p.name,
+      client: p.client,
+      status: p.status,
+      budget: p.budget,
+      spent: p.spent,
+      manager: p.manager,
+      start_date: p.startDate,
+      end_date: p.endDate,
+    }));
+    exportToCSV(projectRecords, 'projects', headers);
   };
 
   const handleExportJSON = () => {
-    exportToJSON(projects, 'projects');
+    const projectRecords = projects.map(p => ({
+      name: p.name,
+      client: p.client,
+      status: p.status,
+      budget: p.budget,
+      spent: p.spent,
+      manager: p.manager,
+      start_date: p.startDate,
+      end_date: p.endDate,
+      description: p.description,
+      id: p.id,
+    }));
+    exportToJSON(projectRecords, 'projects');
   };
 
   // Bulk actions for multiple projects

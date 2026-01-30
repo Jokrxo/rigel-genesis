@@ -177,8 +177,9 @@ const SupplierManagement = () => {
   });
 
   const handleExportCSV = () => {
+    const headers = ['Name', 'Company', 'Email', 'Phone', 'Status'];
     const dataToExport = filteredSuppliers.map(localSupplierToRecord);
-    exportToCSV(dataToExport, 'suppliers-export');
+    exportToCSV(dataToExport, 'suppliers-export', headers);
   };
 
   const handleExportJSON = () => {
@@ -225,13 +226,13 @@ const SupplierManagement = () => {
 
         <ViewSupplierDialog 
           open={isViewOpen}
-          onOpenChange={setIsViewOpen}
+          onClose={() => setIsViewOpen(false)}
           supplier={viewingSupplier}
         />
 
         <DeleteConfirmationDialog 
           open={isDeleteOpen}
-          onOpenChange={setIsDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
           onConfirm={handleConfirmDelete}
           title="Delete Supplier"
           description={`Are you sure you want to delete ${deletingSupplier?.name}? This action cannot be undone.`}

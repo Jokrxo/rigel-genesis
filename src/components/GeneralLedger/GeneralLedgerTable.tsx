@@ -36,6 +36,18 @@ export const GeneralLedgerTable = () => {
     loadLedgerData();
   }, []);
 
+  // Helper function to get account name from code
+  const getAccountName = (accountCode: string): string => {
+    const accountNames: Record<string, string> = {
+      '1000': 'Cash',
+      '1100': 'Accounts Receivable',
+      '2000': 'Accounts Payable',
+      '4000': 'Sales Revenue',
+      '6000': 'Expenses',
+    };
+    return accountNames[accountCode] || 'Unknown Account';
+  };
+
   const loadLedgerData = async () => {
     try {
       setLoading(true);
@@ -54,7 +66,7 @@ export const GeneralLedgerTable = () => {
                 reference: entry.reference,
                 description: line.description || entry.description,
                 account_code: line.accountId,
-                account_name: getAccountName(line.accountId), // Helper function
+                account_name: getAccountName(line.accountId),
                 debit: Number(line.debit),
                 credit: Number(line.credit)
             });

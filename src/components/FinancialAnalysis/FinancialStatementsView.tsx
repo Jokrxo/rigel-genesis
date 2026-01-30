@@ -36,7 +36,7 @@ export const FinancialStatementsView = () => {
       return;
     }
 
-    setStatements(data || []);
+    setStatements((data || []) as unknown as FinancialStatement[]);
     setIsLoading(false);
   };
 
@@ -55,7 +55,19 @@ export const FinancialStatementsView = () => {
     const statement = getLatestStatement('income_statement');
     if (!statement) return <p className="text-muted-foreground">No income statement available</p>;
 
-    const data = statement.statement_data;
+    const data = statement.statement_data as {
+      revenue?: number;
+      netIncome?: number;
+      expenses?: {
+        operatingExpenses?: Record<string, number>;
+        bankCharges?: number;
+        interest?: number;
+      };
+    };
+    
+    const revenue = Number(data.revenue) || 0;
+    const netIncome = Number(data.netIncome) || 0;
+    const expenses = data.expenses || {};
     
     return (
       <div className="space-y-4">
@@ -66,7 +78,7 @@ export const FinancialStatementsView = () => {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-green-600">
-                {formatCurrency(data.revenue)}
+                {formatCurrency(revenue)}
               </p>
             </CardContent>
           </Card>
@@ -76,8 +88,8 @@ export const FinancialStatementsView = () => {
               <CardTitle className="text-lg">Net Income</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className={`text-2xl font-bold ${data.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(data.netIncome)}
+              <p className={`text-2xl font-bold ${netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(netIncome)}
               </p>
             </CardContent>
           </Card>
@@ -89,19 +101,19 @@ export const FinancialStatementsView = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {Object.entries(data.expenses.operatingExpenses || {}).map(([category, amount]) => (
+              {Object.entries(expenses.operatingExpenses || {}).map(([category, amount]) => (
                 <div key={category} className="flex justify-between">
                   <span>{category}</span>
-                  <span className="text-red-600">{formatCurrency(amount as number)}</span>
+                  <span className="text-red-600">{formatCurrency(Number(amount))}</span>
                 </div>
               ))}
               <div className="flex justify-between border-t pt-2 font-semibold">
                 <span>Bank Charges</span>
-                <span className="text-red-600">{formatCurrency(data.expenses.bankCharges)}</span>
+                <span className="text-red-600">{formatCurrency(Number(expenses.bankCharges) || 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Interest</span>
-                <span className="text-red-600">{formatCurrency(data.expenses.interest)}</span>
+                <span className="text-red-600">{formatCurrency(Number(expenses.interest) || 0)}</span>
               </div>
             </div>
           </CardContent>
@@ -114,7 +126,15 @@ export const FinancialStatementsView = () => {
     const statement = getLatestStatement('cash_flow');
     if (!statement) return <p className="text-muted-foreground">No cash flow statement available</p>;
 
-    const data = statement.statement_data;
+    const data = statement.statement_data as {
+      operatingActivities?: { netIncome?: number; adjustments?: number };
+      investingActivities?: number;
+      financingActivities?: number;
+    };
+    
+    const operatingActivities = data.operatingActivities || {};
+    const investingActivities = Number(data.investingActivities) || 0;
+    const financingActivities = Number(data.financingActivities) || 0;
     
     return (
       <div className="space-y-4">
@@ -130,11 +150,11 @@ export const FinancialStatementsView = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Net Income</span>
-                  <span>{formatCurrency(data.operatingActivities.netIncome)}</span>
+                  <span>{formatCurrency(Number(operatingActivities.netIncome) || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Adjustments</span>
-                  <span>{formatCurrency(data.operatingActivities.adjustments)}</span>
+                  <span>{formatCurrency(Number(operatingActivities.adjustments) || 0)}</span>
                 </div>
               </div>
             </CardContent>
@@ -148,8 +168,8 @@ export const FinancialStatementsView = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className={`text-xl font-semibold ${data.investingActivities >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(data.investingActivities)}
+              <p className={`text-xl font-semibold ${investingActivities >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(investingActivities)}
               </p>
             </CardContent>
           </Card>
@@ -162,8 +182,8 @@ export const FinancialStatementsView = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className={`text-xl font-semibold ${data.financingActivities >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(data.financingActivities)}
+              <p className={`text-xl font-semibold ${financingActivities >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(financingActivities)}
               </p>
             </CardContent>
           </Card>
@@ -176,7 +196,15 @@ export const FinancialStatementsView = () => {
     const latestStatement = statements[0];
     if (!latestStatement?.ratios) return <p className="text-muted-foreground">No financial ratios available</p>;
 
-    const ratios = latestStatement.ratios;
+    const ratios = latestStatement.ratios as {
+      cashRatio?: number;
+      expenseRatio?: number;
+      netCashFlow?: number;
+    };
+    
+    const cashRatio = Number(ratios.cashRatio) || 0;
+    const expenseRatio = Number(ratios.expenseRatio) || 0;
+    const netCashFlow = Number(ratios.netCashFlow) || 0;
     
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -186,7 +214,7 @@ export const FinancialStatementsView = () => {
             <CardDescription>Liquidity measurement</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{ratios.cashRatio?.toFixed(2) || '0.00'}</p>
+            <p className="text-2xl font-bold">{cashRatio.toFixed(2)}</p>
           </CardContent>
         </Card>
 
@@ -196,7 +224,7 @@ export const FinancialStatementsView = () => {
             <CardDescription>Expense to income ratio</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{(ratios.expenseRatio * 100)?.toFixed(1) || '0.0'}%</p>
+            <p className="text-2xl font-bold">{(expenseRatio * 100).toFixed(1)}%</p>
           </CardContent>
         </Card>
 
@@ -206,8 +234,8 @@ export const FinancialStatementsView = () => {
             <CardDescription>Period cash movement</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${ratios.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(ratios.netCashFlow)}
+            <p className={`text-2xl font-bold ${netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(netCashFlow)}
             </p>
           </CardContent>
         </Card>

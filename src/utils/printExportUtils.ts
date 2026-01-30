@@ -39,13 +39,13 @@ export const printTable = (tableId: string, title: string) => {
   printWindow.close();
 };
 
-export const exportToCSV = <T extends Record<string, unknown>>(data: T[], filename: string, headers: string[]) => {
+export const exportToCSV = <T>(data: T[], filename: string, headers: string[]) => {
   const csvContent = [
     headers.join(','),
     ...data.map(row => 
       headers.map(header => {
         const key = header.toLowerCase().replace(/\s+/g, '_');
-        const value = key in row ? row[key] : '';
+        const value = key in (row as object) ? (row as Record<string, unknown>)[key] : '';
         return `"${String(value).replace(/"/g, '""')}"`;
       }).join(',')
     )
@@ -62,7 +62,7 @@ export const exportToCSV = <T extends Record<string, unknown>>(data: T[], filena
   document.body.removeChild(link);
 };
 
-export const exportToJSON = <T extends Record<string, unknown>>(data: T[], filename: string) => {
+export const exportToJSON = <T>(data: T[], filename: string) => {
   const jsonContent = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
   const link = document.createElement('a');

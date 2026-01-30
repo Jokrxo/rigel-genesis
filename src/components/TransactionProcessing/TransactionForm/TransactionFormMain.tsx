@@ -38,8 +38,8 @@ interface TransactionFormProps {
 export function TransactionForm({ open, onClose, onSuccess }: TransactionFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [customers, setCustomers] = useState<{ id: string; name: string; company: string | null }[]>([]);
-  const [suppliers, setSuppliers] = useState<{ id: string; name: string; company: string | null }[]>([]);
+  const [customers, setCustomers] = useState<{ id: string; name: string; company: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string; company: string }[]>([]);
   const companyProfile = useCompanyProfile(open);
   const [lockedTransactionTypes, setLockedTransactionTypes] = useState<string[]>([]);
   
@@ -82,7 +82,7 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
         console.error("Error fetching customers:", error);
         return;
       }
-      setCustomers(data || []);
+      setCustomers((data || []).map(c => ({ id: c.id, name: c.name, company: c.company || '' })));
     } catch (error) {
       console.error("Error fetching customers:", error);
     }

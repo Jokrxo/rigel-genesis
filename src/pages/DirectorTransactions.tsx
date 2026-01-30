@@ -76,13 +76,29 @@ const DirectorTransactions = () => {
   };
 
   const handleExportDirectorsCSV = () => {
-    const headers = ['Name', 'ID Number', 'Email', 'Phone', 'Shareholding', 'Status'];
-    exportToCSV(filteredDirectors, 'directors', headers);
+    const headers = ['Name', 'ID Number', 'Email', 'Phone', 'Shareholding', 'Active'];
+    const records = filteredDirectors.map(d => ({
+      name: d.name,
+      id_number: d.idNumber,
+      email: d.email,
+      phone: d.phone,
+      shareholding: d.shareholding,
+      active: d.isActive ? 'Yes' : 'No',
+    }));
+    exportToCSV(records, 'directors', headers);
   };
 
   const handleExportTransactionsCSV = () => {
     const headers = ['Date', 'Director', 'Type', 'Amount', 'Description', 'Reference'];
-    exportToCSV(filteredTransactions, 'director-transactions', headers);
+    const records = filteredTransactions.map(t => ({
+      date: t.date,
+      director: t.directorName,
+      type: t.type,
+      amount: t.amount,
+      description: t.description,
+      reference: t.reference,
+    }));
+    exportToCSV(records, 'director-transactions', headers);
   };
 
   const handleAddDirector = (e: React.FormEvent) => {

@@ -77,11 +77,27 @@ const BankBalanceMovements = () => {
 
   const handleExportCSV = () => {
     const headers = ['Date', 'Description', 'Reference', 'Debit', 'Credit', 'Balance'];
-    exportToCSV(filteredMovements, 'bank-movements', headers);
+    const records = filteredMovements.map(m => ({
+      date: m.date,
+      description: m.description,
+      reference: m.reference,
+      debit: m.debit,
+      credit: m.credit,
+      balance: m.balance,
+    }));
+    exportToCSV(records, 'bank-movements', headers);
   };
 
   const handleExportJSON = () => {
-    exportToJSON(filteredMovements, 'bank-movements');
+    const records = filteredMovements.map(m => ({
+      date: m.date,
+      description: m.description,
+      reference: m.reference,
+      debit: m.debit,
+      credit: m.credit,
+      balance: m.balance,
+    }));
+    exportToJSON(records, 'bank-movements');
   };
 
   return (

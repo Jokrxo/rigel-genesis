@@ -42,7 +42,7 @@ const TransactionProcessing = () => {
         console.error('Fetch transactions error:', error);
         throw error;
       }
-      setTransactions(data || []);
+      setTransactions((data || []) as unknown as Transaction[]);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       toast({
