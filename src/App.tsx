@@ -77,6 +77,7 @@ const queryClient = new QueryClient({
 });
 
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { FloatingContactPanel } from "@/components/Shared/FloatingContactPanel";
 import { CookieConsent } from "@/components/Shared/CookieConsent";
 import { RatingModal } from "@/components/Shared/RatingModal";
 import { TutorialProvider } from "@/components/Tutorial/TutorialContext";

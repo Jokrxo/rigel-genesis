@@ -25,10 +25,6 @@ export const JournalEntryManager = () => {
 
   const [activeTab, setActiveTab] = useState<"standard" | "adjustment">("standard");
 
-  useEffect(() => {
-    loadEntries();
-  }, [loadEntries]);
-
   const loadEntries = useCallback(async () => {
     try {
       setLoading(true);
@@ -40,6 +36,10 @@ export const JournalEntryManager = () => {
       setLoading(false);
     }
   }, [toast]);
+
+  useEffect(() => {
+    loadEntries();
+  }, [loadEntries]);
 
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);

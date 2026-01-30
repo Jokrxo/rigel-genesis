@@ -12,6 +12,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useBudgetData } from "@/hooks/useBudgetData";
+import { queryKnowledgeBase } from "@/lib/ai-knowledge-base";
+import { getAIResponse } from "@/lib/openai-service";
 
 interface Message {
   text: string;
@@ -33,24 +35,13 @@ const initialMessages: Message[] = [
 
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = localStorage.getItem('chat_history');
-    if (saved) {
-      try {
-        return JSON.parse(saved, (key, value) => {
-          if (key === 'timestamp') return new Date(value);
-          return value;
-        });
-      } catch (e) {
-        return initialMessages;
-      }
-    }
-    return initialMessages;
-  });
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
 
+  // Clear history on mount to ensure no stale data
   useEffect(() => {
-    localStorage.setItem('chat_history', JSON.stringify(messages));
-  }, [messages]);
+    localStorage.removeItem('chat_history');
+  }, []);
+
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -215,24 +206,26 @@ export const Chatbot = () => {
                 return;
             }
 
-            // 2. Try Supabase Edge Function (Mocked/Real)
-            // If we had a real OpenAI key, we would call it here.
-            // For now, we fall back to a generic helpful response if local logic fails.
-            
-            /* 
-            // Uncomment when Edge Function is ready
-            const { data, error } = await supabase.functions.invoke('ai-financial-assistant', {
-                body: { 
-                message: currentInput,
-                context: { ... }
-                }
-            });
-            */
-           
-            const fallbackResponse = "I can help with financial data (ask about assets, bank balance) or navigation (ask to go to dashboard). For complex queries, please contact support.";
+            // 2. Try Knowledge Base (Fast Local Cache)
+            // We keep this as a fast first layer for very specific static queries
+            const knowledgeResponse = queryKnowledgeBase(currentInput);
+            if (knowledgeResponse) {
+                const botMessage: Message = {
+                    text: knowledgeResponse,
+                    isUser: false,
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, botMessage]);
+                setIsLoading(false);
+                return;
+            }
+
+            // 3. Use OpenAI (Rigel AI) for complex/novel queries
+            // This guarantees coverage for "any question" as requested.
+            const aiResponse = await getAIResponse(currentInput);
             
             const botMessage: Message = {
-                text: fallbackResponse,
+                text: aiResponse,
                 isUser: false,
                 timestamp: new Date(),
             };
