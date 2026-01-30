@@ -83,6 +83,15 @@ import { RatingModal } from "@/components/Shared/RatingModal";
 import { TutorialProvider } from "@/components/Tutorial/TutorialContext";
 import ToolsSupport from "./pages/ToolsSupport";
 
+const __isDev = import.meta.env.DEV;
+if (!__isDev) {
+  const __noop = () => {};
+  console.log = __noop;
+  console.info = __noop;
+  console.debug = __noop;
+  console.warn = __noop;
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
