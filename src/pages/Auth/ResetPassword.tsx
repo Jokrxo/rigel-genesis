@@ -105,7 +105,7 @@ const ResetPassword = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4 px-2">
             <div className="space-y-2">
-              <Label htmlFor="password" classname="text-gray-800 font-medium">New Password</Label>
+              <Label htmlFor="password" className="text-gray-800 font-medium">New Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -117,7 +117,7 @@ const ResetPassword = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" classname="text-gray-800 font-medium">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-gray-800 font-medium">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"

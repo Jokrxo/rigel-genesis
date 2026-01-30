@@ -130,11 +130,27 @@ const CustomerManagement = () => {
 
   const handleExportCSV = () => {
     const headers = ['Name', 'Company', 'Email', 'Phone', 'Payment Terms', 'Credit Limit'];
-    exportToCSV(filteredCustomers, 'customers', headers);
+    const records = filteredCustomers.map(c => ({
+      name: c.name,
+      company: c.company,
+      email: c.email,
+      phone: c.phone,
+      payment_terms: c.payment_terms,
+      credit_limit: c.credit_limit,
+    }));
+    exportToCSV(records, 'customers', headers);
   };
 
   const handleExportJSON = () => {
-    exportToJSON(filteredCustomers, 'customers');
+    const records = filteredCustomers.map(c => ({
+      name: c.name,
+      company: c.company,
+      email: c.email,
+      phone: c.phone,
+      payment_terms: c.payment_terms,
+      credit_limit: c.credit_limit,
+    }));
+    exportToJSON(records, 'customers');
   };
 
   const filteredCustomers = customers.filter(customer =>

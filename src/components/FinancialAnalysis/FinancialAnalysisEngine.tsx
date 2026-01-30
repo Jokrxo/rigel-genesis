@@ -47,6 +47,31 @@ export const FinancialAnalysisEngine = () => {
   const [activeTab, setActiveTab] = useState("upload");
   const { toast } = useToast();
 
+  const fetchFiles = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_file_overview');
+      
+      if (error) {
+        console.error('Error fetching files:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch files",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setFiles((data || []) as FileData[]);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchFiles();
     
@@ -88,30 +113,6 @@ export const FinancialAnalysisEngine = () => {
     };
   }, [fetchFiles]);
 
-  const fetchFiles = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_file_overview');
-      
-      if (error) {
-        console.error('Error fetching files:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch files",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setFiles(data || []);
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -517,7 +518,7 @@ export const FinancialAnalysisEngine = () => {
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-red-600">
-                      R{Math.abs(analysisResult.summary?.totalDebits || 0).toLocaleString()}
+                      R{Math.abs(Number(analysisResult.summary?.totalDebits) || 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Total Debits</p>
                   </div>

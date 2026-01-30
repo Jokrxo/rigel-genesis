@@ -101,7 +101,7 @@ export function TransactionsTable({
                 <TableCell>{transaction.category || "-"}</TableCell>
                 <TableCell>
                   {transaction.metadata?.party_type ? (
-                    <Badge variant="outline">{transaction.metadata.party_type}</Badge>
+                    <Badge variant="outline">{String(transaction.metadata.party_type)}</Badge>
                   ) : (
                     "-"
                   )}

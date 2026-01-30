@@ -21,6 +21,7 @@ interface AuditResults {
   buttonAudit: AuditCategory;
   navigationAudit: AuditCategory;
   recommendations: string[];
+  timestamp?: string | number;
 }
 
 export const AuditPanel = () => {

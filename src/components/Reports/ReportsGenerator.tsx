@@ -148,9 +148,9 @@ const ReportsGenerator = () => {
             reportType: 'asset-register',
             assets: assets.map(a => ({
                 name: a.name,
-                cost: a.purchase_price,
-                depreciation: a.purchase_price * (a.depreciation_rate / 100), // Annual depreciation estimate
-                bookValue: a.current_value
+                cost: (a as { purchase_price?: number }).purchase_price || (a as { cost_price?: number }).cost_price || 0,
+                depreciation: ((a as { purchase_price?: number }).purchase_price || (a as { cost_price?: number }).cost_price || 0) * (a.depreciation_rate / 100), // Annual depreciation estimate
+                bookValue: (a as { current_value?: number }).current_value || 0
             }))
           };
           break;

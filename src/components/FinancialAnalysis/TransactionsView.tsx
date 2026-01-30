@@ -32,11 +32,51 @@ export const TransactionsView = () => {
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
+    const fetchTransactions = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .order('date', { ascending: false });
+        
+        if (error) throw error;
+        
+        const txs = (data || []) as unknown as Transaction[];
+        setTransactions(txs);
+        
+        // Extract unique categories
+        const uniqueCategories = [...new Set(txs.map(t => t.category).filter(Boolean))] as string[];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
     fetchTransactions();
   }, []);
 
   useEffect(() => {
-    filterTransactions();
+    const filterTransactionsFn = () => {
+      let filtered = transactions;
+      
+      if (searchTerm) {
+        filtered = filtered.filter(t => 
+          t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (t.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      }
+      
+      if (categoryFilter !== 'all') {
+        filtered = filtered.filter(t => t.category === categoryFilter);
+      }
+      
+      setFilteredTransactions(filtered);
+    };
+    
+    filterTransactionsFn();
   }, [transactions, searchTerm, categoryFilter]);
 
   const formatCurrency = (amount: number, currency: string = 'ZAR') => {

@@ -25,14 +25,22 @@ interface SimpleProjectFormProps {
 }
 
 export const SimpleProjectForm = ({ onSubmit, onCancel }: SimpleProjectFormProps) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    client: string;
+    manager: string;
+    startDate: string;
+    endDate: string;
+    budget: string;
+    status: 'planning' | 'active' | 'completed' | 'on-hold';
+  }>({
     name: '',
     client: '',
     manager: '',
     startDate: '',
     endDate: '',
     budget: '',
-    status: 'planning' as const,
+    status: 'planning',
   });
   const { toast } = useToast();
 
@@ -100,7 +108,7 @@ export const SimpleProjectForm = ({ onSubmit, onCancel }: SimpleProjectFormProps
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value: 'planning' | 'active' | 'completed' | 'on-hold') => setFormData({ ...formData, status: value })}>
+              <Select value={formData.status} onValueChange={(value: string) => setFormData({ ...formData, status: value as 'planning' | 'active' | 'completed' | 'on-hold' })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
