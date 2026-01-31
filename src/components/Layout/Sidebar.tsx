@@ -59,6 +59,37 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: "Sales",
+    icon: DollarSign,
+    children: [
+      {
+        title: "Customers",
+        href: "/sales/customers",
+        icon: Users,
+      },
+      {
+        title: "Quotations",
+        href: "/sales/quotations",
+        icon: FileText,
+      },
+      {
+        title: "Invoices",
+        href: "/sales/invoices",
+        icon: FileText,
+      },
+      {
+        title: "Credit Notes",
+        href: "/sales/credit-notes",
+        icon: TrendingDown,
+      },
+      {
+        title: "Receipts",
+        href: "/sales/receipts",
+        icon: CreditCard,
+      },
+    ],
+  },
+  {
     title: "Settings",
     icon: Settings,
     children: [
