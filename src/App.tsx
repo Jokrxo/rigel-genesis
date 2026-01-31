@@ -79,11 +79,19 @@ const queryClient = new QueryClient({
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { FloatingContactPanel } from "@/components/Shared/FloatingContactPanel";
 import { CookieConsent } from "@/components/Shared/CookieConsent";
-import { RatingModal } from "@/components/Shared/RatingModal";
+import { RatingModalProvider } from "@/components/Shared/RatingModal";
 import { TutorialProvider } from "@/components/Tutorial/TutorialContext";
 import ToolsSupport from "./pages/ToolsSupport";
 import Contact from "./pages/Contact";
 import ExportData from "./pages/ExportData";
+
+// Sales Module Pages
+import SalesCustomers from "./pages/Sales/Customers";
+import SalesCustomerDetail from "./pages/Sales/CustomerDetail";
+import SalesQuotations from "./pages/Sales/Quotations";
+import SalesInvoices from "./pages/Sales/Invoices";
+import SalesCreditNotes from "./pages/Sales/CreditNotes";
+import SalesReceipts from "./pages/Sales/Receipts";
 
 const App = () => (
   <ErrorBoundary>
@@ -93,13 +101,13 @@ const App = () => (
           <TutorialProvider>
           <BrowserRouter>
             <AuthProvider>
+              <RatingModalProvider>
               <ErrorBoundary>
                 <Toaster />
                 <Sonner />
                 <FloatingContactPanel />
                 <Chatbot />
                 <CookieConsent />
-                <RatingModal />
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
@@ -162,10 +170,19 @@ const App = () => (
                   <Route path="/monthly-reports" element={<ProtectedRoute><MonthlyReports /></ProtectedRoute>} />
                   <Route path="/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
                   
+                  {/* Sales Module Routes */}
+                  <Route path="/sales/customers" element={<ProtectedRoute><SalesCustomers /></ProtectedRoute>} />
+                  <Route path="/sales/customers/:id" element={<ProtectedRoute><SalesCustomerDetail /></ProtectedRoute>} />
+                  <Route path="/sales/quotations" element={<ProtectedRoute><SalesQuotations /></ProtectedRoute>} />
+                  <Route path="/sales/invoices" element={<ProtectedRoute><SalesInvoices /></ProtectedRoute>} />
+                  <Route path="/sales/credit-notes" element={<ProtectedRoute><SalesCreditNotes /></ProtectedRoute>} />
+                  <Route path="/sales/receipts" element={<ProtectedRoute><SalesReceipts /></ProtectedRoute>} />
+                  
                   {/* 404 route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </ErrorBoundary>
+              </RatingModalProvider>
             </AuthProvider>
           </BrowserRouter>
           </TutorialProvider>

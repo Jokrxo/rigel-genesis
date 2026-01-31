@@ -1,47 +1,64 @@
-import { useState, useEffect } from "react";
+import { useState, createContext, useContext, ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export const RatingModal = () => {
+interface RatingModalContextType {
+  showRatingModal: () => void;
+  isOpen: boolean;
+}
+
+const RatingModalContext = createContext<RatingModalContextType | null>(null);
+
+export const useRatingModal = () => {
+  const context = useContext(RatingModalContext);
+  if (!context) {
+    throw new Error("useRatingModal must be used within RatingModalProvider");
+  }
+  return context;
+};
+
+export const RatingModalProvider = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
+  
+  const showRatingModal = () => {
+    setIsOpen(true);
+  };
+
+  return (
+    <RatingModalContext.Provider value={{ showRatingModal, isOpen }}>
+      {children}
+      <RatingModalContent isOpen={isOpen} onOpenChange={setIsOpen} />
+    </RatingModalContext.Provider>
+  );
+};
+
+interface RatingModalContentProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const RatingModalContent = ({ isOpen, onOpenChange }: RatingModalContentProps) => {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const checkRatingStatus = () => {
-      // Check local storage first to avoid API spam
-      const lastPrompted = localStorage.getItem(`rating_prompt_${user?.id}`);
-      const hasRated = localStorage.getItem(`user_rated_${user?.id}`);
-
-      if (hasRated === "true") return;
-
-      // Logic: Show if never prompted, or prompted more than 7 days ago
-      const now = Date.now();
-      if (!lastPrompted || (now - parseInt(lastPrompted)) > 7 * 24 * 60 * 60 * 1000) {
-        // Delay showing the modal slightly after login
-        const timer = setTimeout(() => {
-          setIsOpen(true);
-          localStorage.setItem(`rating_prompt_${user?.id}`, now.toString());
-        }, 3000);
-        return () => clearTimeout(timer);
-      }
-    };
-
-    if (isAuthenticated && user) {
-      checkRatingStatus();
-    }
-  }, [isAuthenticated, user]);
 
   const handleRate = (value: number) => {
     setRating(value);
+  };
+
+  const performLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Logout error:", err);
+      window.location.href = "/";
+    }
   };
 
   const handleSubmit = async () => {
@@ -52,6 +69,8 @@ export const RatingModal = () => {
 
     setIsSubmitting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Try to save to Supabase 'user_ratings' table
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await supabase.from('user_ratings' as any).insert({
@@ -62,37 +81,52 @@ export const RatingModal = () => {
       });
 
       if (error) {
-        // If table doesn't exist or other error, fallback to local storage and log
-        console.warn("Could not save rating to backend (table might be missing):", error);
-        // We still consider it "success" from UI perspective to not block user
+        console.warn("Could not save rating to backend:", error);
       }
 
       // Mark as rated locally
-      localStorage.setItem(`user_rated_${user?.id}`, "true");
+      if (user?.id) {
+        localStorage.setItem(`user_rated_${user.id}`, "true");
+      }
       
       toast({ title: "Thank you!", description: "We appreciate your feedback." });
-      setIsOpen(false);
+      onOpenChange(false);
+      
+      // Reset form and logout
+      setRating(0);
+      setFeedback("");
+      
+      // Perform logout after submitting rating
+      await performLogout();
     } catch (err) {
       console.error("Error submitting rating:", err);
-      // Fallback success
-      localStorage.setItem(`user_rated_${user?.id}`, "true");
-      setIsOpen(false);
+      onOpenChange(false);
+      await performLogout();
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSkip = () => {
-    setIsOpen(false);
+  const handleSkip = async () => {
+    onOpenChange(false);
+    setRating(0);
+    setFeedback("");
+    // Logout anyway when skipping
+    await performLogout();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        // If closing without action, still logout
+        handleSkip();
+      }
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-xl">How's your experience?</DialogTitle>
           <DialogDescription className="text-center">
-            Rate your experience with Rigel Genesis so far. Your feedback helps us improve!
+            Rate your experience with Rigel Genesis before you go. Your feedback helps us improve!
           </DialogDescription>
         </DialogHeader>
         
@@ -105,7 +139,7 @@ export const RatingModal = () => {
               className="focus:outline-none transition-transform hover:scale-110"
             >
               <Star 
-                className={`h-8 w-8 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} 
+                className={`h-8 w-8 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} 
               />
             </button>
           ))}
@@ -120,11 +154,11 @@ export const RatingModal = () => {
           />
           
           <DialogFooter className="sm:justify-between gap-2">
-            <Button variant="ghost" onClick={handleSkip}>
-              Skip
+            <Button variant="ghost" onClick={handleSkip} disabled={isSubmitting}>
+              Skip & Logout
             </Button>
             <Button onClick={handleSubmit} disabled={isSubmitting || rating === 0}>
-              {isSubmitting ? "Submitting..." : "Submit Feedback"}
+              {isSubmitting ? "Submitting..." : "Submit & Logout"}
             </Button>
           </DialogFooter>
         </div>
@@ -132,3 +166,6 @@ export const RatingModal = () => {
     </Dialog>
   );
 };
+
+// Legacy export for backwards compatibility - now just a placeholder
+export const RatingModal = () => null;
