@@ -20,6 +20,14 @@ interface Transaction {
   reference?: string;
 }
 
+interface MLTag {
+  transaction_id: string;
+  tag_type: string;
+  tag_value: string;
+  confidence_score: number;
+  model_version: string;
+}
+
 interface ProcessedFile {
   fileId: string;
   transactions: Transaction[];
@@ -319,7 +327,7 @@ interface ProcessedData {
 }
 
 async function generateFinancialStatements(
-  supabase: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   fileId: string,
   processedData: ProcessedData
@@ -397,7 +405,7 @@ async function generateFinancialStatements(
       }
     ];
 
-    await supabase.from('financial_statements').insert(statements);
+    await supabaseClient.from('financial_statements').insert(statements);
     
   } catch (error) {
     console.error('Error generating financial statements:', error);
