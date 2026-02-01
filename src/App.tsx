@@ -84,8 +84,6 @@ import { CookieConsent } from "@/components/Shared/CookieConsent";
 import { RatingModalProvider } from "@/components/Shared/RatingModal";
 import { TutorialProvider } from "@/components/Tutorial/TutorialContext";
 import ToolsSupport from "./pages/ToolsSupport";
-import Contact from "./pages/Contact";
-import ExportData from "./pages/ExportData";
 
 // Sales Module Pages
 import SalesCustomers from "./pages/Sales/Customers";
