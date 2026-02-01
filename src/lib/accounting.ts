@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { SalesDocument, SalesDocumentItem } from "@/types/sales";
+import { SalesDocument } from "@/types/sales";
 
 export const postInvoice = async (document: SalesDocument) => {
   // 1. Fetch line items to calculate totals (if not passed)
@@ -15,10 +15,10 @@ export const postInvoice = async (document: SalesDocument) => {
       user_id: user.user.id,
       entry_number: `JE-${document.document_number}`,
       reference: document.document_number,
-      date: document.issue_date,
+      date: document.document_date,
       description: `Invoice ${document.document_number} Posted`,
       status: 'posted',
-      total_amount: document.total_amount,
+      total_amount: document.grand_total,
     })
     .select()
     .single();
@@ -36,7 +36,7 @@ export const postInvoice = async (document: SalesDocument) => {
       journal_entry_id: entry.id,
       account_id: 'ACCOUNTS_RECEIVABLE', // Placeholder, needs real account ID
       description: `Invoice ${document.document_number} - AR`,
-      debit: document.total_amount,
+      debit: document.grand_total,
       credit: 0,
     },
     {
@@ -48,13 +48,13 @@ export const postInvoice = async (document: SalesDocument) => {
     }
   ];
 
-  if (document.tax_amount > 0) {
+  if (document.vat_total > 0) {
     lines.push({
       journal_entry_id: entry.id,
       account_id: 'VAT_PAYABLE', // Placeholder
       description: `Invoice ${document.document_number} - VAT`,
       debit: 0,
-      credit: document.tax_amount,
+      credit: document.vat_total,
     });
   }
 

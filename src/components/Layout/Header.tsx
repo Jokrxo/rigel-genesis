@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, HelpCircle, LogOut, Menu, Search, User, Phone, Wrench, MessageCircle, FileText, Calculator, Download, Sparkles } from "lucide-react";
@@ -15,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useTutorial } from "@/components/Tutorial/TutorialContext";
+import { useRatingModal } from "@/components/Shared/RatingModal";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -25,6 +25,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const { startTutorial } = useTutorial();
+  const { showRatingModal } = useRatingModal();
 
   const handleStartTour = () => {
     startTutorial([
@@ -42,6 +43,19 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
   const openChatbot = () => {
     // Dispatch a custom event that Chatbot component listens to
     window.dispatchEvent(new CustomEvent('open-chatbot'));
+  };
+
+  const handleLogoutClick = () => {
+    // Check if user has already rated
+    const hasRated = localStorage.getItem(`user_rated_${user?.id}`);
+    
+    if (hasRated === "true") {
+      // Already rated, just logout directly
+      logout();
+    } else {
+      // Show rating modal first
+      showRatingModal();
+    }
   };
 
   return (
@@ -150,7 +164,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
               <User className="mr-2 h-4 w-4" /> Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => logout()}>
+            <DropdownMenuItem onClick={handleLogoutClick}>
               <LogOut className="mr-2 h-4 w-4" /> Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
