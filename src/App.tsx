@@ -52,6 +52,8 @@ import BudgetManagement from "./pages/BudgetManagement";
 import ChartOfAccounts from "./pages/ChartOfAccounts";
 import TrialBalance from "./pages/TrialBalance";
 import AccountingCycle from "./pages/AccountingCycle";
+import Contact from "./pages/Contact";
+import ExportData from "./pages/ExportData";
 import CommunityPage from "./pages/Community/Index";
 import ImpairmentModule from "./pages/Impairment/Index";
 import PayrollReports from "./pages/Reports/PayrollReports";
