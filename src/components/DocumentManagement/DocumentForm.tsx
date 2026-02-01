@@ -243,7 +243,7 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
 
       if (editingDocument) {
         const { error } = await supabase
-          .from('documents')
+          .from('sales_documents')
           .update(documentData)
           .eq('id', editingDocument.id);
 
@@ -252,12 +252,12 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
 
         // Delete existing line items
         await supabase
-          .from('document_line_items')
+          .from('sales_document_items')
           .delete()
           .eq('document_id', documentId);
       } else {
         const { data, error } = await supabase
-          .from('documents')
+          .from('sales_documents')
           .insert([documentData])
           .select()
           .single();
@@ -280,7 +280,7 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
       }));
 
       const { error: lineItemsError } = await supabase
-        .from('document_line_items')
+        .from('sales_document_items')
         .insert(lineItemsData);
 
       if (lineItemsError) throw lineItemsError;

@@ -74,6 +74,17 @@ export const DocumentTable = ({ documents, loading, onEdit, onDelete }: Document
                 <TableCell>{new Date(document.created_at).toLocaleDateString()}</TableCell>
                 <TableCell className="no-print">
                   <div className="flex gap-2">
+                    {document.status === 'draft' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Post / Send"
+                        onClick={() => onPost(document)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" title="View">
                       <Eye className="h-4 w-4" />
                     </Button>

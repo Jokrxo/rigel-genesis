@@ -7,45 +7,22 @@ import { DocumentHeader } from "@/components/DocumentManagement/DocumentHeader";
 import { DocumentSearch } from "@/components/DocumentManagement/DocumentSearch";
 import { DocumentForm } from "@/components/DocumentManagement/DocumentForm";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { SalesDocument } from "@/types/sales";
 
-interface LocalDocument {
-  id: string;
-  document_type: string;
-  document_number: string;
-  issue_date: string;
-  due_date: string;
-  customer_id: string;
-  subtotal: number;
-  tax_amount: number;
-  total_amount: number;
-  status: string;
-  notes: string;
-  created_at: string;
-  terms_and_conditions?: string;
-  valid_until?: string;
-  [key: string]: unknown;
-}
-
-interface Document {
-  id: string;
-  customer_id: string;
-  issue_date: string;
-  due_date?: string;
-  valid_until?: string;
-  terms_and_conditions?: string;
-  notes?: string;
-  document_number: string;
-  [key: string]: unknown;
+// Extended interface for UI display including joined customer name
+interface ExtendedSalesDocument extends SalesDocument {
+  customer_name?: string;
+  [key: string]: unknown; // For compatibility with DocumentTable
 }
 
 const DocumentManagement = () => {
-  const [documents, setDocuments] = useState<LocalDocument[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<LocalDocument[]>([]);
+  const [documents, setDocuments] = useState<ExtendedSalesDocument[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<ExtendedSalesDocument[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<LocalDocument | null>(null);
+  const [editingDocument, setEditingDocument] = useState<ExtendedSalesDocument | null>(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState<"invoice" | "quotation">("invoice");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -53,39 +30,27 @@ const DocumentManagement = () => {
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
-      // Mock data for now since the documents table structure may not match
-      const mockDocuments: LocalDocument[] = [
-        {
-          id: "1",
-          document_type: "invoice",
-          document_number: "INV-001",
-          issue_date: "2024-01-15",
-          due_date: "2024-02-15",
-          customer_id: "cust1",
-          subtotal: 1000,
-          tax_amount: 150,
-          total_amount: 1150,
-          status: "sent",
-          notes: "Payment terms: 30 days",
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          document_type: "quotation",
-          document_number: "QUO-001",
-          issue_date: "2024-01-10",
-          due_date: "2024-01-25",
-          customer_id: "cust2",
-          subtotal: 2500,
-          tax_amount: 375,
-          total_amount: 2875,
-          status: "draft",
-          notes: "Quotation valid for 14 days",
-          created_at: new Date().toISOString(),
-        }
-      ];
       
-      setDocuments(mockDocuments);
+      const { data, error } = await supabase
+        .from('sales_documents')
+        .select(`
+          *,
+          customers (
+            name
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedDocuments: ExtendedSalesDocument[] = (data || []).map(doc => ({
+        ...doc,
+        document_type: doc.document_type as "invoice" | "quotation",
+        status: doc.status as "draft" | "sent" | "paid" | "overdue" | "void" | "accepted" | "rejected",
+        customer_name: doc.customers?.name || 'Unknown Customer'
+      }));
+      
+      setDocuments(formattedDocuments);
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast({
@@ -157,6 +122,48 @@ const DocumentManagement = () => {
     }
   };
 
+  const handlePostDocument = async (document: ExtendedSalesDocument) => {
+    if (document.status !== 'draft') return;
+    
+    // Type narrowing to ensure it matches SalesDocument
+    const salesDoc: SalesDocument = {
+        id: document.id,
+        user_id: document.user_id,
+        customer_id: document.customer_id,
+        document_type: document.document_type,
+        document_number: document.document_number,
+        issue_date: document.issue_date,
+        due_date: document.due_date,
+        valid_until: document.valid_until,
+        status: document.status,
+        subtotal: document.subtotal,
+        tax_amount: document.tax_amount,
+        total_amount: document.total_amount,
+        terms_and_conditions: document.terms_and_conditions,
+        notes: document.notes,
+        created_at: document.created_at,
+        updated_at: document.updated_at
+    };
+
+    try {
+      await postInvoice(salesDoc);
+      
+      toast({
+        title: "Success",
+        description: "Document posted and journal entry created",
+      });
+      
+      fetchDocuments();
+    } catch (error) {
+      console.error("Error posting document:", error);
+      toast({
+        title: "Error",
+        description: "Failed to post document",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleFormSuccess = () => {
     setIsFormOpen(false);
     setEditingDocument(null);
@@ -186,6 +193,7 @@ const DocumentManagement = () => {
           loading={loading}
           onEdit={handleEditDocument}
           onDelete={handleDeleteDocument}
+          onPost={handlePostDocument}
         />
 
         <DocumentForm
