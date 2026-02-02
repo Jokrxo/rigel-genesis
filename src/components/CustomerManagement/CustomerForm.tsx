@@ -131,8 +131,8 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
       if (!user) throw new Error("Not authenticated");
 
       if (editingCustomer) {
-        const { error } = await supabase
-          .from('customers')
+        const { error } = await (supabase
+          .from('customers') as any)
           .update({
             ...data,
             updated_at: new Date().toISOString(),
@@ -145,8 +145,8 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
           description: "Customer updated successfully",
         });
       } else {
-        const { error } = await supabase
-          .from('customers')
+        const { error } = await (supabase
+          .from('customers') as any)
           .insert([{
             name: data.name,
             email: data.email || null,

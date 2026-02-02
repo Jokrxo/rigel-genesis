@@ -97,8 +97,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
     setLoading(true);
     try {
       // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('deferred_tax_categories')
+      const { data: categoriesData, error: categoriesError } = await (supabase
+        .from('deferred_tax_categories') as any)
         .select('*')
         .eq('project_id', project.id)
         .order('created_at');
@@ -106,8 +106,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (categoriesError) throw categoriesError;
 
       // Fetch tax losses
-      const { data: lossesData, error: lossesError } = await supabase
-        .from('tax_loss_carry_forwards')
+      const { data: lossesData, error: lossesError } = await (supabase
+        .from('tax_loss_carry_forwards') as any)
         .select('*')
         .eq('project_id', project.id)
         .order('created_at');
@@ -115,8 +115,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (lossesError) throw lossesError;
       
       // Fetch movements
-      const { data: movementsData, error: movementsError } = await supabase
-        .from('deferred_tax_movements')
+      const { data: movementsData, error: movementsError } = await (supabase
+        .from('deferred_tax_movements') as any)
         .select('*')
         .eq('project_id', project.id)
         .order('movement_date', { ascending: false });
@@ -125,12 +125,12 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
           console.warn("Movements table might not exist or error fetching:", movementsError);
       }
 
-      setCategories((categoriesData || []) as DeferredTaxCategory[]);
-      setTaxLosses((lossesData || []) as TaxLossCarryForward[]);
-      setMovements((movementsData || []) as DeferredTaxMovement[]);
+      setCategories((categoriesData || []) as unknown as DeferredTaxCategory[]);
+      setTaxLosses((lossesData || []) as unknown as TaxLossCarryForward[]);
+      setMovements((movementsData || []) as unknown as DeferredTaxMovement[]);
 
       // Calculate summary
-      calculateSummary((categoriesData || []) as DeferredTaxCategory[], (lossesData || []) as TaxLossCarryForward[]);
+      calculateSummary((categoriesData || []) as unknown as DeferredTaxCategory[], (lossesData || []) as unknown as TaxLossCarryForward[]);
     } catch (error) {
       console.error('Error fetching project data:', error);
       toast({
@@ -150,10 +150,17 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
   const handleAddCategory = async (data: Omit<DeferredTaxCategory, 'id' | 'created_at' | 'updated_at' | 'project_id'>) => {
     try {
       // Insert category
-      const { data: newCategory, error } = await supabase
-        .from('deferred_tax_categories')
+      const { data: newCategory, error } = await (supabase
+        .from('deferred_tax_categories') as any)
         .insert({
-          ...data,
+          name: data.name || data.description,
+          category_type: data.category_type,
+          accounting_base: data.book_value || 0,
+          tax_base: data.tax_value || 0,
+          temporary_difference: data.temporary_difference || 0,
+          deferred_tax_asset: data.deferred_tax_asset || 0,
+          deferred_tax_liability: data.deferred_tax_liability || 0,
+          notes: data.notes || null,
           project_id: project.id,
         })
         .select()
@@ -162,16 +169,15 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (error) throw error;
 
       // Create movement record
-      const { error: movementError } = await supabase
-        .from('deferred_tax_movements')
+      const { error: movementError } = await (supabase
+        .from('deferred_tax_movements') as any)
         .insert({
           project_id: project.id,
-          category_id: newCategory.id,
-          movement_type: 'origination',
-          deferred_tax_asset_movement: data.deferred_tax_asset,
-          deferred_tax_liability_movement: data.deferred_tax_liability,
-          movement_date: new Date().toISOString(),
-          description: `Initial recognition of ${data.description}`,
+          category_id: newCategory?.id,
+          movement_type: 'addition',
+          amount: data.deferred_tax_asset - data.deferred_tax_liability,
+          movement_date: new Date().toISOString().split('T')[0],
+          description: `Initial recognition of ${data.description || data.name}`,
         });
 
       if (movementError) console.warn('Failed to create movement record:', movementError);
@@ -194,10 +200,15 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
   const handleAddTaxLoss = async (data: Omit<TaxLossCarryForward, 'id' | 'created_at' | 'updated_at' | 'project_id'>) => {
     try {
       // Insert tax loss
-      const { data: newLoss, error } = await supabase
-        .from('tax_loss_carry_forwards')
+      const { data: newLoss, error } = await (supabase
+        .from('tax_loss_carry_forwards') as any)
         .insert({
-          ...data,
+          loss_year: data.origination_year || new Date().getFullYear(),
+          original_amount: data.loss_amount || 0,
+          utilized_amount: 0,
+          remaining_amount: data.loss_amount || 0,
+          expiry_date: data.expiry_year ? `${data.expiry_year}-12-31` : null,
+          notes: data.notes || null,
           project_id: project.id,
         })
         .select()
@@ -206,16 +217,15 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (error) throw error;
 
       // Create movement record
-      const { error: movementError } = await supabase
-        .from('deferred_tax_movements')
+      const { error: movementError } = await (supabase
+        .from('deferred_tax_movements') as any)
         .insert({
           project_id: project.id,
-          loss_id: newLoss.id,
-          movement_type: 'origination',
-          deferred_tax_asset_movement: data.deferred_tax_asset,
-          deferred_tax_liability_movement: 0,
-          movement_date: new Date().toISOString(),
-          description: `Recognition of tax loss ${data.loss_type}`,
+          loss_id: newLoss?.id,
+          movement_type: 'addition',
+          amount: data.deferred_tax_asset || 0,
+          movement_date: new Date().toISOString().split('T')[0],
+          description: `Recognition of tax loss ${data.loss_type || 'assessed loss'}`,
         });
 
       if (movementError) console.warn('Failed to create movement record:', movementError);
