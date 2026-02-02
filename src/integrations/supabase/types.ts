@@ -14,7 +14,546 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      countries: {
+        Row: {
+          code: string
+          currency_code: string | null
+          id: string
+          name: string
+          tax_rate: number | null
+        }
+        Insert: {
+          code: string
+          currency_code?: string | null
+          id?: string
+          name: string
+          tax_rate?: number | null
+        }
+        Update: {
+          code?: string
+          currency_code?: string | null
+          id?: string
+          name?: string
+          tax_rate?: number | null
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company: string | null
+          country: string | null
+          created_at: string
+          credit_limit: number | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          payment_terms: number | null
+          phone: string | null
+          postal_code: string | null
+          province: string | null
+          updated_at: string
+          user_id: string
+          vat_number: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          updated_at?: string
+          user_id: string
+          vat_number?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          updated_at?: string
+          user_id?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
+      data_issues: {
+        Row: {
+          affected_data: Json | null
+          created_at: string
+          description: string
+          file_id: string | null
+          id: string
+          is_resolved: boolean | null
+          issue_type: string
+          resolved_at: string | null
+          severity: string | null
+          user_id: string
+        }
+        Insert: {
+          affected_data?: Json | null
+          created_at?: string
+          description: string
+          file_id?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          issue_type: string
+          resolved_at?: string | null
+          severity?: string | null
+          user_id: string
+        }
+        Update: {
+          affected_data?: Json | null
+          created_at?: string
+          description?: string
+          file_id?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          issue_type?: string
+          resolved_at?: string | null
+          severity?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      deferred_tax_categories: {
+        Row: {
+          accounting_base: number | null
+          category_type: string
+          created_at: string
+          deferred_tax_asset: number | null
+          deferred_tax_liability: number | null
+          id: string
+          name: string
+          notes: string | null
+          project_id: string
+          tax_base: number | null
+          temporary_difference: number | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_base?: number | null
+          category_type: string
+          created_at?: string
+          deferred_tax_asset?: number | null
+          deferred_tax_liability?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          project_id: string
+          tax_base?: number | null
+          temporary_difference?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_base?: number | null
+          category_type?: string
+          created_at?: string
+          deferred_tax_asset?: number | null
+          deferred_tax_liability?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          project_id?: string
+          tax_base?: number | null
+          temporary_difference?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deferred_tax_categories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deferred_tax_movements: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          loss_id: string | null
+          movement_date: string
+          movement_type: string
+          project_id: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          loss_id?: string | null
+          movement_date?: string
+          movement_type: string
+          project_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          loss_id?: string | null
+          movement_date?: string
+          movement_type?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deferred_tax_movements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deferred_tax_movements_loss_id_fkey"
+            columns: ["loss_id"]
+            isOneToOne: false
+            referencedRelation: "tax_loss_carry_forwards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deferred_tax_movements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deferred_tax_projects: {
+        Row: {
+          country_id: string | null
+          created_at: string
+          description: string | null
+          fiscal_year_end: string | null
+          id: string
+          name: string
+          status: string | null
+          tax_rate: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string
+          description?: string | null
+          fiscal_year_end?: string | null
+          id?: string
+          name: string
+          status?: string | null
+          tax_rate?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string
+          description?: string | null
+          fiscal_year_end?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+          tax_rate?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deferred_tax_projects_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_line_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          document_id: string
+          id: string
+          line_total: number | null
+          product_id: string | null
+          quantity: number | null
+          sort_order: number | null
+          tax_rate: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          document_id: string
+          id?: string
+          line_total?: number | null
+          product_id?: string | null
+          quantity?: number | null
+          sort_order?: number | null
+          tax_rate?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          document_id?: string
+          id?: string
+          line_total?: number | null
+          product_id?: string | null
+          quantity?: number | null
+          sort_order?: number | null
+          tax_rate?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_line_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_line_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          document_number: string
+          document_type: string
+          due_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          status: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          terms_and_conditions: string | null
+          total_amount: number | null
+          updated_at: string
+          user_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          document_number: string
+          document_type: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          document_number?: string
+          document_type?: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          cost_price: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          quantity_on_hand: number | null
+          reorder_level: number | null
+          sku: string | null
+          tax_rate: number | null
+          unit_of_measure: string | null
+          unit_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          quantity_on_hand?: number | null
+          reorder_level?: number | null
+          sku?: string | null
+          tax_rate?: number | null
+          unit_of_measure?: string | null
+          unit_price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          quantity_on_hand?: number | null
+          reorder_level?: number | null
+          sku?: string | null
+          tax_rate?: number | null
+          unit_of_measure?: string | null
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          company_name: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tax_loss_carry_forwards: {
+        Row: {
+          created_at: string
+          expiry_date: string | null
+          id: string
+          loss_year: number
+          notes: string | null
+          original_amount: number
+          project_id: string
+          remaining_amount: number
+          updated_at: string
+          utilized_amount: number | null
+        }
+        Insert: {
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          loss_year: number
+          notes?: string | null
+          original_amount: number
+          project_id: string
+          remaining_amount: number
+          updated_at?: string
+          utilized_amount?: number | null
+        }
+        Update: {
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          loss_year?: number
+          notes?: string | null
+          original_amount?: number
+          project_id?: string
+          remaining_amount?: number
+          updated_at?: string
+          utilized_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_loss_carry_forwards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "deferred_tax_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
