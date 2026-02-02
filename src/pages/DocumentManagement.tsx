@@ -7,22 +7,37 @@ import { DocumentHeader } from "@/components/DocumentManagement/DocumentHeader";
 import { DocumentSearch } from "@/components/DocumentManagement/DocumentSearch";
 import { DocumentForm } from "@/components/DocumentManagement/DocumentForm";
 import { Chatbot } from "@/components/Shared/Chatbot";
-import { SalesDocument } from "@/types/sales";
+import { postInvoice } from "@/lib/accounting";
 
-// Extended interface for UI display including joined customer name
-interface ExtendedSalesDocument extends SalesDocument {
+// Local document interface matching the database schema
+interface LocalDocument {
+  id: string;
+  document_number: string;
+  document_type: 'invoice' | 'quotation' | 'credit_note';
+  customer_id?: string;
+  issue_date: string;
+  due_date?: string;
+  valid_until?: string;
+  subtotal: number;
+  tax_amount: number;
+  total_amount: number;
+  status: string;
+  terms_and_conditions?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
   customer_name?: string;
-  [key: string]: unknown; // For compatibility with DocumentTable
 }
 
 const DocumentManagement = () => {
-  const [documents, setDocuments] = useState<ExtendedSalesDocument[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<ExtendedSalesDocument[]>([]);
+  const [documents, setDocuments] = useState<LocalDocument[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<LocalDocument[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<ExtendedSalesDocument | null>(null);
+  const [editingDocument, setEditingDocument] = useState<LocalDocument | null>(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState<"invoice" | "quotation">("invoice");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -31,8 +46,8 @@ const DocumentManagement = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('sales_documents')
+      const { data, error } = await (supabase
+        .from('sales_documents') as any)
         .select(`
           *,
           customers (
@@ -43,10 +58,10 @@ const DocumentManagement = () => {
 
       if (error) throw error;
 
-      const formattedDocuments: ExtendedSalesDocument[] = (data || []).map(doc => ({
+      const formattedDocuments: LocalDocument[] = ((data || []) as any[]).map((doc: any) => ({
         ...doc,
-        document_type: doc.document_type as "invoice" | "quotation",
-        status: doc.status as "draft" | "sent" | "paid" | "overdue" | "void" | "accepted" | "rejected",
+        document_type: doc.document_type as "invoice" | "quotation" | "credit_note",
+        status: doc.status,
         customer_name: doc.customers?.name || 'Unknown Customer'
       }));
       
@@ -122,31 +137,28 @@ const DocumentManagement = () => {
     }
   };
 
-  const handlePostDocument = async (document: ExtendedSalesDocument) => {
+  const handlePostDocument = async (document: any) => {
     if (document.status !== 'draft') return;
     
-    // Type narrowing to ensure it matches SalesDocument
-    const salesDoc: SalesDocument = {
-        id: document.id,
-        user_id: document.user_id,
-        customer_id: document.customer_id,
-        document_type: document.document_type,
-        document_number: document.document_number,
-        issue_date: document.issue_date,
-        due_date: document.due_date,
-        valid_until: document.valid_until,
-        status: document.status,
-        subtotal: document.subtotal,
-        tax_amount: document.tax_amount,
-        total_amount: document.total_amount,
-        terms_and_conditions: document.terms_and_conditions,
-        notes: document.notes,
-        created_at: document.created_at,
-        updated_at: document.updated_at
+    // Convert to the format expected by postInvoice
+    const salesDoc = {
+      id: document.id,
+      user_id: document.user_id,
+      customer_id: document.customer_id,
+      document_type: document.document_type,
+      document_number: document.document_number,
+      document_date: document.issue_date,
+      line_items: [],
+      subtotal: document.subtotal || 0,
+      vat_total: document.tax_amount || 0,
+      grand_total: document.total_amount || 0,
+      status: document.status,
+      created_at: document.created_at,
+      updated_at: document.updated_at
     };
 
     try {
-      await postInvoice(salesDoc);
+      await postInvoice(salesDoc as any);
       
       toast({
         title: "Success",
@@ -189,9 +201,9 @@ const DocumentManagement = () => {
         />
 
         <DocumentTable
-          documents={filteredDocuments}
+          documents={filteredDocuments as any}
           loading={loading}
-          onEdit={handleEditDocument}
+          onEdit={handleEditDocument as any}
           onDelete={handleDeleteDocument}
           onPost={handlePostDocument}
         />
@@ -200,7 +212,7 @@ const DocumentManagement = () => {
           open={isFormOpen}
           onOpenChange={setIsFormOpen}
           onSuccess={handleFormSuccess}
-          editingDocument={editingDocument}
+          editingDocument={editingDocument as any}
           documentType={selectedDocumentType}
         />
       </div>

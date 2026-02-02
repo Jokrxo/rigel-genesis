@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_statements: {
+        Row: {
+          account_number: string | null
+          bank_name: string | null
+          closing_balance: number | null
+          created_at: string
+          file_id: string | null
+          id: string
+          opening_balance: number | null
+          statement_date: string | null
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          bank_name?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          opening_balance?: number | null
+          statement_date?: string | null
+          user_id: string
+        }
+        Update: {
+          account_number?: string | null
+          bank_name?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          opening_balance?: number | null
+          statement_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_statements_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -423,6 +467,172 @@ export type Database = {
           },
         ]
       }
+      files: {
+        Row: {
+          bank_id: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          processing_metadata: Json | null
+          processing_status: string | null
+          updated_at: string
+          upload_date: string
+          user_id: string
+        }
+        Insert: {
+          bank_id?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          processing_metadata?: Json | null
+          processing_status?: string | null
+          updated_at?: string
+          upload_date?: string
+          user_id: string
+        }
+        Update: {
+          bank_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          processing_metadata?: Json | null
+          processing_status?: string | null
+          updated_at?: string
+          upload_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      financial_statements: {
+        Row: {
+          created_at: string
+          file_id: string | null
+          id: string
+          period_end: string | null
+          period_start: string | null
+          ratios: Json | null
+          statement_data: Json | null
+          statement_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          ratios?: Json | null
+          statement_data?: Json | null
+          statement_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          ratios?: Json | null
+          statement_data?: Json | null
+          statement_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_statements_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          created_at: string
+          description: string | null
+          entry_date: string
+          id: string
+          reference: string | null
+          status: string | null
+          total_credit: number | null
+          total_debit: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          id?: string
+          reference?: string | null
+          status?: string | null
+          total_credit?: number | null
+          total_debit?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          id?: string
+          reference?: string | null
+          status?: string | null
+          total_credit?: number | null
+          total_debit?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      journal_entry_lines: {
+        Row: {
+          account_id: string
+          created_at: string
+          credit: number | null
+          debit: number | null
+          description: string | null
+          id: string
+          journal_entry_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          description?: string | null
+          id?: string
+          journal_entry_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          description?: string | null
+          id?: string
+          journal_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_lines_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
@@ -484,6 +694,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          theme: string | null
           updated_at: string
           user_id: string
         }
@@ -493,6 +704,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          theme?: string | null
           updated_at?: string
           user_id: string
         }
@@ -502,8 +714,203 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          theme?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sales_document_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          document_id: string
+          id: string
+          line_total: number | null
+          product_id: string | null
+          quantity: number | null
+          sort_order: number | null
+          tax_rate: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          document_id: string
+          id?: string
+          line_total?: number | null
+          product_id?: string | null
+          quantity?: number | null
+          sort_order?: number | null
+          tax_rate?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          document_id?: string
+          id?: string
+          line_total?: number | null
+          product_id?: string | null
+          quantity?: number | null
+          sort_order?: number | null
+          tax_rate?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_document_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "sales_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_document_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_documents: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          document_number: string
+          document_type: string
+          due_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          status: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          terms_and_conditions: string | null
+          total_amount: number | null
+          updated_at: string
+          user_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          document_number: string
+          document_type: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          document_number?: string
+          document_type?: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          bank_account_number: string | null
+          bank_branch_code: string | null
+          bank_name: string | null
+          city: string | null
+          company: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          payment_terms: number | null
+          phone: string | null
+          postal_code: string | null
+          province: string | null
+          updated_at: string
+          user_id: string
+          vat_number: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_account_number?: string | null
+          bank_branch_code?: string | null
+          bank_name?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          updated_at?: string
+          user_id: string
+          vat_number?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_account_number?: string | null
+          bank_branch_code?: string | null
+          bank_name?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          updated_at?: string
+          user_id?: string
+          vat_number?: string | null
         }
         Relationships: []
       }
@@ -554,12 +961,79 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          balance: number | null
+          category: string | null
+          created_at: string
+          credit: number | null
+          debit: number | null
+          description: string | null
+          file_id: string | null
+          id: string
+          reference: string | null
+          transaction_date: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          category?: string | null
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          description?: string | null
+          file_id?: string | null
+          id?: string
+          reference?: string | null
+          transaction_date: string
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          category?: string | null
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          description?: string | null
+          file_id?: string | null
+          id?: string
+          reference?: string | null
+          transaction_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_file_overview: {
+        Args: never
+        Returns: {
+          bank_id: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          issues_count: number
+          processing_metadata: Json
+          processing_status: string
+          statement_count: number
+          total_credits: number
+          total_debits: number
+          transaction_count: number
+          upload_date: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

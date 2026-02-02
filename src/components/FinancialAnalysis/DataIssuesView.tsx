@@ -11,14 +11,13 @@ import { AlertTriangle, CheckCircle, X, Eye } from "lucide-react";
 interface DataIssue {
   id: string;
   issue_type: string;
-  issue_description: string;
+  description: string;
   severity: string;
-  resolution_status: string;
-  resolution_notes?: string;
+  is_resolved: boolean;
   created_at: string;
-  updated_at: string;
+  resolved_at?: string;
   file_id?: string;
-  transaction_id?: string;
+  affected_data?: unknown;
 }
 
 export const DataIssuesView = () => {
@@ -31,8 +30,8 @@ export const DataIssuesView = () => {
 
   const fetchIssues = useCallback(async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('data_issues')
+    const { data, error } = await (supabase
+      .from('data_issues') as any)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -41,7 +40,7 @@ export const DataIssuesView = () => {
       return;
     }
 
-    setIssues(data || []);
+    setIssues((data || []) as DataIssue[]);
     setIsLoading(false);
   }, []);
 
@@ -53,7 +52,8 @@ export const DataIssuesView = () => {
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter(issue => issue.resolution_status === statusFilter);
+      const isResolved = statusFilter === "resolved";
+      filtered = filtered.filter(issue => issue.is_resolved === isResolved);
     }
 
     setFilteredIssues(filtered);
@@ -67,13 +67,13 @@ export const DataIssuesView = () => {
     filterIssues();
   }, [filterIssues]);
 
-  const updateIssueStatus = async (issueId: string, status: string, notes?: string) => {
-    const { error } = await supabase
-      .from('data_issues')
+  const updateIssueStatus = async (issueId: string, status: string, _notes?: string) => {
+    const isResolved = status === 'resolved';
+    const { error } = await (supabase
+      .from('data_issues') as any)
       .update({
-        resolution_status: status,
-        resolution_notes: notes,
-        updated_at: new Date().toISOString()
+        is_resolved: isResolved,
+        resolved_at: isResolved ? new Date().toISOString() : null
       })
       .eq('id', issueId);
 
@@ -114,21 +114,18 @@ export const DataIssuesView = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'resolved': return <CheckCircle className="h-4 w-4" />;
-      case 'acknowledged': return <Eye className="h-4 w-4" />;
-      case 'ignored': return <X className="h-4 w-4" />;
-      case 'open': return <AlertTriangle className="h-4 w-4" />;
-      default: return <AlertTriangle className="h-4 w-4" />;
-    }
+  const getStatusIcon = (isResolved: boolean) => {
+    if (isResolved) return <CheckCircle className="h-4 w-4" />;
+    return <AlertTriangle className="h-4 w-4" />;
   };
+
+  const getResolutionStatus = (isResolved: boolean) => isResolved ? 'resolved' : 'open';
 
   const issueStats = {
     total: issues.length,
-    open: issues.filter(i => i.resolution_status === 'open').length,
+    open: issues.filter(i => !i.is_resolved).length,
     critical: issues.filter(i => i.severity === 'critical').length,
-    resolved: issues.filter(i => i.resolution_status === 'resolved').length,
+    resolved: issues.filter(i => i.is_resolved).length,
   };
 
   return (
@@ -254,12 +251,7 @@ export const DataIssuesView = () => {
                         <Badge variant="outline">{issue.issue_type.replace(/_/g, ' ')}</Badge>
                       </TableCell>
                       <TableCell className="max-w-96">
-                        <p className="truncate">{issue.issue_description}</p>
-                        {issue.resolution_notes && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Note: {issue.resolution_notes}
-                          </p>
-                        )}
+                        <p className="truncate">{issue.description}</p>
                       </TableCell>
                       <TableCell>
                         <Badge variant={getSeverityBadgeVariant(issue.severity)}>
@@ -268,9 +260,9 @@ export const DataIssuesView = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {getStatusIcon(issue.resolution_status)}
-                          <Badge variant={getStatusBadgeVariant(issue.resolution_status)}>
-                            {issue.resolution_status}
+                          {getStatusIcon(issue.is_resolved)}
+                          <Badge variant={getStatusBadgeVariant(getResolutionStatus(issue.is_resolved))}>
+                            {getResolutionStatus(issue.is_resolved)}
                           </Badge>
                         </div>
                       </TableCell>
@@ -279,7 +271,7 @@ export const DataIssuesView = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {issue.resolution_status === 'open' && (
+                          {!issue.is_resolved && (
                             <>
                               <Button
                                 size="sm"

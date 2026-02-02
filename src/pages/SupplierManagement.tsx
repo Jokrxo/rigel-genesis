@@ -28,8 +28,10 @@ interface LocalSupplier {
   postal_code?: string;
   country?: string;
   payment_terms?: number;
-  credit_limit?: number;
-  status: string;
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_branch_code?: string;
+  is_active?: boolean;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -55,14 +57,14 @@ const SupplierManagement = () => {
   const fetchSuppliers = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('suppliers')
+      const { data, error } = await (supabase
+        .from('suppliers') as any)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      const typedData = (data || []) as LocalSupplier[];
+      const typedData = (data || []) as unknown as LocalSupplier[];
       setSuppliers(typedData);
       setFilteredSuppliers(typedData);
     } catch (error) {
@@ -91,7 +93,8 @@ const SupplierManagement = () => {
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((supplier) => supplier.status === statusFilter);
+      const isActive = statusFilter === "active";
+      filtered = filtered.filter((supplier) => supplier.is_active === isActive);
     }
 
     setFilteredSuppliers(filtered);
@@ -172,7 +175,7 @@ const SupplierManagement = () => {
     phone: supplier.phone,
     company: supplier.company,
     vat_number: supplier.vat_number,
-    status: supplier.status,
+    is_active: supplier.is_active,
     created_at: supplier.created_at
   });
 
@@ -208,11 +211,11 @@ const SupplierManagement = () => {
             />
             
             <SupplierTable 
-              suppliers={filteredSuppliers}
+              suppliers={filteredSuppliers as any}
               loading={loading}
-              onView={handleViewSupplier}
-              onEdit={handleEditSupplier}
-              onDelete={handleDeleteSupplier}
+              onView={handleViewSupplier as any}
+              onEdit={handleEditSupplier as any}
+              onDelete={handleDeleteSupplier as any}
             />
           </CardContent>
         </Card>
@@ -221,13 +224,13 @@ const SupplierManagement = () => {
           open={isFormOpen} 
           onClose={() => setIsFormOpen(false)} 
           onSuccess={handleFormSuccess}
-          editingSupplier={editingSupplier}
+          editingSupplier={editingSupplier as any}
         />
 
         <ViewSupplierDialog 
           open={isViewOpen}
           onClose={() => setIsViewOpen(false)}
-          supplier={viewingSupplier}
+          supplier={viewingSupplier as any}
         />
 
         <DeleteConfirmationDialog 

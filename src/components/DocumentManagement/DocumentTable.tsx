@@ -2,7 +2,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Edit, Trash2, Send } from "lucide-react";
 
 interface Document {
   id: string;
@@ -19,9 +19,10 @@ interface DocumentTableProps {
   loading: boolean;
   onEdit: (document: Document) => void;
   onDelete: (id: string) => void;
+  onPost?: (document: Document) => void;
 }
 
-export const DocumentTable = ({ documents, loading, onEdit, onDelete }: DocumentTableProps) => {
+export const DocumentTable = ({ documents, loading, onEdit, onDelete, onPost }: DocumentTableProps) => {
   const getStatusBadge = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     const statusColors = {
       draft: "secondary" as const,

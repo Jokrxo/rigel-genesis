@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/Layout/MainLayout";
 import { FinancialOverview } from "@/components/Dashboard/FinancialOverview";
 import { RecentActivity } from "@/components/Dashboard/RecentActivity";
 import { SystemHealthCheck } from "@/components/Dashboard/SystemHealthCheck";
+import { DataDashboard } from "@/components/Dashboard/DataDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -156,6 +157,14 @@ const Dashboard = () => {
 
         <div className="space-y-6">
           <FinancialOverview />
+        </div>
+
+        {/* Data Dashboard - Customer, Product, Document Stats */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl md:text-2xl font-semibold mb-4">Business Overview</h2>
+            <DataDashboard />
+          </div>
         </div>
 
         {/* Master Records Section */}
