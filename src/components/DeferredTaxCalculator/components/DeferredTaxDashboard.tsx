@@ -153,7 +153,7 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       const { data: newCategory, error } = await (supabase
         .from('deferred_tax_categories') as any)
         .insert({
-          name: data.name || data.description,
+          name: data.description,
           category_type: data.category_type,
           accounting_base: data.book_value || 0,
           tax_base: data.tax_value || 0,
@@ -177,7 +177,7 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
           movement_type: 'addition',
           amount: data.deferred_tax_asset - data.deferred_tax_liability,
           movement_date: new Date().toISOString().split('T')[0],
-          description: `Initial recognition of ${data.description || data.name}`,
+          description: `Initial recognition of ${data.description}`,
         });
 
       if (movementError) console.warn('Failed to create movement record:', movementError);

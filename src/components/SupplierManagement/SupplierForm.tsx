@@ -130,8 +130,8 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
       if (!user) throw new Error("Not authenticated");
 
       if (editingSupplier) {
-        const { error } = await supabase
-          .from("suppliers")
+        const { error } = await (supabase
+          .from("suppliers") as any)
           .update({
             ...data,
             updated_at: new Date().toISOString(),
@@ -144,8 +144,8 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
           description: "Supplier updated successfully",
         });
       } else {
-        const { error } = await supabase
-          .from("suppliers")
+        const { error } = await (supabase
+          .from("suppliers") as any)
           .insert([{
             name: data.name,
             email: data.email || null,

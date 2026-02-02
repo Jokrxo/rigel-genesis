@@ -9,16 +9,16 @@ export const postInvoice = async (document: SalesDocument) => {
   if (!user.user) throw new Error("User not authenticated");
 
   // 2. Create Journal Entry Header
-  const { data: entry, error: entryError } = await supabase
-    .from('journal_entries')
+  const { data: entry, error: entryError } = await (supabase
+    .from('journal_entries') as any)
     .insert({
       user_id: user.user.id,
-      entry_number: `JE-${document.document_number}`,
       reference: document.document_number,
-      date: document.document_date,
+      entry_date: document.document_date,
       description: `Invoice ${document.document_number} Posted`,
       status: 'posted',
-      total_amount: document.grand_total,
+      total_debit: document.grand_total,
+      total_credit: document.grand_total,
     })
     .select()
     .single();
@@ -58,8 +58,8 @@ export const postInvoice = async (document: SalesDocument) => {
     });
   }
 
-  const { error: linesError } = await supabase
-    .from('journal_entry_lines')
+  const { error: linesError } = await (supabase
+    .from('journal_entry_lines') as any)
     .insert(lines);
 
   if (linesError) {
@@ -70,8 +70,8 @@ export const postInvoice = async (document: SalesDocument) => {
   }
 
   // 4. Update Document Status
-  const { error: updateError } = await supabase
-    .from('sales_documents')
+  const { error: updateError } = await (supabase
+    .from('sales_documents') as any)
     .update({ status: 'sent' }) // Or 'posted' if that status exists
     .eq('id', document.id);
 
