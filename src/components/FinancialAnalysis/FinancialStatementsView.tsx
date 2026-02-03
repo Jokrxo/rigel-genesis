@@ -63,11 +63,17 @@ export const FinancialStatementsView = () => {
         bankCharges?: number;
         interest?: number;
       };
+      vatReport?: {
+        outputVAT: number;
+        inputVAT: number;
+        netVATPayable: number;
+      };
     };
     
     const revenue = Number(data.revenue) || 0;
     const netIncome = Number(data.netIncome) || 0;
     const expenses = data.expenses || {};
+    const vatReport = data.vatReport;
     
     return (
       <div className="space-y-4">
@@ -118,6 +124,32 @@ export const FinancialStatementsView = () => {
             </div>
           </CardContent>
         </Card>
+
+        {vatReport && (
+          <Card>
+            <CardHeader>
+              <CardTitle>VAT Report (15%)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Output VAT (Sales)</span>
+                  <span className="text-green-600">{formatCurrency(Number(vatReport.outputVAT) || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Input VAT (Expenses)</span>
+                  <span className="text-red-600">{formatCurrency(Number(vatReport.inputVAT) || 0)}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2 font-bold">
+                  <span>Net VAT Payable</span>
+                  <span className={vatReport.netVATPayable >= 0 ? 'text-red-600' : 'text-green-600'}>
+                    {formatCurrency(Number(vatReport.netVATPayable) || 0)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   };

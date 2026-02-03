@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AccountingService } from '@/services/accountingService';
 import type { Customer, SalesDocument, Receipt, CustomerStats, AgingSummary, Invoice } from '@/types/sales';
 
 // Generate document numbers
@@ -34,7 +35,7 @@ export function useCustomers() {
 
       // Try to fetch from Supabase, fallback to localStorage
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.from('sales_customers' as any) as any).select('*').eq('user_id', user.id);
+      const { data, error } = await (supabase.from('customers' as any) as any).select('*').eq('user_id', user.id);
       
       if (error) {
         // Fallback to localStorage
@@ -94,7 +95,7 @@ export function useCustomers() {
 
       // Try Supabase first
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('sales_customers' as any).insert(newCustomer);
+      const { error } = await supabase.from('customers' as any).insert(newCustomer);
       
       if (error) {
         // Fallback to localStorage
@@ -122,7 +123,7 @@ export function useCustomers() {
       const updatedData = { ...updates, updated_at: new Date().toISOString() };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('sales_customers' as any).update(updatedData).eq('id', id);
+      const { error } = await supabase.from('customers' as any).update(updatedData).eq('id', id);
       
       if (error) {
         // Fallback to localStorage
@@ -151,7 +152,7 @@ export function useCustomers() {
       if (!user) throw new Error('Not authenticated');
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('sales_customers' as any).delete().eq('id', id);
+      const { error } = await supabase.from('customers' as any).delete().eq('id', id);
       
       if (error) {
         // Fallback to localStorage
@@ -209,9 +210,20 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const stored = localStorage.getItem(`${storageKey}_${user.id}`);
-      const localData = stored ? JSON.parse(stored) : [];
-      setDocuments(documentType ? localData.filter((d: SalesDocument) => d.document_type === documentType) : localData);
+      // Try Supabase first with resilient select
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.from('sales_documents' as any) as any)
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        const stored = localStorage.getItem(`${storageKey}_${user.id}`);
+        const localData = stored ? JSON.parse(stored) : [];
+        setDocuments(documentType ? localData.filter((d: SalesDocument) => d.document_type === documentType) : localData);
+      } else {
+        const supaData = (data || []) as SalesDocument[];
+        setDocuments(documentType ? supaData.filter((d: SalesDocument) => d.document_type === documentType) : supaData);
+      }
     } catch (err) {
       console.error('Error fetching documents:', err);
     } finally {
@@ -225,23 +237,76 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       if (!user) throw new Error('Not authenticated');
 
       const prefix = prefixes[docData.document_type] || 'DOC';
-      const newDoc: SalesDocument = {
+      // We'll generate a number, but ideally the DB or a sequence should handle this to avoid race conditions.
+      // For now, client-side generation based on count is "okay" for a prototype but risky for prod.
+      const document_number = generateDocNumber(prefix, documents.length);
+
+      // 1. Insert Header
+      const { data: insertedDoc, error: docError } = await supabase
+        .from('sales_documents')
+        .insert({
+          user_id: user.id,
+          customer_id: docData.customer_id,
+          document_type: docData.document_type,
+          document_number: document_number,
+          issue_date: docData.document_date,
+          due_date: (docData as any).due_date, // Cast as Invoice might have due_date
+          status: docData.status,
+          subtotal: docData.subtotal,
+          tax_amount: docData.vat_total,
+          total_amount: docData.grand_total,
+          notes: docData.notes
+        })
+        .select()
+        .single();
+
+      if (docError) throw docError;
+
+      // 2. Insert Items
+      if (docData.line_items && docData.line_items.length > 0) {
+        const itemsToInsert = docData.line_items.map((item, index) => ({
+          document_id: insertedDoc.id,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          tax_rate: item.vat_percent,
+          line_total: item.line_total,
+          sort_order: index
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('sales_document_items')
+          .insert(itemsToInsert);
+
+        if (itemsError) {
+            console.error('Error inserting items:', itemsError);
+            // Optionally rollback header
+        }
+      }
+
+      const fullDoc: SalesDocument = {
         ...docData,
-        id: crypto.randomUUID(),
-        document_number: generateDocNumber(prefix, documents.length),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user_id: user.id,
+        id: insertedDoc.id,
+        document_number: insertedDoc.document_number,
+        created_at: insertedDoc.created_at,
+        updated_at: insertedDoc.updated_at,
+        user_id: insertedDoc.user_id,
       };
 
-      const stored = localStorage.getItem(`${storageKey}_${user.id}`);
-      const localData = stored ? JSON.parse(stored) : [];
-      localData.push(newDoc);
-      localStorage.setItem(`${storageKey}_${user.id}`, JSON.stringify(localData));
+      // 3. Post to Accounting (if Invoice and not draft)
+      if (docData.document_type === 'invoice' && docData.status !== 'draft') {
+        try {
+            await AccountingService.postInvoice(fullDoc as Invoice);
+            toast({ title: 'Accounting', description: 'Journal entries posted successfully.' });
+        } catch (accError) {
+            console.error('Accounting posting failed:', accError);
+            toast({ title: 'Warning', description: 'Invoice saved but accounting posting failed.', variant: 'destructive' });
+        }
+      }
 
-      setDocuments(prev => [...prev, newDoc]);
+      setDocuments(prev => [...prev, fullDoc]);
       toast({ title: 'Success', description: `${docData.document_type} created successfully` });
-      return newDoc;
+      return fullDoc;
     } catch (err) {
       console.error('Error creating document:', err);
       toast({ title: 'Error', description: 'Failed to create document', variant: 'destructive' });

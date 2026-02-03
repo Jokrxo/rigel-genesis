@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Download, Edit2, Trash2, FolderTree, Upload, History } from "lucide-react";
-import { chartOfAccountsApi, Account } from "@/lib/chart-of-accounts-api";
+import { chartOfAccountsApi, Account, SA_CHART_OF_ACCOUNTS } from "@/lib/chart-of-accounts-api";
 
 interface AuditLog {
   id: string;
@@ -97,8 +97,8 @@ export default function ChartOfAccounts() {
       // In a real app, check if account has transactions first
       await chartOfAccountsApi.deleteAccount(id);
       await loadAccounts();
-      addAuditLog('Delete Account', `Deleted account ${id}`);
-      toast({ title: "Account Deleted", description: "Account removed successfully." });
+      addAuditLog('Deactivate Account', `Deactivated account ${id}`);
+      toast({ title: "Account Deactivated", description: "Account marked inactive (not deleted)." });
   }
 
   const handleExport = () => {
@@ -196,6 +196,17 @@ export default function ChartOfAccounts() {
     reader.readAsText(file);
     // Reset input
     e.target.value = '';
+  };
+
+  const loadSAChartOfAccounts = async () => {
+    try {
+      const inserted = await chartOfAccountsApi.seedDefaultSAChart();
+      await loadAccounts();
+      addAuditLog('Seed Accounts', `Loaded Default SA Chart (${inserted} new accounts)`);
+      toast({ title: 'Default SA Chart Loaded', description: inserted > 0 ? `${inserted} accounts added.` : 'All accounts already present.' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to load default chart.', variant: 'destructive' });
+    }
   };
 
   const getTypeColor = (type: string) => {
@@ -336,8 +347,8 @@ export default function ChartOfAccounts() {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Accounts List</CardTitle>
-                  <div className="relative w-64">
+              <CardTitle>Accounts List</CardTitle>
+              <div className="relative w-64">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input 
                       placeholder="Search accounts..." 
@@ -345,68 +356,71 @@ export default function ChartOfAccounts() {
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                     />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Subtype</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Subtype</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAccounts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center space-y-3">
+                        <div>No accounts found.</div>
+                        <Button variant="outline" onClick={loadSAChartOfAccounts}>
+                          Load Default SA Chart
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredAccounts.map((account) => (
+                      <TableRow key={account.id}>
+                        <TableCell className="font-mono font-medium">{account.code}</TableCell>
+                        <TableCell>{account.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className={getTypeColor(account.type)}>
+                            {account.type.charAt(0).toUpperCase() + account.type.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{account.subtype}</TableCell>
+                        <TableCell>
+                          <Badge variant={account.isActive ? "default" : "destructive"}>
+                            {account.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteAccount(account.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredAccounts.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="h-24 text-center">
-                            No accounts found.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredAccounts.map((account) => (
-                          <TableRow key={account.id}>
-                            <TableCell className="font-mono font-medium">{account.code}</TableCell>
-                            <TableCell>{account.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary" className={getTypeColor(account.type)}>
-                                {account.type.charAt(0).toUpperCase() + account.type.slice(1)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{account.subtype}</TableCell>
-                            <TableCell>
-                              <Badge variant={account.isActive ? "default" : "destructive"}>
-                                {account.isActive ? "Active" : "Inactive"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-8 w-8 text-destructive hover:text-destructive"
-                                    onClick={() => handleDeleteAccount(account.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
           </TabsContent>
           
           <TabsContent value="audit" className="mt-4">

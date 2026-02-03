@@ -17,6 +17,7 @@ interface Transaction {
   category: string;
   confidence: number;
   suggestedDeduction: boolean;
+  vatAmount?: number;
   reference?: string;
 }
 
@@ -83,6 +84,7 @@ TASK: Process the bank statement and return structured JSON with:
    - category (specific business category)
    - confidence (0-100 based on OCR/parsing quality)
    - suggestedDeduction (true/false for SA tax purposes)
+   - vatAmount (estimated VAT amount at 15% if applicable, otherwise 0)
 
 2. DATA VALIDATION - Check for:
    - Balance consistency (opening + transactions = closing)
@@ -204,6 +206,7 @@ Return JSON format:
       confidence_score: t.confidence,
       metadata: {
         suggestedDeduction: t.suggestedDeduction,
+        vatAmount: t.vatAmount || 0,
         aiProcessed: true,
         model: 'gpt-4o'
       }
@@ -326,8 +329,14 @@ interface ProcessedData {
   processingNotes?: string;
 }
 
+type MinimalSupabaseClient = {
+  from: (table: string) => {
+    insert: (rows: unknown) => Promise<unknown>;
+  };
+};
+
 async function generateFinancialStatements(
-  supabaseClient: any,
+  supabaseClient: MinimalSupabaseClient,
   userId: string,
   fileId: string,
   processedData: ProcessedData
@@ -337,16 +346,29 @@ async function generateFinancialStatements(
     const summary = processedData.summary;
     
     // Generate Income Statement
+    // Helper to check if category attracts VAT (simplified for SA context)
+    const attractsVAT = (category: string) => 
+      !['Bank Charges', 'Interest', 'Salaries', 'Wages', 'Loan', 'Tax', 'Insurance'].some(c => category.includes(c));
+
+    const revenueTransactions = transactions.filter((t: Transaction) => t.amount > 0 && ['Sales', 'Revenue', 'Income'].includes(t.category));
+    const expenseTransactions = transactions.filter((t: Transaction) => t.amount < 0 && !['Bank Charges', 'Interest', 'Transfer'].includes(t.category));
+
+    const totalOutputVAT = revenueTransactions
+      .reduce((sum: number, t: Transaction) => sum + (t.vatAmount || (attractsVAT(t.category) ? t.amount * 15/115 : 0)), 0);
+      
+    const totalInputVAT = expenseTransactions
+      .reduce((sum: number, t: Transaction) => sum + (Math.abs(t.vatAmount || (attractsVAT(t.category) ? t.amount * 15/115 : 0))), 0);
+
     const incomeStatement = {
-      revenue: transactions
-        .filter((t: Transaction) => t.amount > 0 && ['Sales', 'Revenue', 'Income'].includes(t.category))
-        .reduce((sum: number, t: Transaction) => sum + t.amount, 0),
+      revenue: revenueTransactions.reduce((sum: number, t: Transaction) => sum + t.amount, 0) - totalOutputVAT,
+      grossRevenue: revenueTransactions.reduce((sum: number, t: Transaction) => sum + t.amount, 0),
       expenses: {
-        operatingExpenses: transactions
-          .filter((t: Transaction) => t.amount < 0 && !['Bank Charges', 'Interest'].includes(t.category))
+        operatingExpenses: expenseTransactions
           .reduce((acc: Record<string, number>, t: Transaction) => {
             if (!acc[t.category]) acc[t.category] = 0;
-            acc[t.category] += Math.abs(t.amount);
+            // Deduct VAT from expense if applicable
+            const vat = t.vatAmount || (attractsVAT(t.category) ? Math.abs(t.amount) * 15/115 : 0);
+            acc[t.category] += Math.abs(t.amount) - vat;
             return acc;
           }, {}),
         bankCharges: transactions
@@ -356,7 +378,12 @@ async function generateFinancialStatements(
           .filter((t: Transaction) => t.category === 'Interest')
           .reduce((sum: number, t: Transaction) => sum + Math.abs(t.amount), 0)
       },
-      netIncome: summary.totalCredits + summary.totalDebits
+      vatReport: {
+        outputVAT: totalOutputVAT,
+        inputVAT: totalInputVAT,
+        netVATPayable: totalOutputVAT - totalInputVAT
+      },
+      netIncome: summary.totalCredits + summary.totalDebits // Note: Net Income usually calculated from Revenue - Expenses
     };
 
     // Generate Cash Flow Statement

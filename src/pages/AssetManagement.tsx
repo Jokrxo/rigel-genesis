@@ -84,7 +84,6 @@ const AssetManagement = () => {
   const handleCreateAsset = async (data: AssetFormData) => {
     try {
       const newAsset: CreateFixedAsset = {
-        entity_id: 'demo', // Default entity
         name: data.name,
         category: data.category,
         purchase_date: data.purchase_date,

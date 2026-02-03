@@ -202,11 +202,17 @@ export const SalesDocumentForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {customers.map(customer => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
+                    {customers.length === 0 ? (
+                      <SelectItem value="" disabled>
+                        No customers available
                       </SelectItem>
-                    ))}
+                    ) : (
+                      customers.map(customer => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 // We define it manually since it might be missing in the generated types
 export interface FixedAsset {
   id: string;
-  entity_id: string;
+  user_id: string;
   name: string;
   category: string | null;
   purchase_date: string;
@@ -17,18 +17,16 @@ export interface FixedAsset {
   created_at?: string;
 }
 
-export type CreateFixedAsset = Omit<FixedAsset, 'id' | 'created_at' | 'accum_depr'>;
+export type CreateFixedAsset = Omit<FixedAsset, 'id' | 'created_at' | 'accum_depr' | 'user_id'>;
 
 const TABLE_NAME = 'fixed_assets';
 
 export const fixedAssetsApi = {
-  async getAll(entityId: string = 'demo') {
+  async getAll() {
     try {
-      // Use any to bypass strict type checking for table that may not exist
-      const { data, error } = await (supabase as any)
-        .from(TABLE_NAME)
+      const { data, error } = await supabase
+        .from<FixedAsset>(TABLE_NAME)
         .select('*')
-        .eq('entity_id', entityId)
         .order('purchase_date', { ascending: false });
 
       if (error) {
@@ -44,9 +42,12 @@ export const fixedAssetsApi = {
 
   async create(asset: CreateFixedAsset) {
     try {
-      const { data, error } = await (supabase as any)
-        .from(TABLE_NAME)
-        .insert([asset])
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from<FixedAsset>(TABLE_NAME)
+        .insert([{ ...asset, user_id: user.id }])
         .select()
         .single();
 
@@ -63,8 +64,8 @@ export const fixedAssetsApi = {
 
   async update(id: string, updates: Partial<FixedAsset>) {
     try {
-      const { data, error } = await (supabase as any)
-        .from(TABLE_NAME)
+      const { data, error } = await supabase
+        .from<FixedAsset>(TABLE_NAME)
         .update(updates)
         .eq('id', id)
         .select()
@@ -83,8 +84,8 @@ export const fixedAssetsApi = {
 
   async delete(id: string) {
     try {
-      const { error } = await (supabase as any)
-        .from(TABLE_NAME)
+      const { error } = await supabase
+        .from<FixedAsset>(TABLE_NAME)
         .delete()
         .eq('id', id);
 

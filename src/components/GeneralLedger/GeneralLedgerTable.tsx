@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { chartOfAccountsApi } from "@/lib/chart-of-accounts-api";
 import {
   Table,
   TableBody,
@@ -31,21 +32,28 @@ export const GeneralLedgerTable = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [accountFilter, setAccountFilter] = useState("all");
+  const [accountMap, setAccountMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadLedgerData();
   }, []);
 
-  // Helper function to get account name from code
-  const getAccountName = (accountCode: string): string => {
-    const accountNames: Record<string, string> = {
+  useEffect(() => {
+    chartOfAccountsApi.getAccounts().then(accs => {
+      const map: Record<string, string> = {};
+      accs.forEach(a => { map[a.code] = a.name; });
+      setAccountMap(map);
+    }).catch(() => setAccountMap({
       '1000': 'Cash',
       '1100': 'Accounts Receivable',
       '2000': 'Accounts Payable',
       '4000': 'Sales Revenue',
       '6000': 'Expenses',
-    };
-    return accountNames[accountCode] || 'Unknown Account';
+    }));
+  }, []);
+
+  const getAccountName = (accountCode: string): string => {
+    return accountMap[accountCode] || 'Unknown Account';
   };
 
   const loadLedgerData = async () => {

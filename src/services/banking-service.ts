@@ -96,3 +96,54 @@ export const bankingService = {
     return this.getTransactions(accountId);
   }
 };
+
+// Heuristic account mapping based on transaction description and type
+export function suggestAccountMapping(tx: BankTransaction, accounts: Array<{ code: string; name: string; type: string }>) {
+  const desc = tx.description.toLowerCase();
+  const findByName = (keywords: string[]) => accounts.find(a => keywords.some(k => a.name.toLowerCase().includes(k)));
+  const findByCode = (code: string) => accounts.find(a => a.code === code);
+
+  let debit: { code: string; name: string } | undefined;
+  let credit: { code: string; name: string } | undefined;
+
+  if (tx.type === 'debit') {
+    if (desc.includes('salary') || desc.includes('payroll')) {
+      debit = findByName(['salaries', 'wages']) || findByCode('6010');
+      credit = findByCode('1000');
+    } else if (desc.includes('vat')) {
+      debit = findByName(['vat receivable']) || findByCode('1300');
+      credit = findByCode('1000');
+    } else if (desc.includes('rent')) {
+      debit = findByName(['rent']) || findByCode('6030');
+      credit = findByCode('1000');
+    } else if (desc.includes('utilities') || desc.includes('electric') || desc.includes('water')) {
+      debit = findByName(['utilities']) || findByCode('6020');
+      credit = findByCode('1000');
+    } else if (desc.includes('insurance')) {
+      debit = findByName(['insurance']) || findByCode('6040');
+      credit = findByCode('1000');
+    } else {
+      debit = findByName(['office supplies']) || findByCode('6000');
+      credit = findByCode('1000');
+    }
+  } else {
+    if (desc.includes('pos') || desc.includes('sale') || desc.includes('payment received')) {
+      debit = findByCode('1000');
+      credit = findByName(['sales revenue']) || findByCode('4000');
+    } else if (desc.includes('interest')) {
+      debit = findByCode('1000');
+      credit = findByName(['interest income']) || findByCode('4030');
+    } else if (desc.includes('vat')) {
+      debit = findByCode('1000');
+      credit = findByName(['vat payable']) || findByCode('2200');
+    } else {
+      debit = findByCode('1000');
+      credit = findByName(['other revenue']) || findByCode('4040');
+    }
+  }
+
+  return {
+    debit,
+    credit,
+  };
+}

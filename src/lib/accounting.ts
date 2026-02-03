@@ -34,14 +34,14 @@ export const postInvoice = async (document: SalesDocument) => {
   const lines = [
     {
       journal_entry_id: entry.id,
-      account_id: 'ACCOUNTS_RECEIVABLE', // Placeholder, needs real account ID
+      account_id: '1100',
       description: `Invoice ${document.document_number} - AR`,
       debit: document.grand_total,
       credit: 0,
     },
     {
       journal_entry_id: entry.id,
-      account_id: 'SALES_REVENUE', // Placeholder
+      account_id: '4000',
       description: `Invoice ${document.document_number} - Revenue`,
       debit: 0,
       credit: document.subtotal,
@@ -51,7 +51,7 @@ export const postInvoice = async (document: SalesDocument) => {
   if (document.vat_total > 0) {
     lines.push({
       journal_entry_id: entry.id,
-      account_id: 'VAT_PAYABLE', // Placeholder
+      account_id: '2200',
       description: `Invoice ${document.document_number} - VAT`,
       debit: 0,
       credit: document.vat_total,
@@ -70,9 +70,9 @@ export const postInvoice = async (document: SalesDocument) => {
   }
 
   // 4. Update Document Status
-  const { error: updateError } = await (supabase
-    .from('sales_documents') as any)
-    .update({ status: 'sent' }) // Or 'posted' if that status exists
+  const { error: updateError } = await supabase
+    .from('sales_documents')
+    .update({ status: 'posted' })
     .eq('id', document.id);
 
   if (updateError) throw updateError;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,9 @@ import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Director {
   id: string;
@@ -38,9 +41,16 @@ interface DirectorTransaction {
 const DirectorTransactions = () => {
   const [directors, setDirectors] = useState<Director[]>([]);
   const [transactions, setTransactions] = useState<DirectorTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDirector, setShowAddDirector] = useState(false);
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [activeTab, setActiveTab] = useState("directors");
+  
+  const [editingDirectorId, setEditingDirectorId] = useState<string | null>(null);
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  // Removed unused state
+
   const [directorForm, setDirectorForm] = useState({
     name: "",
     idNumber: "",
@@ -49,13 +59,87 @@ const DirectorTransactions = () => {
     appointmentDate: "",
     shareholding: "",
   });
+
+  const [transactionForm, setTransactionForm] = useState({
+    directorId: "",
+    date: new Date().toISOString().split('T')[0],
+    type: "loan_to_director",
+    amount: "",
+    description: "",
+    reference: "",
+  });
+
   const { toast } = useToast();
 
+  const fetchDirectors = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('directors')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setDirectors(data.map(d => ({
+        id: d.id,
+        name: d.name,
+        idNumber: d.id_number,
+        email: d.email,
+        phone: d.phone,
+        appointmentDate: d.appointment_date,
+        shareholding: d.shareholding,
+        isActive: d.is_active
+      })));
+    } catch (error) {
+      console.error('Error fetching directors:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch directors",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('director_transactions')
+        .select(`
+          *,
+          director:directors(name)
+        `)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      setTransactions(data.map(t => ({
+        id: t.id,
+        directorId: t.director_id,
+        directorName: t.director?.name || 'Unknown',
+        date: t.date,
+        type: t.type,
+        amount: t.amount,
+        description: t.description,
+        reference: t.reference
+      })));
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch transactions",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
   useEffect(() => {
-    // Initialize with empty data - will be populated with real data in future
-    setDirectors([]);
-    setTransactions([]);
-  }, []);
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchDirectors(), fetchTransactions()]);
+      setLoading(false);
+    };
+    loadData();
+  }, [fetchDirectors, fetchTransactions]);
 
   const filteredDirectors = directors.filter(director =>
     director.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,30 +185,313 @@ const DirectorTransactions = () => {
     exportToCSV(records, 'director-transactions', headers);
   };
 
-  const handleAddDirector = (e: React.FormEvent) => {
+  const handleAddDirector = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDirectors([
-      ...directors,
-      {
-        id: Date.now().toString(),
-        name: directorForm.name,
-        idNumber: directorForm.idNumber,
-        email: directorForm.email,
-        phone: directorForm.phone,
-        appointmentDate: directorForm.appointmentDate,
-        shareholding: Number(directorForm.shareholding),
-        isActive: true,
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      if (editingDirectorId) {
+        const { error } = await supabase
+          .from('directors')
+          .update({
+            name: directorForm.name,
+            id_number: directorForm.idNumber,
+            email: directorForm.email,
+            phone: directorForm.phone,
+            appointment_date: directorForm.appointmentDate,
+            shareholding: Number(directorForm.shareholding),
+          })
+          .eq('id', editingDirectorId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Director updated successfully",
+        });
+      } else {
+        const { error } = await supabase
+          .from('directors')
+          .insert([{
+            user_id: user.id,
+            name: directorForm.name,
+            id_number: directorForm.idNumber,
+            email: directorForm.email,
+            phone: directorForm.phone,
+            appointment_date: directorForm.appointmentDate,
+            shareholding: Number(directorForm.shareholding),
+            is_active: true
+          }]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Director added successfully",
+        });
       }
-    ]);
-    setShowAddDirector(false);
+      
+      setShowAddDirector(false);
+      setEditingDirectorId(null);
+      setDirectorForm({
+        name: "",
+        idNumber: "",
+        email: "",
+        phone: "",
+        appointmentDate: "",
+        shareholding: "",
+      });
+      fetchDirectors();
+    } catch (error) {
+      console.error('Error saving director:', error);
+      toast({
+        title: "Error",
+        description: `Failed to ${editingDirectorId ? 'update' : 'add'} director`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Removed duplicate handleEditDirector
+
+  // Removed duplicate handleDeleteDirector
+
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      if (editingTransactionId) {
+        const { error } = await supabase
+          .from('director_transactions')
+          .update({
+            director_id: transactionForm.directorId,
+            date: transactionForm.date,
+            type: transactionForm.type,
+            amount: Number(transactionForm.amount),
+            description: transactionForm.description,
+            reference: transactionForm.reference
+          })
+          .eq('id', editingTransactionId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Transaction updated successfully",
+        });
+      } else {
+        const { error } = await supabase
+          .from('director_transactions')
+          .insert([{
+            user_id: user.id,
+            director_id: transactionForm.directorId,
+            date: transactionForm.date,
+            type: transactionForm.type,
+            amount: Number(transactionForm.amount),
+            description: transactionForm.description,
+            reference: transactionForm.reference
+          }]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Transaction added successfully",
+        });
+      }
+
+      setShowAddTransaction(false);
+      setEditingTransactionId(null);
+      setTransactionForm({
+        directorId: "",
+        date: new Date().toISOString().split('T')[0],
+        type: "loan_to_director",
+        amount: "",
+        description: "",
+        reference: "",
+      });
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      toast({
+        title: "Error",
+        description: `Failed to ${editingTransactionId ? 'update' : 'add'} transaction`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Removed duplicate handleEditTransaction
+
+  // Removed duplicate handleDeleteTransaction
+
+  const handleEditDirector = (director: Director) => {
+    setSelectedDirector(director);
     setDirectorForm({
-      name: "",
-      idNumber: "",
-      email: "",
-      phone: "",
-      appointmentDate: "",
-      shareholding: "",
+      name: director.name,
+      idNumber: director.idNumber,
+      email: director.email,
+      phone: director.phone,
+      appointmentDate: director.appointmentDate,
+      shareholding: director.shareholding.toString(),
     });
+    setShowEditDirector(true);
+  };
+
+  const handleUpdateDirector = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDirector) return;
+
+    try {
+      const { error } = await supabase
+        .from('directors')
+        .update({
+          name: directorForm.name,
+          id_number: directorForm.idNumber,
+          email: directorForm.email,
+          phone: directorForm.phone,
+          appointment_date: directorForm.appointmentDate,
+          shareholding: Number(directorForm.shareholding),
+        })
+        .eq('id', selectedDirector.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Director updated successfully",
+      });
+      
+      setShowEditDirector(false);
+      fetchDirectors();
+    } catch (error) {
+      console.error('Error updating director:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update director",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteDirector = (director: Director) => {
+    setSelectedDirector(director);
+    setShowDeleteDirector(true);
+  };
+
+  const handleConfirmDeleteDirector = async () => {
+    if (!selectedDirector) return;
+
+    try {
+      const { error } = await supabase
+        .from('directors')
+        .delete()
+        .eq('id', selectedDirector.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Director deleted successfully",
+      });
+      
+      setShowDeleteDirector(false);
+      fetchDirectors();
+    } catch (error) {
+      console.error('Error deleting director:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete director. Ensure there are no linked transactions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditTransaction = (transaction: DirectorTransaction) => {
+    setSelectedTransaction(transaction);
+    setTransactionForm({
+      directorId: transaction.directorId,
+      date: transaction.date,
+      type: transaction.type,
+      amount: transaction.amount.toString(),
+      description: transaction.description,
+      reference: transaction.reference,
+    });
+    setShowEditTransaction(true);
+  };
+
+  const handleUpdateTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTransaction) return;
+
+    try {
+      const { error } = await supabase
+        .from('director_transactions')
+        .update({
+          director_id: transactionForm.directorId,
+          date: transactionForm.date,
+          type: transactionForm.type,
+          amount: Number(transactionForm.amount),
+          description: transactionForm.description,
+          reference: transactionForm.reference
+        })
+        .eq('id', selectedTransaction.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Transaction updated successfully",
+      });
+
+      setShowEditTransaction(false);
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update transaction",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTransaction = (transaction: DirectorTransaction) => {
+    setSelectedTransaction(transaction);
+    setShowDeleteTransaction(true);
+  };
+
+  const handleConfirmDeleteTransaction = async () => {
+    if (!selectedTransaction) return;
+
+    try {
+      const { error } = await supabase
+        .from('director_transactions')
+        .delete()
+        .eq('id', selectedTransaction.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Transaction deleted successfully",
+      });
+
+      setShowDeleteTransaction(false);
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete transaction",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -213,6 +580,54 @@ const DirectorTransactions = () => {
                 </DialogContent>
               </Dialog>
 
+              {/* Edit Director Form (Dialog) */}
+              <Dialog open={showEditDirector} onOpenChange={setShowEditDirector}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Director</DialogTitle>
+                    <DialogDescription>Update the director's details.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleUpdateDirector} className="space-y-4 mt-2">
+                    <div>
+                      <Label htmlFor="edit-name">Full Name</Label>
+                      <Input id="edit-name" value={directorForm.name} onChange={e => setDirectorForm({ ...directorForm, name: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-idNumber">ID Number</Label>
+                      <Input id="edit-idNumber" value={directorForm.idNumber} onChange={e => setDirectorForm({ ...directorForm, idNumber: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input id="edit-email" type="email" value={directorForm.email} onChange={e => setDirectorForm({ ...directorForm, email: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-phone">Phone</Label>
+                      <Input id="edit-phone" value={directorForm.phone} onChange={e => setDirectorForm({ ...directorForm, phone: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-appointmentDate">Appointment Date</Label>
+                      <Input id="edit-appointmentDate" type="date" value={directorForm.appointmentDate} onChange={e => setDirectorForm({ ...directorForm, appointmentDate: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-shareholding">Shareholding (%)</Label>
+                      <Input id="edit-shareholding" type="number" value={directorForm.shareholding} onChange={e => setDirectorForm({ ...directorForm, shareholding: e.target.value })} required min={0} max={100} step="0.01" />
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setShowEditDirector(false)}>Cancel</Button>
+                      <Button type="submit">Update</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              <DeleteConfirmationDialog 
+                open={showDeleteDirector} 
+                onClose={() => setShowDeleteDirector(false)} 
+                onConfirm={handleConfirmDeleteDirector} 
+                title="Delete Director"
+                description="Are you sure you want to delete this director? This action cannot be undone."
+              />
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -239,50 +654,47 @@ const DirectorTransactions = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredDirectors.map((director) => (
-                          <TableRow key={director.id}>
-                            <TableCell className="font-medium">{director.name}</TableCell>
-                            <TableCell>{director.idNumber}</TableCell>
-                            <TableCell>{director.email}</TableCell>
-                            <TableCell>{director.phone}</TableCell>
-                            <TableCell>{new Date(director.appointmentDate).toLocaleDateString()}</TableCell>
-                            <TableCell>{director.shareholding}%</TableCell>
-                            <TableCell>
-                              <Badge variant={director.isActive ? "default" : "secondary"}>
-                                {director.isActive ? "Active" : "Inactive"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => {
-                                    toast({
-                                      title: "Edit Director", 
-                                      description: "Edit functionality will be available in a future update"
-                                    });
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => {
-                                    toast({
-                                      title: "Delete Director",
-                                      description: "Delete functionality will be available in a future update",
-                                      variant: "destructive",
-                                    });
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                        {filteredDirectors.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                              No directors found. Add one to get started.
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ) : (
+                          filteredDirectors.map((director) => (
+                            <TableRow key={director.id}>
+                              <TableCell className="font-medium">{director.name}</TableCell>
+                              <TableCell>{director.idNumber}</TableCell>
+                              <TableCell>{director.email}</TableCell>
+                              <TableCell>{director.phone}</TableCell>
+                              <TableCell>{new Date(director.appointmentDate).toLocaleDateString()}</TableCell>
+                              <TableCell>{director.shareholding}%</TableCell>
+                              <TableCell>
+                                <Badge variant={director.isActive ? "default" : "secondary"}>
+                                  {director.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleEditDirector(director)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleDeleteDirector(director)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -314,19 +726,152 @@ const DirectorTransactions = () => {
                     <Download className="mr-2 h-4 w-4" />
                     Export CSV
                   </Button>
-                  <Button 
-                    onClick={() => {
-                      toast({
-                        title: "New Transaction",
-                        description: "Transaction creation form will be available in a future update",
-                      });
-                    }}
-                  >
+                  <Button onClick={() => setShowAddTransaction(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Transaction
                   </Button>
                 </div>
               </div>
+
+              {/* Add Transaction Form (Dialog) */}
+              <Dialog open={showAddTransaction} onOpenChange={setShowAddTransaction}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Transaction</DialogTitle>
+                    <DialogDescription>Record a new transaction for a director.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleAddTransaction} className="space-y-4 mt-2">
+                    <div>
+                      <Label htmlFor="director">Director</Label>
+                      <Select 
+                        value={transactionForm.directorId} 
+                        onValueChange={(val) => setTransactionForm({ ...transactionForm, directorId: val })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select director" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {directors.map(d => (
+                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="date">Date</Label>
+                      <Input id="date" type="date" value={transactionForm.date} onChange={e => setTransactionForm({ ...transactionForm, date: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="type">Transaction Type</Label>
+                      <Select 
+                        value={transactionForm.type} 
+                        onValueChange={(val) => setTransactionForm({ ...transactionForm, type: val as any })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="loan_to_director">Loan to Director</SelectItem>
+                          <SelectItem value="loan_from_director">Loan from Director</SelectItem>
+                          <SelectItem value="salary">Salary</SelectItem>
+                          <SelectItem value="dividend">Dividend</SelectItem>
+                          <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="amount">Amount (R)</Label>
+                      <Input id="amount" type="number" step="0.01" value={transactionForm.amount} onChange={e => setTransactionForm({ ...transactionForm, amount: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Input id="description" value={transactionForm.description} onChange={e => setTransactionForm({ ...transactionForm, description: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="reference">Reference</Label>
+                      <Input id="reference" value={transactionForm.reference} onChange={e => setTransactionForm({ ...transactionForm, reference: e.target.value })} />
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setShowAddTransaction(false)}>Cancel</Button>
+                      <Button type="submit">Add</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              {/* Edit Transaction Form (Dialog) */}
+              <Dialog open={showEditTransaction} onOpenChange={setShowEditTransaction}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Transaction</DialogTitle>
+                    <DialogDescription>Update the transaction details.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleUpdateTransaction} className="space-y-4 mt-2">
+                    <div>
+                      <Label htmlFor="edit-director">Director</Label>
+                      <Select 
+                        value={transactionForm.directorId} 
+                        onValueChange={(val) => setTransactionForm({ ...transactionForm, directorId: val })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select director" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {directors.map(d => (
+                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-date">Date</Label>
+                      <Input id="edit-date" type="date" value={transactionForm.date} onChange={e => setTransactionForm({ ...transactionForm, date: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-type">Transaction Type</Label>
+                      <Select 
+                        value={transactionForm.type} 
+                        onValueChange={(val) => setTransactionForm({ ...transactionForm, type: val as any })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="loan_to_director">Loan to Director</SelectItem>
+                          <SelectItem value="loan_from_director">Loan from Director</SelectItem>
+                          <SelectItem value="salary">Salary</SelectItem>
+                          <SelectItem value="dividend">Dividend</SelectItem>
+                          <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-amount">Amount (R)</Label>
+                      <Input id="edit-amount" type="number" step="0.01" value={transactionForm.amount} onChange={e => setTransactionForm({ ...transactionForm, amount: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-description">Description</Label>
+                      <Input id="edit-description" value={transactionForm.description} onChange={e => setTransactionForm({ ...transactionForm, description: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-reference">Reference</Label>
+                      <Input id="edit-reference" value={transactionForm.reference} onChange={e => setTransactionForm({ ...transactionForm, reference: e.target.value })} />
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setShowEditTransaction(false)}>Cancel</Button>
+                      <Button type="submit">Update</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              <DeleteConfirmationDialog 
+                open={showDeleteTransaction} 
+                onClose={() => setShowDeleteTransaction(false)} 
+                onConfirm={handleConfirmDeleteTransaction} 
+                title="Delete Transaction"
+                description="Are you sure you want to delete this transaction? This action cannot be undone."
+              />
 
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
@@ -393,49 +938,46 @@ const DirectorTransactions = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredTransactions.map((transaction) => (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                            <TableCell className="font-medium">{transaction.directorName}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {transaction.type.replace('_', ' ').toUpperCase()}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{transaction.description}</TableCell>
-                            <TableCell>{transaction.reference}</TableCell>
-                            <TableCell className="text-right">R{transaction.amount.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => {
-                                    toast({
-                                      title: "Edit Transaction",
-                                      description: "Transaction editing will be available in a future update",
-                                    });
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => {
-                                    toast({
-                                      title: "Delete Transaction",
-                                      description: "Transaction deletion will be available in a future update",
-                                      variant: "destructive",
-                                    });
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                        {filteredTransactions.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                              No transactions found.
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ) : (
+                          filteredTransactions.map((transaction) => (
+                            <TableRow key={transaction.id}>
+                              <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                              <TableCell className="font-medium">{transaction.directorName}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {transaction.type.replace('_', ' ').toUpperCase()}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{transaction.description}</TableCell>
+                              <TableCell>{transaction.reference}</TableCell>
+                              <TableCell className="text-right">R{transaction.amount.toLocaleString()}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleEditTransaction(transaction)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleDeleteTransaction(transaction)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>

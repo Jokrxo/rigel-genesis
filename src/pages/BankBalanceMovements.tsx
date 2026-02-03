@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
+import { chartOfAccountsApi } from "@/lib/chart-of-accounts-api";
+import { suggestAccountMapping } from "@/services/banking-service";
 
 interface BankMovement {
   id: string;
@@ -23,6 +25,7 @@ interface BankMovement {
 
 const BankBalanceMovements = () => {
   const [movements, setMovements] = useState<BankMovement[]>([]);
+  const [accounts, setAccounts] = useState<{ code: string; name: string; type: string }[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -60,6 +63,9 @@ const BankBalanceMovements = () => {
       }
     ];
     setMovements(mockMovements);
+    chartOfAccountsApi.getAccounts()
+      .then(accs => setAccounts(accs.map(a => ({ code: a.code, name: a.name, type: a.type }))))
+      .catch(() => setAccounts([]));
   }, []);
 
   const filteredMovements = movements.filter(movement =>
@@ -198,11 +204,21 @@ const BankBalanceMovements = () => {
                     <TableHead>Type</TableHead>
                     <TableHead className="text-right">Debit</TableHead>
                     <TableHead className="text-right">Credit</TableHead>
+                    <TableHead>Suggested Account</TableHead>
                     <TableHead className="text-right">Balance</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredMovements.map((movement) => (
+                  {filteredMovements.map((movement) => {
+                    const suggestion = suggestAccountMapping({
+                      id: movement.id,
+                      date: movement.date,
+                      description: movement.description,
+                      amount: movement.debit || movement.credit,
+                      type: movement.debit ? 'debit' : 'credit',
+                      status: 'unmatched',
+                    }, accounts);
+                    return (
                     <TableRow key={movement.id}>
                       <TableCell>{new Date(movement.date).toLocaleDateString()}</TableCell>
                       <TableCell className="font-medium">{movement.description}</TableCell>
@@ -222,11 +238,20 @@ const BankBalanceMovements = () => {
                       <TableCell className="text-right">
                         {movement.credit > 0 ? `R${movement.credit.toLocaleString()}` : '-'}
                       </TableCell>
+                      <TableCell>
+                        {suggestion.debit && suggestion.credit ? (
+                          <span className="text-sm">
+                            Dr {suggestion.debit.code} {suggestion.debit.name} / Cr {suggestion.credit.code} {suggestion.credit.name}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">No suggestion</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-medium">
                         R{movement.balance.toLocaleString()}
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );})}
                 </TableBody>
               </Table>
             </div>

@@ -54,7 +54,7 @@ const SalesInvoices = () => {
     if (editingDoc) {
       await updateDocument(editingDoc.id, invoiceData);
     } else {
-      await createDocument(invoiceData as any);
+      await createDocument(invoiceData);
     }
     setIsFormOpen(false);
     setEditingDoc(null);

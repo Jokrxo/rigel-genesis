@@ -12,6 +12,8 @@ interface Bank {
   logo: string;
 }
 
+import { CSVImport } from "./CSVImport";
+
 const ImportStatementPage = () => {
   const [selectedBankId, setSelectedBankId] = useState<string>();
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -189,6 +191,14 @@ const ImportStatementPage = () => {
           isProcessingComplete={isProcessingComplete}
           onUpload={() => handleUpload("excel")}
         />
+        
+        <div className="my-8 border-t pt-8">
+          <h2 className="text-xl font-semibold mb-4">Heuristic Import (Beta)</h2>
+          <p className="text-muted-foreground mb-4">
+            Parse CSV files directly in the browser with automatic account suggestion.
+          </p>
+          <CSVImport />
+        </div>
       </div>
 
       {(isUploading || uploadProgress > 0 || processingStatus) && (
