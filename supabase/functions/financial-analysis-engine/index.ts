@@ -331,7 +331,9 @@ interface ProcessedData {
 
 type MinimalSupabaseClient = {
   from: (table: string) => {
-    insert: (rows: unknown) => Promise<unknown>;
+    // In supabase-js, `insert()` returns a Postgrest builder (thenable), not a plain Promise.
+    // Use a permissive return type here since this runs fire-and-forget.
+    insert: (rows: unknown) => unknown;
   };
 };
 

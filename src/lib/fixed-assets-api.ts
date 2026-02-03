@@ -15,6 +15,8 @@ export interface FixedAsset {
   disposal_date: string | null;
   selling_price: number | null;
   created_at?: string;
+  // Legacy/local fallback field (ignored by DB)
+  entity_id?: string;
 }
 
 export type CreateFixedAsset = Omit<FixedAsset, 'id' | 'created_at' | 'accum_depr' | 'user_id'>;
@@ -24,8 +26,10 @@ const TABLE_NAME = 'fixed_assets';
 export const fixedAssetsApi = {
   async getAll() {
     try {
-      const { data, error } = await supabase
-        .from<FixedAsset>(TABLE_NAME)
+      // supabase-js v2 no longer supports passing a single generic to `from<T>()`.
+      // We keep runtime behavior the same and cast the result.
+      const { data, error } = await (supabase as any)
+        .from(TABLE_NAME)
         .select('*')
         .order('purchase_date', { ascending: false });
 
@@ -45,8 +49,8 @@ export const fixedAssetsApi = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from<FixedAsset>(TABLE_NAME)
+      const { data, error } = await (supabase as any)
+        .from(TABLE_NAME)
         .insert([{ ...asset, user_id: user.id }])
         .select()
         .single();
@@ -64,8 +68,8 @@ export const fixedAssetsApi = {
 
   async update(id: string, updates: Partial<FixedAsset>) {
     try {
-      const { data, error } = await supabase
-        .from<FixedAsset>(TABLE_NAME)
+      const { data, error } = await (supabase as any)
+        .from(TABLE_NAME)
         .update(updates)
         .eq('id', id)
         .select()
@@ -84,8 +88,8 @@ export const fixedAssetsApi = {
 
   async delete(id: string) {
     try {
-      const { error } = await supabase
-        .from<FixedAsset>(TABLE_NAME)
+      const { error } = await (supabase as any)
+        .from(TABLE_NAME)
         .delete()
         .eq('id', id);
 
