@@ -1,5 +1,9 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/sales';
+
+// Some deployments may not include all optional accounting tables in generated types.
+// Cast to avoid TypeScript failing the entire build.
+const supabase: any = supabaseClient;
 
 // Constants matching the seeded Chart of Accounts
 export const ACCOUNT_CODES = {

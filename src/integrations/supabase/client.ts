@@ -2,8 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Vite only exposes env vars prefixed with `VITE_`, but Lovable Cloud may provide
+// backend/public keys under non-VITE names depending on the runtime.
+// We support both to avoid blank-screen crashes.
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ??
+  import.meta.env.SUPABASE_URL;
+
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  import.meta.env.VITE_SUPABASE_ANON_KEY ??
+  import.meta.env.SUPABASE_PUBLISHABLE_KEY ??
+  import.meta.env.SUPABASE_ANON_KEY;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
