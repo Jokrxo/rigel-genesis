@@ -237,7 +237,10 @@ export const DataDashboard = () => {
               <a href="/documents">View Documents</a>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <a href="/inventory">View Products</a>
+              <a href="/inventory?type=inventory">View Products</a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href="/inventory?type=service">View Services</a>
             </Button>
           </CardContent>
         </Card>

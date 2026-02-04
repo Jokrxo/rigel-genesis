@@ -61,6 +61,8 @@ import PayrollReports from "./pages/Reports/PayrollReports";
 import BalanceSheet from "./pages/FinancialReports/BalanceSheet";
 import IncomeStatement from "./pages/FinancialReports/IncomeStatement";
 import CashFlowStatement from "./pages/FinancialReports/CashFlowStatement";
+import CashControlMasterfile from "./pages/FinancialReports/CashControlMasterfile";
+import DebtorsAgeAnalysis from "./pages/FinancialReports/DebtorsAgeAnalysis";
 import EquityStatement from "./pages/FinancialReports/EquityStatement";
 import Notes from "./pages/FinancialReports/Notes";
 import GeneralLedger from "./pages/GeneralLedger/GeneralLedger";
@@ -89,6 +91,7 @@ import ToolsSupport from "./pages/ToolsSupport";
 import SalesCustomers from "./pages/Sales/Customers";
 import SalesCustomerDetail from "./pages/Sales/CustomerDetail";
 import SalesQuotations from "./pages/Sales/Quotations";
+import SalesOrders from "./pages/Sales/Orders";
 import SalesInvoices from "./pages/Sales/Invoices";
 import SalesCreditNotes from "./pages/Sales/CreditNotes";
 import SalesReceipts from "./pages/Sales/Receipts";
@@ -172,6 +175,8 @@ const App = () => (
                   <Route path="/reports/balance-sheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
                   <Route path="/reports/income-statement" element={<ProtectedRoute><IncomeStatement /></ProtectedRoute>} />
                   <Route path="/reports/cash-flow" element={<ProtectedRoute><CashFlowStatement /></ProtectedRoute>} />
+                  <Route path="/reports/cash-control" element={<ProtectedRoute><CashControlMasterfile /></ProtectedRoute>} />
+                  <Route path="/reports/debtors-age-analysis" element={<ProtectedRoute><DebtorsAgeAnalysis /></ProtectedRoute>} />
                   <Route path="/reports/equity" element={<ProtectedRoute><EquityStatement /></ProtectedRoute>} />
                   <Route path="/reports/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
                   <Route path="/general-ledger" element={<ProtectedRoute><GeneralLedger /></ProtectedRoute>} />

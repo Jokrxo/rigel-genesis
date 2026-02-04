@@ -53,6 +53,7 @@ const productSchema = z.object({
   unit_of_measure: z.string().default("units"),
   is_active: z.boolean().default(true),
   tax_rate: z.coerce.number().min(0).default(15),
+  type: z.enum(['inventory', 'service']).default('inventory'),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -83,7 +84,8 @@ export const ProductFormDialog = ({
       reorder_level: 0,
       unit_of_measure: "units",
       is_active: true,
-      tax_rate: 15, // Default VAT
+      tax_rate: 15,
+      type: "inventory",
     },
   });
 
@@ -100,7 +102,8 @@ export const ProductFormDialog = ({
         reorder_level: editingProduct.reorder_level || 0,
         unit_of_measure: editingProduct.unit_of_measure || "units",
         is_active: editingProduct.is_active ?? true,
-        tax_rate: editingProduct.tax_rate || 15,
+        tax_rate: editingProduct.tax_rate ?? 15,
+        type: (editingProduct as any).type || "inventory",
       });
     } else {
       form.reset({
@@ -115,9 +118,12 @@ export const ProductFormDialog = ({
         unit_of_measure: "units",
         is_active: true,
         tax_rate: 15,
+        type: "inventory",
       });
     }
   }, [editingProduct, form]);
+
+  const watchType = form.watch("type");
 
   const handleSubmit = (data: ProductFormData) => {
     onSubmit(data);
@@ -140,6 +146,41 @@ export const ProductFormDialog = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <FormControl>
+                    <div className="flex gap-4">
+                        <div className="flex items-center space-x-2">
+                            <Input 
+                                type="radio" 
+                                id="type-inventory" 
+                                className="w-4 h-4" 
+                                checked={field.value === 'inventory'} 
+                                onChange={() => field.onChange('inventory')}
+                            />
+                            <Label htmlFor="type-inventory">Inventory (Track Stock)</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Input 
+                                type="radio" 
+                                id="type-service" 
+                                className="w-4 h-4" 
+                                checked={field.value === 'service'} 
+                                onChange={() => field.onChange('service')}
+                            />
+                            <Label htmlFor="type-service">Service</Label>
+                        </div>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -249,6 +290,8 @@ export const ProductFormDialog = ({
                 )}
               />
 
+              {watchType === 'inventory' && (
+              <>
               <FormField
                 control={form.control}
                 name="quantity_on_hand"
@@ -283,6 +326,8 @@ export const ProductFormDialog = ({
                   </FormItem>
                 )}
               />
+              </>
+              )}
 
               <FormField
                 control={form.control}

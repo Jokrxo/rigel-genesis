@@ -41,7 +41,7 @@ export const PAYMENT_TERMS_LABELS: Record<PaymentTerms, string> = {
   '90_days': '90 Days',
 };
 
-export type DocumentType = 'quotation' | 'invoice' | 'credit_note' | 'receipt';
+export type DocumentType = 'quotation' | 'sales_order' | 'invoice' | 'credit_note' | 'receipt';
 export type DocumentStatus = 'draft' | 'posted' | 'cancelled' | 'paid' | 'partial';
 export type TransactionType = 'service' | 'inventory' | 'asset';
 export type SaleType = 'cash' | 'credit';

@@ -64,6 +64,8 @@ const ReportsGenerator = () => {
     { value: 'income-statement', label: 'Income Statement' },
     { value: 'balance-sheet', label: 'Balance Sheet' },
     { value: 'cash-flow', label: 'Cash Flow Statement' },
+    { value: 'cash-control', label: 'Cash Control Masterfile' },
+    { value: 'debtors-age-analysis', label: 'Debtors Age Analysis' },
     { value: 'tax-summary', label: 'Tax Summary Report' },
     { value: 'asset-register', label: 'Asset Register' },
     { value: 'inventory-report', label: 'Inventory Report' },
@@ -395,6 +397,8 @@ const renderReportContent = (report: GeneratedReport) => {
         'cash-flow': '/reports/cash-flow',
         'equity': '/reports/equity',
         'notes': '/reports/notes',
+        'cash-control': '/reports/cash-control',
+        'debtors-age-analysis': '/reports/debtors-age-analysis',
       };
       
       const link = reportLinks[report.reportType];

@@ -37,7 +37,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { useCustomers } from "@/hooks/useSalesData";
+import { useCustomers, useSalesDocuments } from "@/hooks/useSalesData";
 import { CustomerForm } from "@/components/Sales/CustomerForm";
 import { 
   Plus, 
@@ -52,11 +52,12 @@ import {
   DollarSign,
   AlertCircle
 } from "lucide-react";
-import type { Customer } from "@/types/sales";
+import type { Customer, Invoice } from "@/types/sales";
 
 const SalesCustomers = () => {
   const navigate = useNavigate();
   const { customers, loading, stats, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
+  const { documents } = useSalesDocuments('invoice');
   
   const [searchQuery, setSearchQuery] = useState("");
   const [showActiveOnly, setShowActiveOnly] = useState(false);
@@ -64,6 +65,19 @@ const SalesCustomers = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Calculate balances
+  const customerBalances = useMemo(() => {
+    const balances: Record<string, number> = {};
+    const invoices = documents as Invoice[];
+    
+    invoices.forEach(inv => {
+      if (inv.status !== 'paid' && inv.status !== 'cancelled' && inv.customer_id) {
+        balances[inv.customer_id] = (balances[inv.customer_id] || 0) + (inv.total_amount || 0); // Using total_amount as amount_due proxy if needed
+      }
+    });
+    return balances;
+  }, [documents]);
 
   const filteredCustomers = useMemo(() => {
     return customers.filter(customer => {
@@ -74,13 +88,12 @@ const SalesCustomers = () => {
       
       const matchesActive = showActiveOnly ? customer.is_active : true;
       
-      // For balance filter, we'd need to calculate outstanding balance per customer
-      // This is a simplified version
-      const matchesBalance = showWithBalance ? true : true;
+      const balance = customerBalances[customer.id] || 0;
+      const matchesBalance = showWithBalance ? balance > 0 : true;
 
       return matchesSearch && matchesActive && matchesBalance;
     });
-  }, [customers, searchQuery, showActiveOnly, showWithBalance]);
+  }, [customers, searchQuery, showActiveOnly, showWithBalance, customerBalances]);
 
   const handleAddCustomer = () => {
     setEditingCustomer(null);
@@ -275,37 +288,49 @@ const SalesCustomers = () => {
                         <TableCell>{customer.email}</TableCell>
                         <TableCell>{customer.phone}</TableCell>
                         <TableCell>{formatCurrency(customer.credit_limit)}</TableCell>
-                        <TableCell>{formatCurrency(0)}</TableCell>
+                        <TableCell>{formatCurrency(customerBalances[customer.id] || 0)}</TableCell>
                         <TableCell>
                           <Badge variant={customer.is_active ? "default" : "secondary"}>
                             {customer.is_active ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewCustomer(customer.id)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditCustomer(customer)}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-destructive"
-                                onClick={() => setDeleteConfirmId(customer.id)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewCustomer(customer.id);
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditCustomer(customer);
+                              }}
+                              title="Edit Customer"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteConfirmId(customer.id);
+                              }}
+                              title="Delete Customer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

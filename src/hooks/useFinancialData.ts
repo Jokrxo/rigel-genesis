@@ -3,6 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { journalApi, JournalEntry } from '@/lib/journal-api';
 import { fixedAssetsApi, FixedAsset } from '@/lib/fixed-assets-api';
 
+export interface AccountBalance {
+  account_id: string;
+  code: string;
+  name: string;
+  type: string;
+  subtype: string;
+  current_balance: number;
+}
+
 export interface FinancialDataResult {
   revenue: number;
   costOfSales: number;
@@ -17,24 +26,44 @@ export interface FinancialDataResult {
 
 export interface BalanceSheetResult {
   assets: {
-    nonCurrent: number;
-    current: number;
+    nonCurrent: {
+      propertyPlantEquipment: number;
+      intangibleAssets: number;
+      investments: number;
+      total: number;
+    };
+    current: {
+      inventories: number;
+      tradeReceivables: number;
+      cashAndEquivalents: number;
+      total: number;
+    };
     total: number;
   };
   equity: {
     shareCapital: number;
     retainedEarnings: number;
+    drawings: number;
     total: number;
   };
   liabilities: {
-    nonCurrent: number;
-    current: number;
+    nonCurrent: {
+      longTermBorrowings: number;
+      total: number;
+    };
+    current: {
+      tradePayables: number;
+      shortTermBorrowings: number;
+      taxLiabilities: number;
+      total: number;
+    };
     total: number;
   };
 }
 
 export const useFinancialData = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
   const [assets, setAssets] = useState<FixedAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +72,43 @@ export const useFinancialData = () => {
     try {
       setLoading(true);
       
-      const [journalData, assetsData] = await Promise.all([
-        journalApi.getEntries(),
-        fixedAssetsApi.getAll()
+      const [journalData, assetsData, balancesData] = await Promise.all([
+        supabase
+          .from('journal_entries')
+          .select(`
+            *,
+            lines:journal_entry_lines (
+              id,
+              account_id,
+              description,
+              debit,
+              credit
+            )
+          `)
+          .order('date', { ascending: false }),
+        fixedAssetsApi.getAll(),
+        supabase.from('account_balances').select('*')
       ]);
 
-      setEntries(journalData);
+      if (journalData.error) throw journalData.error;
+
+      // Transform Supabase data to match JournalEntry interface if needed, 
+      // or just use the returned structure. 
+      // The current JournalEntry interface expects 'accountId', but Supabase returns 'account_id'.
+      // We'll map it.
+      const mappedEntries = (journalData.data || []).map((entry: any) => ({
+        ...entry,
+        lines: entry.lines.map((line: any) => ({
+          ...line,
+          accountId: line.account_id // Map snake_case to camelCase
+        }))
+      }));
+
+      setEntries(mappedEntries);
       setAssets(assetsData);
+      if (balancesData.data) {
+        setAccountBalances(balancesData.data as any as AccountBalance[]);
+      }
 
     } catch (err: unknown) {
       console.error('Error fetching financial data:', err);
@@ -98,10 +157,13 @@ export const useFinancialData = () => {
   const getIncomeStatementData = (startDate: Date, endDate: Date): FinancialDataResult => {
     let revenue = 0;
     let costOfSales = 0;
-    const otherIncome = 0;
+    let otherIncome = 0;
     let expenses = 0;
     const taxExpenses = 0;
     const expensesByCategory: Record<string, number> = {};
+
+    // Create lookup map for accounts
+    const accountMap = new Map(accountBalances.map(b => [b.account_id, b]));
 
     entries.forEach(entry => {
       // Only include posted entries for financial reports
@@ -110,16 +172,38 @@ export const useFinancialData = () => {
       const entryDate = new Date(entry.date);
       if (entryDate >= startDate && entryDate <= endDate) {
         entry.lines.forEach(line => {
-          const type = getAccountType(line.accountId);
+          const account = accountMap.get(line.accountId);
+          if (!account) return;
+
+          const type = getAccountType(account.code);
           const amount = Number(line.credit) - Number(line.debit); // Revenue is Credit normal
 
-          if (type === 'revenue') revenue += amount;
-          if (type === 'cogs') costOfSales += (Number(line.debit) - Number(line.credit)); // Expense is Debit normal
+          if (type === 'revenue') {
+             // Check if it's other income based on code or subtype
+             if (account.subtype === 'other_income' || account.code.startsWith('42')) {
+                 otherIncome += amount;
+             } else {
+                 revenue += amount;
+             }
+          }
+          
+          if (type === 'cogs') {
+              costOfSales += (Number(line.debit) - Number(line.credit)); // Expense is Debit normal
+          }
+
           if (type === 'expense') {
             const expAmount = Number(line.debit) - Number(line.credit);
             expenses += expAmount;
-            // Simple categorization by account code for now
-            const cat = line.description || 'General';
+            
+            // Categorize
+            let cat = 'Other';
+            if (account.subtype) {
+                // capitalize first letter
+                cat = account.subtype.charAt(0).toUpperCase() + account.subtype.slice(1).replace(/_/g, ' ');
+            } else {
+                cat = line.description || account.name || 'General';
+            }
+            
             expensesByCategory[cat] = (expensesByCategory[cat] || 0) + expAmount;
           }
         });
@@ -140,116 +224,218 @@ export const useFinancialData = () => {
   };
 
   const getBalanceSheetData = (asOfDate: Date): BalanceSheetResult => {
-    let currentAssets = 0;
-    let nonCurrentAssets = 0;
-    let currentLiabilities = 0;
-    let nonCurrentLiabilities = 0;
+    // Use real-time account balances for current state
+    const balances = accountBalances;
+    
+    // Initialize totals
+    let ppe = 0;
+    let inventory = 0;
+    let tradeReceivables = 0;
+    let cash = 0;
+    
     let shareCapital = 0;
-    let retainedEarnings = 0;
+    let retainedEarningsAccount = 0;
+    let drawings = 0;
+    let currentYearProfit = 0;
+    
+    let longTermLiabilities = 0;
+    let tradePayables = 0;
+    let taxLiabilities = 0;
+    let otherCurrentLiabilities = 0;
 
-    // Calculate from Journal Entries
-    entries.forEach(entry => {
-      // Only include posted entries
-      if (entry.status !== 'posted') return;
-
-      const entryDate = new Date(entry.date);
-      if (entryDate <= asOfDate) {
-        entry.lines.forEach(line => {
-          const type = getAccountType(line.accountId);
-          const debit = Number(line.debit);
-          const credit = Number(line.credit);
-          const netDebit = debit - credit;
-          const netCredit = credit - debit;
-
-          // 1xxx Assets
-          if (type === 'asset') {
-             // Heuristic: 1000-1499 Current, 1500-1999 Non-Current
-             if (Number(line.accountId) < 1500) {
-                 currentAssets += netDebit;
-             } else {
-                 nonCurrentAssets += netDebit;
-             }
-          }
-          // 2xxx Liabilities
-          else if (type === 'liability') {
-              // Heuristic: 2000-2499 Current, 2500-2999 Non-Current
-              if (Number(line.accountId) < 2500) {
-                  currentLiabilities += netCredit;
-              } else {
-                  nonCurrentLiabilities += netCredit;
-              }
-          }
-          // 3xxx Equity
-          else if (type === 'equity') {
-              shareCapital += netCredit;
-          }
-          // P&L items flow to Retained Earnings
-          else if (['revenue', 'cogs', 'expense'].includes(type)) {
-              retainedEarnings += netCredit; // Revenue increases Equity, Expenses decrease it
-          }
-        });
-      }
+    balances.forEach(b => {
+        const bal = Number(b.current_balance);
+        const code = Number(b.code);
+        
+        if (b.type === 'asset') {
+            if (b.subtype === 'fixed_asset') ppe += bal;
+            else if (code >= 1100 && code < 1200) inventory += bal;
+            else if (code >= 1200 && code < 1300) tradeReceivables += bal;
+            else if (code >= 1300 && code < 1400) cash += bal;
+            else if (code >= 1400 && code < 1500) tradeReceivables += bal; // VAT Receivable treated as receivable
+            else if (b.subtype === 'current_asset') cash += bal; // Fallback
+            else ppe += bal; // Fallback to non-current
+        }
+        else if (b.type === 'equity') {
+            if (code === 2000) shareCapital += bal;
+            else if (code === 2100) retainedEarningsAccount += bal;
+            else if (code === 2200) drawings += bal;
+        }
+        else if (b.type === 'liability') {
+            if (b.subtype === 'long_term_liability') longTermLiabilities += bal;
+            else if (code >= 3100 && code < 3200) tradePayables += bal;
+            else if (code >= 3200 && code < 3300) taxLiabilities += bal; // VAT Payable
+            else if (code >= 3300 && code < 3500) otherCurrentLiabilities += bal; // Payroll, Accrued
+            else otherCurrentLiabilities += bal;
+        }
+        else if (b.type === 'income' || b.type === 'revenue') {
+            currentYearProfit += bal;
+        }
+        else if (b.type === 'expense' || b.type === 'cogs') {
+            currentYearProfit -= bal;
+        }
     });
 
-    // Fallback/Augment with Fixed Assets module if GL is empty for assets
-    // This is a hybrid approach to ensure data shows up even if GL isn't fully populated manually
-    if (nonCurrentAssets === 0 && assets.length > 0) {
-        nonCurrentAssets = assets.reduce((sum, a) => sum + (a.cost_price - (a.accum_depr || 0)), 0);
-    }
+    const totalRetainedEarnings = retainedEarningsAccount + currentYearProfit + drawings;
 
     return {
       assets: {
-        nonCurrent: nonCurrentAssets,
-        current: currentAssets,
-        total: nonCurrentAssets + currentAssets
+        nonCurrent: {
+            propertyPlantEquipment: ppe,
+            intangibleAssets: 0,
+            investments: 0,
+            total: ppe
+        },
+        current: {
+            inventories: inventory,
+            tradeReceivables: tradeReceivables,
+            cashAndEquivalents: cash,
+            total: inventory + tradeReceivables + cash
+        },
+        total: ppe + inventory + tradeReceivables + cash
       },
       equity: {
         shareCapital,
-        retainedEarnings,
-        total: shareCapital + retainedEarnings
+        retainedEarnings: totalRetainedEarnings,
+        drawings,
+        total: shareCapital + totalRetainedEarnings + drawings
       },
       liabilities: {
-        nonCurrent: nonCurrentLiabilities,
-        current: currentLiabilities,
-        total: nonCurrentLiabilities + currentLiabilities
+        nonCurrent: {
+            longTermBorrowings: longTermLiabilities,
+            total: longTermLiabilities
+        },
+        current: {
+            tradePayables: tradePayables,
+            shortTermBorrowings: 0,
+            taxLiabilities: taxLiabilities,
+            total: tradePayables + taxLiabilities + otherCurrentLiabilities
+        },
+        total: longTermLiabilities + tradePayables + taxLiabilities + otherCurrentLiabilities
       }
     };
   };
 
-  const getDepreciationExpense = (startDate: Date, endDate: Date) => {
-    // Calculate from Fixed Assets module
-     const daysInPeriod = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-     const yearFraction = daysInPeriod / 365;
- 
-     return assets.reduce((total, asset) => {
-        const annualDepreciation = asset.cost_price * (asset.depreciation_rate / 100);
-        return total + (annualDepreciation * yearFraction);
-     }, 0);
-  };
+  const getCashFlowStatementData = (startDate: Date, endDate: Date) => {
+    let netProfit = 0;
+    let depreciation = 0;
+    let increaseInventory = 0;
+    let increaseReceivables = 0;
+    let increasePayables = 0;
+    let purchasePPE = 0;
+    let loansReceived = 0;
+    let loansRepaid = 0;
+    let capitalIssued = 0;
+    let dividendsPaid = 0;
 
-  const getBankBalance = (): number => {
-    let bankBalance = 0;
+    const accountMap = new Map(accountBalances.map(b => [b.account_id, b]));
+
+    // Calculate Net Profit for the period first (Income - Expenses)
+    // And calculate movements in balance sheet accounts
     entries.forEach(entry => {
-      if (entry.status !== 'posted') return;
-      entry.lines.forEach(line => {
-        // Assuming 1000 is the main Bank account
-        if (line.accountId === '1000') {
-          bankBalance += (Number(line.debit) - Number(line.credit));
-        }
-      });
+        if (entry.status !== 'posted') return;
+        const entryDate = new Date(entry.date);
+        if (entryDate < startDate || entryDate > endDate) return;
+
+        entry.lines.forEach(line => {
+            const account = accountMap.get(line.accountId);
+            if (!account) return;
+            
+            const debit = Number(line.debit);
+            const credit = Number(line.credit);
+            const netDebit = debit - credit;
+            const netCredit = credit - debit;
+
+            // Income Statement items
+            if (account.type === 'revenue' || account.type === 'income') {
+                netProfit += netCredit;
+            } else if (account.type === 'expense' || account.type === 'cogs') {
+                netProfit -= netDebit;
+                
+                // Add back depreciation
+                if (account.name.toLowerCase().includes('depreciation') || 
+                    account.subtype === 'depreciation') {
+                    depreciation += netDebit;
+                }
+            }
+            
+            // Working Capital Changes
+            else if (account.type === 'asset') {
+                const code = Number(account.code);
+                // Inventory (1100 range)
+                if (code >= 1100 && code < 1200) {
+                    increaseInventory += netDebit; // Increase is outflow
+                }
+                // Receivables (1200 range)
+                else if (code >= 1200 && code < 1300) {
+                    increaseReceivables += netDebit; // Increase is outflow
+                }
+                // Fixed Assets (PPE)
+                else if (account.subtype === 'fixed_asset') {
+                    purchasePPE += netDebit; // Purchase is outflow
+                }
+            }
+            else if (account.type === 'liability') {
+                const code = Number(account.code);
+                // Trade Payables (3100 range)
+                if (code >= 3100 && code < 3200) {
+                    increasePayables += netCredit; // Increase is inflow
+                }
+                // Loans
+                else if (account.subtype === 'long_term_liability' || account.subtype === 'liability') {
+                    if (netCredit > 0) loansReceived += netCredit;
+                    if (netDebit > 0) loansRepaid += netDebit;
+                }
+            }
+            else if (account.type === 'equity') {
+                const code = Number(account.code);
+                if (code === 2000) capitalIssued += netCredit;
+                else if (code === 2200) dividendsPaid += netDebit;
+            }
+        });
     });
-    return bankBalance;
+
+    const cashFromOperations = netProfit + depreciation - increaseInventory - increaseReceivables + increasePayables;
+    const cashFromInvesting = -purchasePPE;
+    const cashFromFinancing = loansReceived - loansRepaid + capitalIssued - dividendsPaid;
+    const netChangeInCash = cashFromOperations + cashFromInvesting + cashFromFinancing;
+
+    return {
+        operatingActivities: {
+            netProfit,
+            adjustments: {
+                depreciation,
+                workingCapital: {
+                    increaseInventory,
+                    increaseReceivables,
+                    increasePayables
+                }
+            },
+            total: cashFromOperations
+        },
+        investingActivities: {
+            purchasePPE,
+            total: cashFromInvesting
+        },
+        financingActivities: {
+            loansReceived,
+            loansRepaid,
+            capitalIssued,
+            dividendsPaid,
+            total: cashFromFinancing
+        },
+        netChangeInCash
+    };
   };
 
-  return { 
-    entries, 
-    assets,
-    loading, 
-    error, 
-    refresh: fetchFinancialData, 
-    getIncomeStatementData, 
+  return {
+    entries,
+    accountBalances,
+    loading,
+    error,
+    getIncomeStatementData,
     getBalanceSheetData,
-    getDepreciationExpense,
-    getBankBalance
+    getCashFlowStatementData,
+    refresh: fetchFinancialData
   };
 };

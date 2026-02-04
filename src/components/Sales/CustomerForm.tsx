@@ -33,6 +33,7 @@ const addressSchema = z.object({
 });
 
 const customerSchema = z.object({
+  customer_code: z.string().optional(),
   name: z.string().min(1, "Name is required").max(100),
   tax_number: z.string().optional(),
   contact_person: z.string().optional(),
@@ -61,6 +62,7 @@ export const CustomerForm = ({ initialData, onSubmit, onCancel }: CustomerFormPr
   const form = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
+      customer_code: initialData?.customer_code || "Auto-generated",
       name: initialData?.name || "",
       tax_number: initialData?.tax_number || "",
       contact_person: initialData?.contact_person || "",
@@ -81,108 +83,213 @@ export const CustomerForm = ({ initialData, onSubmit, onCancel }: CustomerFormPr
   const watchShippingSame = form.watch("shipping_same_as_billing");
 
   const handleSubmit = async (data: CustomerFormData) => {
-    await onSubmit(data as Omit<Customer, 'id' | 'customer_code' | 'created_at' | 'updated_at' | 'user_id'>);
+    // Exclude customer_code from submission as it's read-only/auto-generated
+    const { customer_code, ...submitData } = data;
+    await onSubmit(submitData as Omit<Customer, 'id' | 'customer_code' | 'created_at' | 'updated_at' | 'user_id'>);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Basic Info */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Customer Name *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Company or individual name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        
+        {/* Masterfile Details Section */}
+        <div className="border rounded-lg p-4 space-y-4">
+          <h3 className="font-semibold text-lg border-b pb-2">Masterfile Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+            
+            <FormField
+              control={form.control}
+              name="customer_code"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-3">
+                  <FormLabel>System Code</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled className="bg-muted" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="tax_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>VAT Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., 4123456789" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-9">
+                  <FormLabel>Customer Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Company or individual name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="contact_person"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contact Person</FormLabel>
-                <FormControl>
-                  <Input placeholder="Primary contact" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="tax_number"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-4">
+                  <FormLabel>VAT Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., 4123456789" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email *</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="email@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone *</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="+27 XX XXX XXXX" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="mobile"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mobile</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="+27 XX XXX XXXX" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="is_active"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-2 flex flex-col justify-end pb-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormLabel>Active Status</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
-        {/* Billing Address */}
-        <div className="space-y-4">
-          <h3 className="font-semibold">Billing Address</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Contact Information Section */}
+        <div className="border rounded-lg p-4 space-y-4">
+          <h3 className="font-semibold text-lg border-b pb-2">Contact Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             <FormField
+              control={form.control}
+              name="contact_person"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Person</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Primary contact" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email *</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="email@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone *</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="+27 XX XXX XXXX" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="mobile"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mobile</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="+27 XX XXX XXXX" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="assigned_salesperson"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Salesperson</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Sales rep name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Financial Settings Section */}
+        <div className="border rounded-lg p-4 space-y-4">
+          <h3 className="font-semibold text-lg border-b pb-2">Financial Settings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+             <FormField
+              control={form.control}
+              name="credit_limit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Credit Limit (ZAR)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" step="0.01" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="payment_terms"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Terms</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select terms" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(PAYMENT_TERMS_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Address Section */}
+        <div className="border rounded-lg p-4 space-y-4">
+          <h3 className="font-semibold text-lg border-b pb-2">Address Details</h3>
+          
+          {/* Billing Address */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Billing Address</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
             <FormField
               control={form.control}
               name="billing_address.street"
               render={({ field }) => (
-                <FormItem className="md:col-span-2">
+                <FormItem className="lg:col-span-12">
                   <FormLabel>Street *</FormLabel>
                   <FormControl>
                     <Input placeholder="Street address" {...field} />
@@ -195,7 +302,7 @@ export const CustomerForm = ({ initialData, onSubmit, onCancel }: CustomerFormPr
               control={form.control}
               name="billing_address.city"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="lg:col-span-4">
                   <FormLabel>City *</FormLabel>
                   <FormControl>
                     <Input placeholder="City" {...field} />
@@ -332,75 +439,7 @@ export const CustomerForm = ({ initialData, onSubmit, onCancel }: CustomerFormPr
           )}
         </div>
 
-        {/* Financial Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="credit_limit"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Credit Limit (ZAR)</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" step="0.01" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="payment_terms"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Payment Terms</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select terms" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.entries(PAYMENT_TERMS_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="assigned_salesperson"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Assigned Salesperson</FormLabel>
-                <FormControl>
-                  <Input placeholder="Salesperson name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="is_active"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <FormLabel>Active Status</FormLabel>
-                  <p className="text-sm text-muted-foreground">Customer can be used for transactions</p>
-                </div>
-                <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
+        {/* Financial Info - REMOVED DUPLICATE SECTION */}
 
         <FormField
           control={form.control}

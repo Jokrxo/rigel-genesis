@@ -12,8 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { ViewProductDialog } from "@/components/InventoryManagement/ViewProductDialog";
-import { ProductFormDialog } from "@/components/InventoryManagement/ProductFormDialog";
+import { ProductFormDialog, ProductFormData } from "@/components/InventoryManagement/ProductFormDialog";
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
+import { useSearchParams } from "react-router-dom";
 
 interface Product {
   id: string;
@@ -28,21 +29,8 @@ interface Product {
   unit_of_measure?: string;
   is_active?: boolean;
   tax_rate?: number;
+  type?: 'inventory' | 'service';
   created_at: string;
-}
-
-interface ProductFormData {
-  name: string;
-  description: string;
-  sku: string;
-  category: string;
-  unit_price: number;
-  cost_price: number;
-  quantity_on_hand: number;
-  reorder_level: number;
-  unit_of_measure: string;
-  is_active: boolean;
-  tax_rate: number;
 }
 
 const InventoryManagement = () => {
@@ -50,6 +38,8 @@ const InventoryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const typeFilter = searchParams.get('type');
 
   // Dialog states
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -122,6 +112,7 @@ const InventoryManagement = () => {
           unit_of_measure: data.unit_of_measure || null,
           is_active: data.is_active ?? true,
           tax_rate: data.tax_rate || 0,
+          type: data.type || 'inventory',
           user_id: user.id,
         }]);
 
@@ -212,11 +203,15 @@ const InventoryManagement = () => {
     exportToJSON(filteredProducts, 'inventory');
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = typeFilter ? product.type === typeFilter : true;
+
+    return matchesSearch && matchesType;
+  });
 
   const lowStockProducts = filteredProducts.filter(
     product => (product.quantity_on_hand || 0) <= (product.reorder_level || 0)
@@ -294,6 +289,7 @@ const InventoryManagement = () => {
                     <TableHead>SKU</TableHead>
                     <TableHead>Product Name</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Unit Price</TableHead>
                     <TableHead>Cost Price</TableHead>
@@ -323,12 +319,21 @@ const InventoryManagement = () => {
                           <TableCell className="font-medium">{product.name}</TableCell>
                           <TableCell>{product.category || '-'}</TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span>{product.quantity_on_hand || 0} {product.unit_of_measure || 'units'}</span>
-                              {isLowStock && (
-                                <AlertTriangle className="h-4 w-4 text-orange-500" />
-                              )}
-                            </div>
+                            <Badge variant="outline" className={product.type === 'service' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}>
+                                {product.type === 'service' ? 'Service' : 'Inventory'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {product.type === 'service' ? (
+                                <span className="text-muted-foreground">-</span>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                  <span>{product.quantity_on_hand || 0} {product.unit_of_measure || 'units'}</span>
+                                  {isLowStock && (
+                                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                  )}
+                                </div>
+                            )}
                           </TableCell>
                           <TableCell>R{product.unit_price.toFixed(2)}</TableCell>
                           <TableCell>

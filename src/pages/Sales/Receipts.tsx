@@ -17,14 +17,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useReceipts, useCustomers } from "@/hooks/useSalesData";
+import { useReceipts, useCustomers, useSalesDocuments } from "@/hooks/useSalesData";
 import { ReceiptForm } from "@/components/Sales/ReceiptForm";
 import { Plus, Receipt as ReceiptIcon, Eye, Wallet, CreditCard, Building } from "lucide-react";
-import type { Receipt } from "@/types/sales";
+import type { Receipt, Invoice } from "@/types/sales";
 
 const SalesReceipts = () => {
   const { receipts, loading, createReceipt } = useReceipts();
   const { customers } = useCustomers();
+  const { documents: invoices } = useSalesDocuments('invoice');
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
@@ -168,6 +169,7 @@ const SalesReceipts = () => {
             </DialogHeader>
             <ReceiptForm
               customers={customers}
+              invoices={invoices as Invoice[]}
               onSubmit={handleFormSubmit}
               onCancel={() => setIsFormOpen(false)}
             />

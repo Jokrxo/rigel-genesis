@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -20,7 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Customer, Receipt } from "@/types/sales";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { Customer, Receipt, Invoice } from "@/types/sales";
 
 const receiptSchema = z.object({
   receipt_date: z.string().min(1, "Date is required"),
@@ -33,12 +42,14 @@ const receiptSchema = z.object({
 
 interface ReceiptFormProps {
   customers: Customer[];
+  invoices?: Invoice[];
   onSubmit: (data: Omit<Receipt, 'id' | 'receipt_number' | 'created_at' | 'updated_at' | 'user_id'>) => Promise<void>;
   onCancel: () => void;
 }
 
-export const ReceiptForm = ({ customers, onSubmit, onCancel }: ReceiptFormProps) => {
+export const ReceiptForm = ({ customers, invoices = [], onSubmit, onCancel }: ReceiptFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allocations, setAllocations] = useState<Record<string, number>>({});
 
   const form = useForm({
     resolver: zodResolver(receiptSchema),
@@ -52,9 +63,67 @@ export const ReceiptForm = ({ customers, onSubmit, onCancel }: ReceiptFormProps)
     },
   });
 
+  const selectedCustomerId = form.watch("customer_id");
+  const currentAmount = form.watch("amount");
+
+  const outstandingInvoices = useMemo(() => {
+    if (!selectedCustomerId) return [];
+    return invoices.filter(inv => 
+      inv.customer_id === selectedCustomerId && 
+      inv.status !== 'paid' && 
+      inv.status !== 'cancelled'
+    ).sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+  }, [invoices, selectedCustomerId]);
+
+  const handleAutoAllocate = () => {
+    let remaining = currentAmount;
+    const newAllocations: Record<string, number> = {};
+    
+    outstandingInvoices.forEach(inv => {
+      if (remaining <= 0) return;
+      
+      const due = (inv.amount_due || inv.grand_total); // Fallback if amount_due not set
+      const allocate = Math.min(remaining, due);
+      
+      if (allocate > 0) {
+        newAllocations[inv.id] = allocate;
+        remaining -= allocate;
+      }
+    });
+    
+    setAllocations(newAllocations);
+  };
+
+  const handleAllocationChange = (invoiceId: string, amount: number) => {
+    const newAllocations = { ...allocations };
+    if (amount > 0) {
+      newAllocations[invoiceId] = amount;
+    } else {
+      delete newAllocations[invoiceId];
+    }
+    setAllocations(newAllocations);
+    
+    // Optional: Update total amount to match sum of allocations?
+    // Let's NOT do that automatically to allow "Credit on Account", 
+    // but maybe show a warning or hint.
+  };
+
+  const totalAllocated = Object.values(allocations).reduce((sum, val) => sum + val, 0);
+
+  // Clear allocations when customer changes
+  useEffect(() => {
+    setAllocations({});
+  }, [selectedCustomerId]);
+
   const handleSubmit = async (formData: z.infer<typeof receiptSchema>) => {
     setIsSubmitting(true);
     try {
+      // Convert allocations map to array
+      const allocationArray = Object.entries(allocations).map(([invoice_id, amount]) => ({
+        invoice_id,
+        amount
+      }));
+
       await onSubmit({
         receipt_date: formData.receipt_date,
         customer_id: formData.customer_id,
@@ -62,7 +131,7 @@ export const ReceiptForm = ({ customers, onSubmit, onCancel }: ReceiptFormProps)
         payment_method: formData.payment_method,
         reference: formData.reference,
         notes: formData.notes,
-        allocations: [],
+        allocations: allocationArray,
       });
     } finally {
       setIsSubmitting(false);
@@ -165,19 +234,76 @@ export const ReceiptForm = ({ customers, onSubmit, onCancel }: ReceiptFormProps)
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Additional notes..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Additional notes..." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Allocation Section */}
+          {outstandingInvoices.length > 0 && (
+            <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-sm">Outstanding Invoices</h3>
+                <div className="flex items-center gap-2">
+                   <span className="text-sm text-muted-foreground">
+                      Allocated: {new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(totalAllocated)}
+                   </span>
+                   <Button type="button" variant="secondary" size="sm" onClick={handleAutoAllocate}>
+                     Auto Allocate
+                   </Button>
+                </div>
+              </div>
+              
+              <div className="max-h-[300px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead className="text-right">Due</TableHead>
+                      <TableHead className="text-right w-[150px]">Allocate</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {outstandingInvoices.map((inv) => (
+                      <TableRow key={inv.id}>
+                        <TableCell>{new Date(inv.document_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{inv.document_number}</TableCell>
+                        <TableCell className="text-right">
+                          {new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(inv.amount_due || inv.grand_total)}
+                        </TableCell>
+                        <TableCell>
+                           <Input 
+                             type="number" 
+                             min="0" 
+                             step="0.01"
+                             className="text-right h-8"
+                             value={allocations[inv.id] || ''}
+                             onChange={(e) => handleAllocationChange(inv.id, parseFloat(e.target.value) || 0)}
+                           />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {totalAllocated > currentAmount && (
+                 <p className="text-sm text-destructive font-medium">
+                   Warning: Allocated amount exceeds receipt amount.
+                 </p>
+              )}
+            </div>
           )}
-        />
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

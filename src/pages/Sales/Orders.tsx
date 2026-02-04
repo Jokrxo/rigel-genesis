@@ -22,13 +22,13 @@ import { SalesDocumentForm } from "@/components/Sales/SalesDocumentForm";
 import { Plus, FileText, Eye, ArrowRight } from "lucide-react";
 import type { SalesDocument } from "@/types/sales";
 
-const SalesQuotations = () => {
-  const { documents: quotations, loading, createDocument, updateDocument } = useSalesDocuments('quotation');
+const SalesOrders = () => {
+  const { documents: orders, loading, createDocument, updateDocument } = useSalesDocuments('sales_order');
   const { createDocument: createInvoice } = useSalesDocuments('invoice');
-  const { createDocument: createOrder } = useSalesDocuments('sales_order');
   const { customers } = useCustomers();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SalesDocument | null>(null);
+  const [formMode, setFormMode] = useState<'sales_order' | 'invoice'>('sales_order');
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
@@ -39,33 +39,15 @@ const SalesQuotations = () => {
     return customer?.name || 'Unknown';
   };
 
-  const [formMode, setFormMode] = useState<'quotation' | 'sales_order' | 'invoice'>('quotation');
-
-  const handleCreateQuotation = () => {
+  const handleCreateOrder = () => {
     setEditingDoc(null);
-    setFormMode('quotation');
-    setIsFormOpen(true);
-  };
-
-  const handleConvertToOrder = (quotation: SalesDocument) => {
-    const orderData = {
-      ...quotation,
-      id: undefined,
-      document_number: undefined,
-      document_type: 'sales_order' as const,
-      status: 'draft' as const,
-      document_date: new Date().toISOString(),
-      converted_from: quotation.id,
-    };
-    
-    setEditingDoc(orderData as SalesDocument);
     setFormMode('sales_order');
     setIsFormOpen(true);
   };
 
-  const handleConvertToInvoice = (quotation: SalesDocument) => {
+  const handleConvertToInvoice = (order: SalesDocument) => {
     const invoiceData = {
-      ...quotation,
+      ...order,
       id: undefined, // Ensure new ID generation
       document_number: undefined, // Ensure new number generation
       document_type: 'invoice' as const,
@@ -73,7 +55,7 @@ const SalesQuotations = () => {
       document_date: new Date().toISOString(),
       // Default 30 days due date
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      converted_from: quotation.id,
+      converted_from: order.id,
     };
     
     setEditingDoc(invoiceData as SalesDocument); // Cast to satisfy type
@@ -84,10 +66,8 @@ const SalesQuotations = () => {
   const handleFormSubmit = async (data: Omit<SalesDocument, 'id' | 'document_number' | 'created_at' | 'updated_at' | 'user_id'>) => {
     if (formMode === 'invoice') {
        await createInvoice(data);
-    } else if (formMode === 'sales_order') {
-       await createOrder(data);
     } else {
-      if (editingDoc && editingDoc.id) {
+      if (editingDoc && editingDoc.id && formMode === 'sales_order') {
         await updateDocument(editingDoc.id, data);
       } else {
         await createDocument(data);
@@ -95,7 +75,7 @@ const SalesQuotations = () => {
     }
     setIsFormOpen(false);
     setEditingDoc(null);
-    setFormMode('quotation');
+    setFormMode('sales_order');
   };
 
   const getStatusColor = (status: string) => {
@@ -112,30 +92,30 @@ const SalesQuotations = () => {
       <div className="space-y-6 p-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Quotations</h1>
-            <p className="text-muted-foreground">Create and manage sales quotations</p>
+            <h1 className="text-3xl font-bold">Sales Orders</h1>
+            <p className="text-muted-foreground">Manage received orders and convert to invoices</p>
           </div>
-          <Button onClick={handleCreateQuotation}>
+          <Button onClick={handleCreateOrder}>
             <Plus className="h-4 w-4 mr-2" />
-            New Quotation
+            Receive Order
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Total Quotations</CardTitle>
+              <CardTitle className="text-sm">Total Orders</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{quotations.length}</div>
+              <div className="text-2xl font-bold">{orders.length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Draft</CardTitle>
+              <CardTitle className="text-sm">Pending</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{quotations.filter(q => q.status === 'draft').length}</div>
+              <div className="text-2xl font-bold">{orders.filter(o => o.status === 'draft').length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -144,7 +124,7 @@ const SalesQuotations = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(quotations.reduce((sum, q) => sum + q.grand_total, 0))}
+                {formatCurrency(orders.reduce((sum, o) => sum + o.grand_total, 0))}
               </div>
             </CardContent>
           </Card>
@@ -153,15 +133,15 @@ const SalesQuotations = () => {
         <Card>
           <CardContent className="pt-6">
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading quotations...</div>
-            ) : quotations.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">Loading orders...</div>
+            ) : orders.length === 0 ? (
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No quotations yet</h3>
-                <p className="text-muted-foreground mb-4">Create your first quotation to get started</p>
-                <Button onClick={handleCreateQuotation}>
+                <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
+                <p className="text-muted-foreground mb-4">Receive your first order to get started</p>
+                <Button onClick={handleCreateOrder}>
                   <Plus className="h-4 w-4 mr-2" />
-                  New Quotation
+                  Receive Order
                 </Button>
               </div>
             ) : (
@@ -177,30 +157,30 @@ const SalesQuotations = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {quotations.map((quotation) => (
-                    <TableRow key={quotation.id}>
-                      <TableCell className="font-mono">{quotation.document_number}</TableCell>
-                      <TableCell>{new Date(quotation.document_date).toLocaleDateString()}</TableCell>
-                      <TableCell>{getCustomerName(quotation.customer_id)}</TableCell>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-mono">{order.document_number}</TableCell>
+                      <TableCell>{new Date(order.document_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{getCustomerName(order.customer_id)}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(quotation.status) as "default" | "secondary" | "destructive" | "outline"}>
-                          {quotation.status}
+                        <Badge variant={getStatusColor(order.status) as "default" | "secondary" | "destructive" | "outline"}>
+                          {order.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(quotation.grand_total)}
+                        {formatCurrency(order.grand_total)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {quotation.status === 'draft' && (
+                          {order.status === 'draft' && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               title="Convert to Invoice"
-                              onClick={() => handleConvertToInvoice(quotation)}
+                              onClick={() => handleConvertToInvoice(order)}
                             >
                               <ArrowRight className="h-4 w-4" />
                             </Button>
@@ -221,9 +201,7 @@ const SalesQuotations = () => {
               <DialogTitle>
                 {formMode === 'invoice' 
                   ? "Convert to Invoice" 
-                  : formMode === 'sales_order'
-                  ? "Convert to Order"
-                  : (editingDoc ? "Edit Quotation" : "New Quotation")}
+                  : (editingDoc ? "Edit Order" : "Receive Order")}
               </DialogTitle>
             </DialogHeader>
             <SalesDocumentForm
@@ -240,4 +218,4 @@ const SalesQuotations = () => {
   );
 };
 
-export default SalesQuotations;
+export default SalesOrders;

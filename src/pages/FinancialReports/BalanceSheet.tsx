@@ -14,43 +14,43 @@ const BalanceSheet = () => {
   const data = {
     assets: {
       nonCurrent: [
-        { name: "Property, Plant and Equipment", value: balanceData.assets.nonCurrent },
-        { name: "Intangible Assets", value: 0 },
-        { name: "Goodwill", value: 0 },
+        { name: "Property, Plant and Equipment", value: balanceData.assets.nonCurrent.propertyPlantEquipment },
+        { name: "Intangible Assets", value: balanceData.assets.nonCurrent.intangibleAssets },
+        { name: "Investments", value: balanceData.assets.nonCurrent.investments },
       ],
       current: [
-        { name: "Inventories", value: 0 },
-        { name: "Trade and Other Receivables", value: 0 },
-        { name: "Cash and Cash Equivalents", value: balanceData.assets.current },
+        { name: "Inventories", value: balanceData.assets.current.inventories },
+        { name: "Trade and Other Receivables", value: balanceData.assets.current.tradeReceivables },
+        { name: "Cash and Cash Equivalents", value: balanceData.assets.current.cashAndEquivalents },
       ]
     },
     equity: [
       { name: "Share Capital", value: balanceData.equity.shareCapital },
       { name: "Retained Earnings", value: balanceData.equity.retainedEarnings },
-      { name: "Drawings", value: 0 },
+      { name: "Drawings", value: balanceData.equity.drawings },
     ],
     liabilities: {
       nonCurrent: [
-        { name: "Long-term Borrowings", value: balanceData.liabilities.nonCurrent },
+        { name: "Long-term Borrowings", value: balanceData.liabilities.nonCurrent.longTermBorrowings },
         { name: "Deferred Tax Liabilities", value: 0 },
       ],
       current: [
-        { name: "Trade and Other Payables", value: 0 },
-        { name: "Short-term Borrowings", value: balanceData.liabilities.current },
-        { name: "Current Tax Liabilities", value: 0 },
+        { name: "Trade and Other Payables", value: balanceData.liabilities.current.tradePayables },
+        { name: "Short-term Borrowings", value: balanceData.liabilities.current.shortTermBorrowings },
+        { name: "Current Tax Liabilities", value: balanceData.liabilities.current.taxLiabilities },
       ]
     }
   };
 
   const calculateTotal = (items: { value: number }[]) => items.reduce((sum, item) => sum + item.value, 0);
 
-  const totalNonCurrentAssets = calculateTotal(data.assets.nonCurrent);
-  const totalCurrentAssets = calculateTotal(data.assets.current);
-  const totalAssets = totalNonCurrentAssets + totalCurrentAssets;
+  const totalNonCurrentAssets = balanceData.assets.nonCurrent.total;
+  const totalCurrentAssets = balanceData.assets.current.total;
+  const totalAssets = balanceData.assets.total;
 
-  const totalEquity = calculateTotal(data.equity);
-  const totalNonCurrentLiabilities = calculateTotal(data.liabilities.nonCurrent);
-  const totalCurrentLiabilities = calculateTotal(data.liabilities.current);
+  const totalEquity = balanceData.equity.total;
+  const totalNonCurrentLiabilities = balanceData.liabilities.nonCurrent.total;
+  const totalCurrentLiabilities = balanceData.liabilities.current.total;
   const totalEquityAndLiabilities = totalEquity + totalNonCurrentLiabilities + totalCurrentLiabilities;
 
   const formatCurrency = (value: number) => {

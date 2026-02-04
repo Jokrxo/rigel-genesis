@@ -17,17 +17,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSalesDocuments, useCustomers } from "@/hooks/useSalesData";
 import { SalesDocumentForm } from "@/components/Sales/SalesDocumentForm";
-import { Plus, FileText, Eye, DollarSign, AlertCircle, CheckCircle } from "lucide-react";
-import type { SalesDocument, Invoice } from "@/types/sales";
+import { CustomerForm } from "@/components/Sales/CustomerForm";
+import { Plus, FileText, Eye, DollarSign, AlertCircle, CheckCircle, Pencil, Trash2 } from "lucide-react";
+import type { SalesDocument, Invoice, Customer } from "@/types/sales";
 
 const SalesInvoices = () => {
-  const { documents, loading, createDocument, updateDocument } = useSalesDocuments('invoice');
+  const { documents, loading, createDocument, updateDocument, deleteDocument } = useSalesDocuments('invoice');
   const invoices = documents as Invoice[];
-  const { customers } = useCustomers();
+  const { customers, createCustomer, updateCustomer } = useCustomers();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SalesDocument | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  
+  // Customer Quick Actions State
+  const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
+  const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
@@ -41,6 +57,41 @@ const SalesInvoices = () => {
   const handleCreateInvoice = () => {
     setEditingDoc(null);
     setIsFormOpen(true);
+  };
+
+  const handleViewCustomer = (customerId: string) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (customer) {
+      setCustomerToEdit(customer);
+      setIsCustomerFormOpen(true);
+    }
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setCustomerToEdit(customer);
+    setIsCustomerFormOpen(true);
+  };
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingDoc(invoice);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirmId) {
+      await deleteDocument(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const handleCustomerFormSubmit = async (data: Omit<Customer, 'id' | 'customer_code' | 'created_at' | 'updated_at' | 'user_id'>) => {
+    if (customerToEdit) {
+      await updateCustomer(customerToEdit.id, data);
+    } else {
+      await createCustomer(data);
+    }
+    setIsCustomerFormOpen(false);
+    setCustomerToEdit(null);
   };
 
   const handleFormSubmit = async (data: Omit<SalesDocument, 'id' | 'document_number' | 'created_at' | 'updated_at' | 'user_id'>) => {
@@ -185,9 +236,36 @@ const SalesInvoices = () => {
                         {formatCurrency(invoice.amount_due || invoice.grand_total)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            title="View/Edit Details"
+                            onClick={() => handleEditInvoice(invoice)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Edit Invoice"
+                            onClick={() => handleEditInvoice(invoice)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteConfirmId(invoice.id);
+                            }}
+                            title="Delete Invoice"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -196,6 +274,23 @@ const SalesInvoices = () => {
             )}
           </CardContent>
         </Card>
+
+        <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the invoice and reverse any associated accounting entries.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -208,6 +303,21 @@ const SalesInvoices = () => {
               customers={customers}
               onSubmit={handleFormSubmit}
               onCancel={() => setIsFormOpen(false)}
+              onViewCustomer={handleViewCustomer}
+              onEditCustomer={handleEditCustomer}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isCustomerFormOpen} onOpenChange={setIsCustomerFormOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{customerToEdit ? "Edit Customer" : "New Customer"}</DialogTitle>
+            </DialogHeader>
+            <CustomerForm
+              initialData={customerToEdit || undefined}
+              onSubmit={handleCustomerFormSubmit}
+              onCancel={() => setIsCustomerFormOpen(false)}
             />
           </DialogContent>
         </Dialog>

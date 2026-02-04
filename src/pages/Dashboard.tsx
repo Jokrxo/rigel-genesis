@@ -60,11 +60,18 @@ const Dashboard = () => {
       color: "bg-warning"
     },
     {
-      title: "Inventory Control",
+      title: "Inventory",
       description: "Track products and stock levels",
       icon: Package,
-      href: "/inventory",
+      href: "/inventory?type=inventory",
       color: "bg-accent"
+    },
+    {
+      title: "Services",
+      description: "Manage service offerings",
+      icon: FileText,
+      href: "/inventory?type=service",
+      color: "bg-info"
     },
     {
       title: "Director Transactions",
@@ -74,7 +81,7 @@ const Dashboard = () => {
       color: "bg-primary"
     },
     {
-      title: "Asset Management",
+      title: "Assets",
       description: "Monitor business assets and depreciation",
       icon: Building,
       href: "/asset-management",

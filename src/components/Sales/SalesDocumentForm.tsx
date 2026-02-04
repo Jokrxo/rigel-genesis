@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Eye, Pencil } from "lucide-react";
 import type { Customer, SalesDocument, LineItem, DocumentType, TransactionType, SaleType, VAT_RATE } from "@/types/sales";
 
 const lineItemSchema = z.object({
@@ -55,6 +55,8 @@ interface SalesDocumentFormProps {
   customers: Customer[];
   onSubmit: (data: Omit<SalesDocument, 'id' | 'document_number' | 'created_at' | 'updated_at' | 'user_id'>) => Promise<void>;
   onCancel: () => void;
+  onEditCustomer?: (customer: Customer) => void;
+  onViewCustomer?: (customerId: string) => void;
 }
 
 const DEFAULT_VAT_RATE = 15;
@@ -64,7 +66,9 @@ export const SalesDocumentForm = ({
   initialData, 
   customers, 
   onSubmit, 
-  onCancel 
+  onCancel,
+  onEditCustomer,
+  onViewCustomer
 }: SalesDocumentFormProps) => {
   const [lineItems, setLineItems] = useState<LineItem[]>(
     initialData?.line_items || []
@@ -165,6 +169,7 @@ export const SalesDocumentForm = ({
   const getDocumentTypeLabel = () => {
     switch (documentType) {
       case 'quotation': return 'Quotation';
+      case 'sales_order': return 'Sales Order';
       case 'invoice': return 'Invoice';
       case 'credit_note': return 'Credit Note';
       default: return 'Document';
@@ -194,7 +199,40 @@ export const SalesDocumentForm = ({
             name="customer_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Customer *</FormLabel>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Customer *</FormLabel>
+                  {field.value && (
+                    <div className="flex gap-1">
+                      {onViewCustomer && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => onViewCustomer(field.value)}
+                          title="View Customer"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {onEditCustomer && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            const customer = customers.find(c => c.id === field.value);
+                            if (customer) onEditCustomer(customer);
+                          }}
+                          title="Edit Customer"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>

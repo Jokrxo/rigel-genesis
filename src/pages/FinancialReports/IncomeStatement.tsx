@@ -13,16 +13,39 @@ const IncomeStatement = () => {
   const incomeData = getIncomeStatementData(start, end);
 
   // Map hook data to component structure
-  // Negate expenses for display logic if they are positive in the hook (assuming hook returns positive values for expenses)
+  // Negate expenses for display logic if they are positive in the hook
+  
+  // Categorize expenses
+  let distribution = 0;
+  let admin = 0;
+  let finance = 0;
+  let otherExp = 0;
+
+  Object.entries(incomeData.expensesByCategory).forEach(([cat, amount]) => {
+      const lowerCat = cat.toLowerCase();
+      if (lowerCat.includes('marketing') || lowerCat.includes('distribution') || lowerCat.includes('delivery')) {
+          distribution += amount;
+      } else if (lowerCat.includes('finance') || lowerCat.includes('interest')) {
+          finance += amount;
+      } else if (lowerCat.includes('depreciation') || lowerCat.includes('amortisation')) {
+          otherExp += amount; // IAS 1 often separates this or puts in Admin/Cost of Sales. Let's put in Other for visibility or Admin.
+          // Actually, depreciation usually allocated to function. Default to Admin.
+          admin += amount;
+      } else {
+          // Default to Admin
+          admin += amount;
+      }
+  });
+
   const data = {
     revenue: incomeData.revenue,
     costOfSales: -incomeData.costOfSales, // Display as deduction
     otherIncome: incomeData.otherIncome,
     expenses: {
-      distribution: 0, // TODO: map from category
-      admin: -incomeData.expenses, // Lump sum, display as deduction
-      other: 0,
-      finance: 0
+      distribution: -distribution,
+      admin: -admin,
+      other: -otherExp,
+      finance: -finance
     },
     incomeTax: -incomeData.taxExpenses
   };
