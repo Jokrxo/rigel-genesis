@@ -57,6 +57,7 @@ interface SalesDocumentFormProps {
   onCancel: () => void;
   onEditCustomer?: (customer: Customer) => void;
   onViewCustomer?: (customerId: string) => void;
+  onDeleteCustomer?: (customer: Customer) => void;
 }
 
 const DEFAULT_VAT_RATE = 15;
@@ -68,7 +69,8 @@ export const SalesDocumentForm = ({
   onSubmit, 
   onCancel,
   onEditCustomer,
-  onViewCustomer
+  onViewCustomer,
+  onDeleteCustomer
 }: SalesDocumentFormProps) => {
   const [lineItems, setLineItems] = useState<LineItem[]>(
     initialData?.line_items || []
@@ -228,6 +230,21 @@ export const SalesDocumentForm = ({
                           title="Edit Customer"
                         >
                           <Pencil className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {onDeleteCustomer && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            const customer = customers.find(c => c.id === field.value);
+                            if (customer) onDeleteCustomer(customer);
+                          }}
+                          title="Delete Customer"
+                        >
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
                     </div>

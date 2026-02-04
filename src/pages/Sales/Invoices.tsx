@@ -72,6 +72,10 @@ const SalesInvoices = () => {
     setIsCustomerFormOpen(true);
   };
 
+  const handleDeleteCustomer = (customer: Customer) => {
+    setDeleteCustomerConfirmId(customer.id);
+  };
+
   const handleEditInvoice = (invoice: Invoice) => {
     setEditingDoc(invoice);
     setIsFormOpen(true);
@@ -81,6 +85,13 @@ const SalesInvoices = () => {
     if (deleteConfirmId) {
       await deleteDocument(deleteConfirmId);
       setDeleteConfirmId(null);
+    }
+  };
+
+  const handleDeleteCustomerConfirm = async () => {
+    if (deleteCustomerConfirmId) {
+      await deleteCustomer(deleteCustomerConfirmId);
+      setDeleteCustomerConfirmId(null);
     }
   };
 
@@ -305,6 +316,7 @@ const SalesInvoices = () => {
               onCancel={() => setIsFormOpen(false)}
               onViewCustomer={handleViewCustomer}
               onEditCustomer={handleEditCustomer}
+              onDeleteCustomer={handleDeleteCustomer}
             />
           </DialogContent>
         </Dialog>
