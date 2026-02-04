@@ -438,6 +438,7 @@ export const CustomerForm = ({ initialData, onSubmit, onCancel }: CustomerFormPr
             </div>
           )}
         </div>
+      </div>
 
         {/* Financial Info - REMOVED DUPLICATE SECTION */}
 
