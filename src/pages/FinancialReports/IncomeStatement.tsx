@@ -28,9 +28,9 @@ const IncomeStatement = () => {
       } else if (lowerCat.includes('finance') || lowerCat.includes('interest')) {
           finance += amount;
       } else if (lowerCat.includes('depreciation') || lowerCat.includes('amortisation')) {
-          otherExp += amount; // IAS 1 often separates this or puts in Admin/Cost of Sales. Let's put in Other for visibility or Admin.
-          // Actually, depreciation usually allocated to function. Default to Admin.
-          admin += amount;
+          // IAS 1 often separates this or puts in Admin/Cost of Sales. 
+          // We'll classify as Other Expenses for visibility in this report.
+          otherExp += amount;
       } else {
           // Default to Admin
           admin += amount;
