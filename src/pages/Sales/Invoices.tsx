@@ -36,14 +36,15 @@ import type { SalesDocument, Invoice, Customer } from "@/types/sales";
 const SalesInvoices = () => {
   const { documents, loading, createDocument, updateDocument, deleteDocument } = useSalesDocuments('invoice');
   const invoices = documents as Invoice[];
-  const { customers, createCustomer, updateCustomer } = useCustomers();
+  const { customers, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SalesDocument | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  
+
   // Customer Quick Actions State
   const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
   const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
+  const [deleteCustomerConfirmId, setDeleteCustomerConfirmId] = useState<string | null>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);

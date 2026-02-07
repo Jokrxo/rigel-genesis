@@ -73,7 +73,8 @@ const SalesCustomers = () => {
     
     invoices.forEach(inv => {
       if (inv.status !== 'paid' && inv.status !== 'cancelled' && inv.customer_id) {
-        balances[inv.customer_id] = (balances[inv.customer_id] || 0) + (inv.total_amount || 0); // Using total_amount as amount_due proxy if needed
+        const amount = (inv.amount_due ?? inv.grand_total ?? 0) as number;
+        balances[inv.customer_id] = (balances[inv.customer_id] || 0) + amount;
       }
     });
     return balances;

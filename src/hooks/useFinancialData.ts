@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { journalApi, JournalEntry } from '@/lib/journal-api';
-import { fixedAssetsApi, FixedAsset } from '@/lib/fixed-assets-api';
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { journalApi, JournalEntry } from "@/lib/journal-api";
+import { fixedAssetsApi, FixedAsset } from "@/lib/fixed-assets-api";
 
 export interface AccountBalance {
   account_id: string;
@@ -71,11 +71,12 @@ export const useFinancialData = () => {
   const fetchFinancialData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       const [journalData, assetsData, balancesData] = await Promise.all([
         supabase
-          .from('journal_entries')
-          .select(`
+          .from("journal_entries")
+          .select(
+            `
             *,
             lines:journal_entry_lines (
               id,
@@ -84,35 +85,31 @@ export const useFinancialData = () => {
               debit,
               credit
             )
-          `)
-          .order('date', { ascending: false }),
+          `
+          )
+          .order("date", { ascending: false }),
         fixedAssetsApi.getAll(),
-        supabase.from('account_balances').select('*')
+        // account_balances may not exist in generated types yet
+        (supabase as any).from("account_balances").select("*"),
       ]);
 
       if (journalData.error) throw journalData.error;
 
-      // Transform Supabase data to match JournalEntry interface if needed, 
-      // or just use the returned structure. 
-      // The current JournalEntry interface expects 'accountId', but Supabase returns 'account_id'.
-      // We'll map it.
+      // Map snake_case to camelCase expected by some UI code.
       const mappedEntries = (journalData.data || []).map((entry: any) => ({
         ...entry,
-        lines: entry.lines.map((line: any) => ({
+        lines: (entry.lines || []).map((line: any) => ({
           ...line,
-          accountId: line.account_id // Map snake_case to camelCase
-        }))
+          accountId: line.account_id,
+        })),
       }));
 
       setEntries(mappedEntries);
       setAssets(assetsData);
-      if (balancesData.data) {
-        setAccountBalances(balancesData.data as any as AccountBalance[]);
-      }
-
+      if (balancesData.data) setAccountBalances(balancesData.data as AccountBalance[]);
     } catch (err: unknown) {
-      console.error('Error fetching financial data:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error("Error fetching financial data:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -122,13 +119,13 @@ export const useFinancialData = () => {
     fetchFinancialData();
 
     const channel = supabase
-      .channel('financial-data-changes')
+      .channel("financial-data-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'journal_entries'
+          event: "*",
+          schema: "public",
+          table: "journal_entries",
         },
         () => {
           fetchFinancialData();
@@ -143,14 +140,21 @@ export const useFinancialData = () => {
 
   const getAccountType = (code: string) => {
     const prefix = code.substring(0, 1);
-    switch(prefix) {
-      case '1': return 'asset';
-      case '2': return 'liability';
-      case '3': return 'equity';
-      case '4': return 'revenue';
-      case '5': return 'cogs';
-      case '6': return 'expense';
-      default: return 'other';
+    switch (prefix) {
+      case "1":
+        return "asset";
+      case "2":
+        return "liability";
+      case "3":
+        return "equity";
+      case "4":
+        return "revenue";
+      case "5":
+        return "cogs";
+      case "6":
+        return "expense";
+      default:
+        return "other";
     }
   };
 
@@ -162,52 +166,39 @@ export const useFinancialData = () => {
     const taxExpenses = 0;
     const expensesByCategory: Record<string, number> = {};
 
-    // Create lookup map for accounts
-    const accountMap = new Map(accountBalances.map(b => [b.account_id, b]));
+    const accountMap = new Map(accountBalances.map((b) => [b.account_id, b]));
 
-    entries.forEach(entry => {
-      // Only include posted entries for financial reports
-      if (entry.status !== 'posted') return;
+    entries.forEach((entry) => {
+      if (entry.status !== "posted") return;
 
       const entryDate = new Date(entry.date);
-      if (entryDate >= startDate && entryDate <= endDate) {
-        entry.lines.forEach(line => {
-          const account = accountMap.get(line.accountId);
-          if (!account) return;
+      if (entryDate < startDate || entryDate > endDate) return;
 
-          const type = getAccountType(account.code);
-          const amount = Number(line.credit) - Number(line.debit); // Revenue is Credit normal
+      entry.lines.forEach((line: any) => {
+        const account = accountMap.get(line.accountId);
+        if (!account) return;
 
-          if (type === 'revenue') {
-             // Check if it's other income based on code or subtype
-             if (account.subtype === 'other_income' || account.code.startsWith('42')) {
-                 otherIncome += amount;
-             } else {
-                 revenue += amount;
-             }
-          }
-          
-          if (type === 'cogs') {
-              costOfSales += (Number(line.debit) - Number(line.credit)); // Expense is Debit normal
-          }
+        const type = getAccountType(account.code);
+        const amount = Number(line.credit) - Number(line.debit);
 
-          if (type === 'expense') {
-            const expAmount = Number(line.debit) - Number(line.credit);
-            expenses += expAmount;
-            
-            // Categorize
-            let cat = 'Other';
-            if (account.subtype) {
-                // capitalize first letter
-                cat = account.subtype.charAt(0).toUpperCase() + account.subtype.slice(1).replace(/_/g, ' ');
-            } else {
-                cat = line.description || account.name || 'General';
-            }
-            
-            expensesByCategory[cat] = (expensesByCategory[cat] || 0) + expAmount;
-          }
-        });
-      }
+        if (type === "revenue") {
+          if (account.subtype === "other_income" || account.code.startsWith("42")) otherIncome += amount;
+          else revenue += amount;
+        }
+
+        if (type === "cogs") costOfSales += Number(line.debit) - Number(line.credit);
+
+        if (type === "expense") {
+          const expAmount = Number(line.debit) - Number(line.credit);
+          expenses += expAmount;
+
+          let cat = "Other";
+          if (account.subtype) cat = account.subtype.charAt(0).toUpperCase() + account.subtype.slice(1).replace(/_/g, " ");
+          else cat = line.description || account.name || "General";
+
+          expensesByCategory[cat] = (expensesByCategory[cat] || 0) + expAmount;
+        }
+      });
     });
 
     return {
@@ -219,61 +210,55 @@ export const useFinancialData = () => {
       netProfit: revenue + otherIncome - costOfSales - expenses - taxExpenses,
       grossProfit: revenue - costOfSales,
       operatingProfit: revenue + otherIncome - costOfSales - expenses,
-      expensesByCategory
+      expensesByCategory,
     };
   };
 
-  const getBalanceSheetData = (asOfDate: Date): BalanceSheetResult => {
-    // Use real-time account balances for current state
+  const getBalanceSheetData = (_asOfDate: Date): BalanceSheetResult => {
     const balances = accountBalances;
-    
-    // Initialize totals
+
     let ppe = 0;
     let inventory = 0;
     let tradeReceivables = 0;
     let cash = 0;
-    
+
     let shareCapital = 0;
     let retainedEarningsAccount = 0;
     let drawings = 0;
     let currentYearProfit = 0;
-    
+
     let longTermLiabilities = 0;
     let tradePayables = 0;
     let taxLiabilities = 0;
     let otherCurrentLiabilities = 0;
 
-    balances.forEach(b => {
-        const bal = Number(b.current_balance);
-        const code = Number(b.code);
-        
-        if (b.type === 'asset') {
-            if (b.subtype === 'fixed_asset') ppe += bal;
-            else if (code >= 1100 && code < 1200) inventory += bal;
-            else if (code >= 1200 && code < 1300) tradeReceivables += bal;
-            else if (code >= 1300 && code < 1400) cash += bal;
-            else if (code >= 1400 && code < 1500) tradeReceivables += bal; // VAT Receivable treated as receivable
-            else if (b.subtype === 'current_asset') cash += bal; // Fallback
-            else ppe += bal; // Fallback to non-current
-        }
-        else if (b.type === 'equity') {
-            if (code === 2000) shareCapital += bal;
-            else if (code === 2100) retainedEarningsAccount += bal;
-            else if (code === 2200) drawings += bal;
-        }
-        else if (b.type === 'liability') {
-            if (b.subtype === 'long_term_liability') longTermLiabilities += bal;
-            else if (code >= 3100 && code < 3200) tradePayables += bal;
-            else if (code >= 3200 && code < 3300) taxLiabilities += bal; // VAT Payable
-            else if (code >= 3300 && code < 3500) otherCurrentLiabilities += bal; // Payroll, Accrued
-            else otherCurrentLiabilities += bal;
-        }
-        else if (b.type === 'income' || b.type === 'revenue') {
-            currentYearProfit += bal;
-        }
-        else if (b.type === 'expense' || b.type === 'cogs') {
-            currentYearProfit -= bal;
-        }
+    balances.forEach((b) => {
+      const bal = Number(b.current_balance);
+      const code = Number(b.code);
+
+      if (b.type === "asset") {
+        if (b.subtype === "fixed_asset") ppe += bal;
+        else if (code >= 1100 && code < 1200) inventory += bal;
+        else if (code >= 1200 && code < 1300) tradeReceivables += bal;
+        else if (code >= 1300 && code < 1400) cash += bal;
+        else if (code >= 1400 && code < 1500) tradeReceivables += bal;
+        else if (b.subtype === "current_asset") cash += bal;
+        else ppe += bal;
+      } else if (b.type === "equity") {
+        if (code === 2000) shareCapital += bal;
+        else if (code === 2100) retainedEarningsAccount += bal;
+        else if (code === 2200) drawings += bal;
+      } else if (b.type === "liability") {
+        if (b.subtype === "long_term_liability") longTermLiabilities += bal;
+        else if (code >= 3100 && code < 3200) tradePayables += bal;
+        else if (code >= 3200 && code < 3300) taxLiabilities += bal;
+        else if (code >= 3300 && code < 3500) otherCurrentLiabilities += bal;
+        else otherCurrentLiabilities += bal;
+      } else if (b.type === "income" || b.type === "revenue") {
+        currentYearProfit += bal;
+      } else if (b.type === "expense" || b.type === "cogs") {
+        currentYearProfit -= bal;
+      }
     });
 
     const totalRetainedEarnings = retainedEarningsAccount + currentYearProfit + drawings;
@@ -281,38 +266,38 @@ export const useFinancialData = () => {
     return {
       assets: {
         nonCurrent: {
-            propertyPlantEquipment: ppe,
-            intangibleAssets: 0,
-            investments: 0,
-            total: ppe
+          propertyPlantEquipment: ppe,
+          intangibleAssets: 0,
+          investments: 0,
+          total: ppe,
         },
         current: {
-            inventories: inventory,
-            tradeReceivables: tradeReceivables,
-            cashAndEquivalents: cash,
-            total: inventory + tradeReceivables + cash
+          inventories: inventory,
+          tradeReceivables,
+          cashAndEquivalents: cash,
+          total: inventory + tradeReceivables + cash,
         },
-        total: ppe + inventory + tradeReceivables + cash
+        total: ppe + inventory + tradeReceivables + cash,
       },
       equity: {
         shareCapital,
         retainedEarnings: totalRetainedEarnings,
         drawings,
-        total: shareCapital + totalRetainedEarnings + drawings
+        total: shareCapital + totalRetainedEarnings + drawings,
       },
       liabilities: {
         nonCurrent: {
-            longTermBorrowings: longTermLiabilities,
-            total: longTermLiabilities
+          longTermBorrowings: longTermLiabilities,
+          total: longTermLiabilities,
         },
         current: {
-            tradePayables: tradePayables,
-            shortTermBorrowings: 0,
-            taxLiabilities: taxLiabilities,
-            total: tradePayables + taxLiabilities + otherCurrentLiabilities
+          tradePayables,
+          shortTermBorrowings: 0,
+          taxLiabilities,
+          total: tradePayables + taxLiabilities + otherCurrentLiabilities,
         },
-        total: longTermLiabilities + tradePayables + taxLiabilities + otherCurrentLiabilities
-      }
+        total: longTermLiabilities + tradePayables + taxLiabilities + otherCurrentLiabilities,
+      },
     };
   };
 
@@ -328,71 +313,48 @@ export const useFinancialData = () => {
     let capitalIssued = 0;
     let dividendsPaid = 0;
 
-    const accountMap = new Map(accountBalances.map(b => [b.account_id, b]));
+    const accountMap = new Map(accountBalances.map((b) => [b.account_id, b]));
 
-    // Calculate Net Profit for the period first (Income - Expenses)
-    // And calculate movements in balance sheet accounts
-    entries.forEach(entry => {
-        if (entry.status !== 'posted') return;
-        const entryDate = new Date(entry.date);
-        if (entryDate < startDate || entryDate > endDate) return;
+    entries.forEach((entry) => {
+      if (entry.status !== "posted") return;
+      const entryDate = new Date(entry.date);
+      if (entryDate < startDate || entryDate > endDate) return;
 
-        entry.lines.forEach(line => {
-            const account = accountMap.get(line.accountId);
-            if (!account) return;
-            
-            const debit = Number(line.debit);
-            const credit = Number(line.credit);
-            const netDebit = debit - credit;
-            const netCredit = credit - debit;
+      entry.lines.forEach((line: any) => {
+        const account = accountMap.get(line.accountId);
+        if (!account) return;
 
-            // Income Statement items
-            if (account.type === 'revenue' || account.type === 'income') {
-                netProfit += netCredit;
-            } else if (account.type === 'expense' || account.type === 'cogs') {
-                netProfit -= netDebit;
-                
-                // Add back depreciation
-                if (account.name.toLowerCase().includes('depreciation') || 
-                    account.subtype === 'depreciation') {
-                    depreciation += netDebit;
-                }
-            }
-            
-            // Working Capital Changes
-            else if (account.type === 'asset') {
-                const code = Number(account.code);
-                // Inventory (1100 range)
-                if (code >= 1100 && code < 1200) {
-                    increaseInventory += netDebit; // Increase is outflow
-                }
-                // Receivables (1200 range)
-                else if (code >= 1200 && code < 1300) {
-                    increaseReceivables += netDebit; // Increase is outflow
-                }
-                // Fixed Assets (PPE)
-                else if (account.subtype === 'fixed_asset') {
-                    purchasePPE += netDebit; // Purchase is outflow
-                }
-            }
-            else if (account.type === 'liability') {
-                const code = Number(account.code);
-                // Trade Payables (3100 range)
-                if (code >= 3100 && code < 3200) {
-                    increasePayables += netCredit; // Increase is inflow
-                }
-                // Loans
-                else if (account.subtype === 'long_term_liability' || account.subtype === 'liability') {
-                    if (netCredit > 0) loansReceived += netCredit;
-                    if (netDebit > 0) loansRepaid += netDebit;
-                }
-            }
-            else if (account.type === 'equity') {
-                const code = Number(account.code);
-                if (code === 2000) capitalIssued += netCredit;
-                else if (code === 2200) dividendsPaid += netDebit;
-            }
-        });
+        const debit = Number(line.debit);
+        const credit = Number(line.credit);
+        const netDebit = debit - credit;
+        const netCredit = credit - debit;
+
+        if (account.type === "revenue" || account.type === "income") {
+          netProfit += netCredit;
+        } else if (account.type === "expense" || account.type === "cogs") {
+          netProfit -= netDebit;
+
+          if (account.name.toLowerCase().includes("depreciation") || account.subtype === "depreciation") {
+            depreciation += netDebit;
+          }
+        } else if (account.type === "asset") {
+          const code = Number(account.code);
+          if (code >= 1100 && code < 1200) increaseInventory += netDebit;
+          else if (code >= 1200 && code < 1300) increaseReceivables += netDebit;
+          else if (account.subtype === "fixed_asset") purchasePPE += netDebit;
+        } else if (account.type === "liability") {
+          const code = Number(account.code);
+          if (code >= 3100 && code < 3200) increasePayables += netCredit;
+          else if (account.subtype === "long_term_liability" || account.subtype === "liability") {
+            if (netCredit > 0) loansReceived += netCredit;
+            if (netDebit > 0) loansRepaid += netDebit;
+          }
+        } else if (account.type === "equity") {
+          const code = Number(account.code);
+          if (code === 2000) capitalIssued += netCredit;
+          else if (code === 2200) dividendsPaid += netDebit;
+        }
+      });
     });
 
     const cashFromOperations = netProfit + depreciation - increaseInventory - increaseReceivables + increasePayables;
@@ -401,41 +363,76 @@ export const useFinancialData = () => {
     const netChangeInCash = cashFromOperations + cashFromInvesting + cashFromFinancing;
 
     return {
-        operatingActivities: {
-            netProfit,
-            adjustments: {
-                depreciation,
-                workingCapital: {
-                    increaseInventory,
-                    increaseReceivables,
-                    increasePayables
-                }
-            },
-            total: cashFromOperations
+      operatingActivities: {
+        netProfit,
+        adjustments: {
+          depreciation,
+          workingCapital: {
+            increaseInventory,
+            increaseReceivables,
+            increasePayables,
+          },
         },
-        investingActivities: {
-            purchasePPE,
-            total: cashFromInvesting
-        },
-        financingActivities: {
-            loansReceived,
-            loansRepaid,
-            capitalIssued,
-            dividendsPaid,
-            total: cashFromFinancing
-        },
-        netChangeInCash
+        total: cashFromOperations,
+      },
+      investingActivities: {
+        purchasePPE,
+        total: cashFromInvesting,
+      },
+      financingActivities: {
+        loansReceived,
+        loansRepaid,
+        capitalIssued,
+        dividendsPaid,
+        total: cashFromFinancing,
+      },
+      netChangeInCash,
     };
+  };
+
+  const getBankBalance = () => {
+    // Best-effort: use current cash & equivalents from balances.
+    return getBalanceSheetData(new Date()).assets.current.cashAndEquivalents;
+  };
+
+  const getDepreciationExpense = (startDate: Date, endDate: Date) => {
+    const accountMap = new Map(accountBalances.map((b) => [b.account_id, b]));
+    let depreciation = 0;
+
+    entries.forEach((entry) => {
+      if (entry.status !== "posted") return;
+
+      const entryDate = new Date(entry.date);
+      if (entryDate < startDate || entryDate > endDate) return;
+
+      entry.lines.forEach((line: any) => {
+        const account = accountMap.get(line.accountId);
+        if (!account) return;
+
+        const isDepreciation =
+          account.subtype === "depreciation" || account.name.toLowerCase().includes("depreciation");
+
+        if (!isDepreciation) return;
+
+        depreciation += Number(line.debit) - Number(line.credit);
+      });
+    });
+
+    return depreciation;
   };
 
   return {
     entries,
     accountBalances,
+    assets,
     loading,
     error,
     getIncomeStatementData,
     getBalanceSheetData,
     getCashFlowStatementData,
-    refresh: fetchFinancialData
+    getBankBalance,
+    getDepreciationExpense,
+    refresh: fetchFinancialData,
   };
 };
+

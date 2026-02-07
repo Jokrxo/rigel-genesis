@@ -25,7 +25,7 @@ import type { SalesDocument } from "@/types/sales";
 const SalesQuotations = () => {
   const { documents: quotations, loading, createDocument, updateDocument } = useSalesDocuments('quotation');
   const { createDocument: createInvoice } = useSalesDocuments('invoice');
-  const { createDocument: createOrder } = useSalesDocuments('sales_order');
+  const { createDocument: createOrder } = useSalesDocuments('sales_order' as any);
   const { customers } = useCustomers();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SalesDocument | null>(null);

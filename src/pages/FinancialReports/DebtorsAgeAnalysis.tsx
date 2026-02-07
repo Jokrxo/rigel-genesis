@@ -58,7 +58,7 @@ export default function DebtorsAgeAnalysis() {
 
       return {
         id: customer.id,
-        name: customer.customer_name,
+        name: customer.name,
         code: customer.customer_code,
         current,
         days30,
