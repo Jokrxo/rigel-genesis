@@ -23,7 +23,7 @@ import { Plus, FileText, Eye, ArrowRight } from "lucide-react";
 import type { SalesDocument } from "@/types/sales";
 
 const SalesOrders = () => {
-  const { documents: orders, loading, createDocument, updateDocument } = useSalesDocuments('sales_order');
+  const { documents: orders, loading, createDocument, updateDocument } = useSalesDocuments('sales_order' as any);
   const { createDocument: createInvoice } = useSalesDocuments('invoice');
   const { customers } = useCustomers();
   const [isFormOpen, setIsFormOpen] = useState(false);

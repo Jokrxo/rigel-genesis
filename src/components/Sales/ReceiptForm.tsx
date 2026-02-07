@@ -121,7 +121,8 @@ export const ReceiptForm = ({ customers, invoices = [], onSubmit, onCancel }: Re
       // Convert allocations map to array
       const allocationArray = Object.entries(allocations).map(([invoice_id, amount]) => ({
         invoice_id,
-        amount
+        invoice_number: "",
+        amount_applied: amount,
       }));
 
       await onSubmit({
