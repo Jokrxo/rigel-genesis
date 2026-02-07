@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AccountingService } from '@/services/accountingService';
+import { auditLogger } from '@/lib/audit-logger';
 import type { Customer, SalesDocument, Receipt, CustomerStats, AgingSummary, Invoice } from '@/types/sales';
 
 // Generate document numbers
@@ -14,6 +15,16 @@ const generateDocNumber = (prefix: string, count: number): string => {
 // Generate customer code
 const generateCustomerCode = (count: number): string => {
   return `CUST-${String(count + 1).padStart(4, '0')}`;
+};
+
+// Helper to get company_id
+const getCompanyId = async (userId: string) => {
+  const { data } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('user_id', userId)
+    .single();
+  return data?.company_id;
 };
 
 export function useCustomers() {
@@ -33,19 +44,20 @@ export function useCustomers() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Try to fetch from Supabase, fallback to localStorage
+      const company_id = await getCompanyId(user.id);
+      if (!company_id) throw new Error('Company not found');
+
+      // Try Supabase first with resilient select
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.from('customers' as any) as any).select('*').eq('user_id', user.id);
+      const { data, error } = await (supabase.from('customers' as any) as any)
+        .select('*')
+        .eq('company_id', company_id);
       
       if (error) {
-        // Fallback to localStorage
-        const stored = localStorage.getItem(`customers_${user.id}`);
-        const localData = stored ? JSON.parse(stored) : [];
-        setCustomers(localData as Customer[]);
-        calculateStats(localData as Customer[]);
+        throw error;
       } else {
         setCustomers((data || []) as Customer[]);
-        calculateStats((data || []) as Customer[]);
+        calculateStats((data || []) as Customer[], company_id);
       }
     } catch (err) {
       console.error('Error fetching customers:', err);
@@ -55,34 +67,57 @@ export function useCustomers() {
     }
   }, [toast]);
 
-  const calculateStats = (customerList: Customer[]) => {
-    const invoices = JSON.parse(localStorage.getItem('sales_invoices') || '[]') as Invoice[];
-    const now = new Date();
-    
-    let totalReceivables = 0;
-    let overdueAmount = 0;
-    
-    invoices.forEach(inv => {
-      if (inv.status !== 'paid' && inv.status !== 'cancelled') {
-        totalReceivables += inv.amount_due || 0;
-        if (new Date(inv.due_date) < now) {
-          overdueAmount += inv.amount_due || 0;
-        }
-      }
-    });
+  const calculateStats = async (customerList: Customer[], companyId?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    setStats({
-      total_customers: customerList.length,
-      active_customers: customerList.filter(c => c.is_active).length,
-      total_receivables: totalReceivables,
-      overdue_amount: overdueAmount,
-    });
+      if (!companyId) {
+        companyId = await getCompanyId(user.id);
+      }
+
+      const { data: invoices, error } = await supabase
+        .from('sales_documents')
+        .select('due_date, total_amount, amount_paid, status')
+        .eq('document_type', 'invoice')
+        .eq('company_id', companyId)
+        .neq('status', 'cancelled');
+
+      if (error) throw error;
+      
+      const now = new Date();
+      
+      let totalReceivables = 0;
+      let overdueAmount = 0;
+      
+      (invoices || []).forEach(inv => {
+        if (inv.status !== 'paid') {
+          const amountDue = (inv.total_amount || 0) - (inv.amount_paid || 0);
+          totalReceivables += amountDue;
+          if (new Date(inv.due_date) < now) {
+            overdueAmount += amountDue;
+          }
+        }
+      });
+
+      setStats({
+        total_customers: customerList.length,
+        active_customers: customerList.filter(c => c.is_active).length,
+        total_receivables: totalReceivables,
+        overdue_amount: overdueAmount,
+      });
+    } catch (err) {
+      console.error('Error calculating customer stats:', err);
+    }
   };
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'customer_code' | 'created_at' | 'updated_at' | 'user_id'>): Promise<Customer | null> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      const company_id = await getCompanyId(user.id);
+      if (!company_id) throw new Error('Company not found');
 
       const newCustomer: Customer = {
         ...customerData,
@@ -91,6 +126,7 @@ export function useCustomers() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         user_id: user.id,
+        company_id: company_id
       };
 
       // Try Supabase first
@@ -98,15 +134,19 @@ export function useCustomers() {
       const { error } = await supabase.from('customers' as any).insert(newCustomer);
       
       if (error) {
-        // Fallback to localStorage
-        const stored = localStorage.getItem(`customers_${user.id}`);
-        const localData = stored ? JSON.parse(stored) : [];
-        localData.push(newCustomer);
-        localStorage.setItem(`customers_${user.id}`, JSON.stringify(localData));
+         throw error;
       }
 
       setCustomers(prev => [...prev, newCustomer]);
       toast({ title: 'Success', description: 'Customer created successfully' });
+      
+      await auditLogger.log({
+        action: 'CREATE_CUSTOMER',
+        entityType: 'customer',
+        entityId: newCustomer.id,
+        details: { customer_code: newCustomer.customer_code, name: newCustomer.customer_name }
+      });
+
       return newCustomer;
     } catch (err) {
       console.error('Error creating customer:', err);
@@ -126,14 +166,7 @@ export function useCustomers() {
       const { error } = await supabase.from('customers' as any).update(updatedData).eq('id', id);
       
       if (error) {
-        // Fallback to localStorage
-        const stored = localStorage.getItem(`customers_${user.id}`);
-        const localData = stored ? JSON.parse(stored) : [];
-        const index = localData.findIndex((c: Customer) => c.id === id);
-        if (index !== -1) {
-          localData[index] = { ...localData[index], ...updatedData };
-          localStorage.setItem(`customers_${user.id}`, JSON.stringify(localData));
-        }
+        throw error;
       }
 
       setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updatedData } : c));
@@ -155,15 +188,18 @@ export function useCustomers() {
       const { error } = await supabase.from('customers' as any).delete().eq('id', id);
       
       if (error) {
-        // Fallback to localStorage
-        const stored = localStorage.getItem(`customers_${user.id}`);
-        const localData = stored ? JSON.parse(stored) : [];
-        const filtered = localData.filter((c: Customer) => c.id !== id);
-        localStorage.setItem(`customers_${user.id}`, JSON.stringify(filtered));
+        throw error;
       }
 
       setCustomers(prev => prev.filter(c => c.id !== id));
       toast({ title: 'Success', description: 'Customer deleted successfully' });
+
+      await auditLogger.log({
+        action: 'DELETE_CUSTOMER',
+        entityType: 'customer',
+        entityId: id
+      });
+
       return true;
     } catch (err) {
       console.error('Error deleting customer:', err);
@@ -214,12 +250,10 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.from('sales_documents' as any) as any)
         .select('*')
-        .eq('user_id', user.id);
+        .eq('company_id', await getCompanyId(user.id));
 
       if (error) {
-        const stored = localStorage.getItem(`${storageKey}_${user.id}`);
-        const localData = stored ? JSON.parse(stored) : [];
-        setDocuments(documentType ? localData.filter((d: SalesDocument) => d.document_type === documentType) : localData);
+        throw error;
       } else {
         const supaData = (data || []) as SalesDocument[];
         setDocuments(documentType ? supaData.filter((d: SalesDocument) => d.document_type === documentType) : supaData);
@@ -237,72 +271,59 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       if (!user) throw new Error('Not authenticated');
 
       const prefix = prefixes[docData.document_type] || 'DOC';
-      // We'll generate a number, but ideally the DB or a sequence should handle this to avoid race conditions.
-      // For now, client-side generation based on count is "okay" for a prototype but risky for prod.
       const document_number = generateDocNumber(prefix, documents.length);
+      const company_id = await getCompanyId(user.id);
 
-      // 1. Insert Header
-      const { data: insertedDoc, error: docError } = await supabase
-        .from('sales_documents')
-        .insert({
-          user_id: user.id,
-          customer_id: docData.customer_id,
-          document_type: docData.document_type,
-          document_number: document_number,
-          issue_date: docData.document_date,
-          due_date: (docData as any).due_date, // Cast as Invoice might have due_date
-          status: docData.status,
-          subtotal: docData.subtotal,
-          tax_amount: docData.vat_total,
-          total_amount: docData.grand_total,
-          notes: docData.notes
-        })
-        .select()
-        .single();
+      // Prepare items for RPC
+      const itemsForRpc = (docData.line_items || []).map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        tax_rate: item.vat_percent
+      }));
 
-      if (docError) throw docError;
+      // Call atomic RPC
+      const { data: rpcData, error: rpcError } = await supabase.rpc('create_sales_document_v2', {
+        p_user_id: user.id,
+        p_customer_id: docData.customer_id,
+        p_document_type: docData.document_type,
+        p_document_number: document_number,
+        p_issue_date: docData.document_date,
+        p_due_date: (docData as any).due_date || null,
+        p_items: itemsForRpc,
+        p_notes: docData.notes,
+        p_status: docData.status,
+        p_converted_from: docData.converted_from || null,
+        p_company_id: company_id
+      });
 
-      // 2. Insert Items
-      if (docData.line_items && docData.line_items.length > 0) {
-        const itemsToInsert = docData.line_items.map((item, index) => ({
-          document_id: insertedDoc.id,
-          description: item.description,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          tax_rate: item.vat_percent,
-          line_total: item.line_total,
-          sort_order: index
-        }));
+      if (rpcError) throw rpcError;
 
-        const { error: itemsError } = await supabase
-          .from('sales_document_items')
-          .insert(itemsToInsert);
-
-        if (itemsError) {
-            console.error('Error inserting items:', itemsError);
-            // Optionally rollback header
-        }
-      }
-
+      // Construct full document object for state update
+      // Note: We might want to fetch the fresh document to be 100% sure, but for now we construct it to save a round trip
+      // We need the ID returned by RPC
+      const newDocId = (rpcData as any).id;
+      
       const fullDoc: SalesDocument = {
         ...docData,
-        id: insertedDoc.id,
-        document_number: insertedDoc.document_number,
-        created_at: insertedDoc.created_at,
-        updated_at: insertedDoc.updated_at,
-        user_id: insertedDoc.user_id,
+        id: newDocId,
+        document_number: document_number,
+        created_at: new Date().toISOString(), // Approximation
+        updated_at: new Date().toISOString(),
+        user_id: user.id,
+        // Recalculate totals or trust inputs? Trust inputs for now as they matched RPC logic
       };
 
-      // 3. Post to Accounting (if Invoice and not draft)
-      if (docData.document_type === 'invoice' && docData.status !== 'draft') {
-        try {
-            await AccountingService.postInvoice(fullDoc as Invoice);
-            toast({ title: 'Accounting', description: 'Journal entries posted successfully.' });
-        } catch (accError) {
-            console.error('Accounting posting failed:', accError);
-            toast({ title: 'Warning', description: 'Invoice saved but accounting posting failed.', variant: 'destructive' });
-        }
+      if (docData.document_type === 'invoice' && docData.status === 'posted') {
+        toast({ title: 'Accounting', description: 'Invoice posted to journal successfully.' });
       }
+
+      await auditLogger.log({
+        action: `CREATE_${docData.document_type.toUpperCase()}`,
+        entityType: 'sales_document',
+        entityId: newDocId,
+        details: { document_number: document_number, total_amount: docData.total_amount, customer_id: docData.customer_id }
+      });
 
       setDocuments(prev => [...prev, fullDoc]);
       toast({ title: 'Success', description: `${docData.document_type} created successfully` });
@@ -319,15 +340,50 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const stored = localStorage.getItem(`${storageKey}_${user.id}`);
-      const localData = stored ? JSON.parse(stored) : [];
-      const index = localData.findIndex((d: SalesDocument) => d.id === id);
-      if (index !== -1) {
-        localData[index] = { ...localData[index], ...updates, updated_at: new Date().toISOString() };
-        localStorage.setItem(`${storageKey}_${user.id}`, JSON.stringify(localData));
+      const company_id = await getCompanyId(user.id);
+
+      // If we have line items, use the RPC for full update
+      if (updates.line_items) {
+         const itemsForRpc = updates.line_items.map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            tax_rate: item.vat_percent
+         }));
+
+         const { error } = await supabase.rpc('update_sales_document_v2', {
+            p_document_id: id,
+            p_user_id: user.id,
+            p_customer_id: updates.customer_id,
+            p_issue_date: updates.document_date,
+            p_due_date: (updates as any).due_date || updates.document_date,
+            p_items: itemsForRpc,
+            p_notes: updates.notes,
+            p_status: updates.status,
+            p_company_id: company_id
+         });
+
+         if (error) throw error;
+      } else {
+         // Just header update (e.g. status change)
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const { error } = await supabase.from('sales_documents' as any).update({
+            ...updates,
+            updated_at: new Date().toISOString()
+         }).eq('id', id);
+
+         if (error) throw error;
       }
 
       setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...updates, updated_at: new Date().toISOString() } : d));
+      
+      await auditLogger.log({
+        action: 'UPDATE_SALES_DOCUMENT',
+        entityType: 'sales_document',
+        entityId: id,
+        details: { updates }
+      });
+
       toast({ title: 'Success', description: 'Document updated successfully' });
       return true;
     } catch (err) {
@@ -342,10 +398,17 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const stored = localStorage.getItem(`${storageKey}_${user.id}`);
-      const localData = stored ? JSON.parse(stored) : [];
-      const filtered = localData.filter((d: SalesDocument) => d.id !== id);
-      localStorage.setItem(`${storageKey}_${user.id}`, JSON.stringify(filtered));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from('sales_documents' as any).delete().eq('id', id);
+      
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'DELETE_SALES_DOCUMENT',
+        entityType: 'sales_document',
+        entityId: id,
+        details: {}
+      });
 
       setDocuments(prev => prev.filter(d => d.id !== id));
       toast({ title: 'Success', description: 'Document deleted successfully' });
@@ -382,8 +445,24 @@ export function useReceipts() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const stored = localStorage.getItem(`sales_receipts_${user.id}`);
-      setReceipts(stored ? JSON.parse(stored) : []);
+      const company_id = await getCompanyId(user.id);
+      if (!company_id) return;
+
+      const { data, error } = await supabase
+        .from('receipts')
+        .select(`
+          *,
+          allocations:receipt_allocations(*)
+        `)
+        .eq('company_id', company_id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching receipts from Supabase:', error);
+        throw error;
+      } else {
+        setReceipts((data || []) as Receipt[]);
+      }
     } catch (err) {
       console.error('Error fetching receipts:', err);
     } finally {
@@ -396,26 +475,52 @@ export function useReceipts() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const newReceipt: Receipt = {
+      const company_id = await getCompanyId(user.id);
+
+      // Call atomic RPC
+      const { data: rpcData, error: rpcError } = await supabase.rpc('create_receipt_v2', {
+        p_user_id: user.id,
+        p_customer_id: receiptData.customer_id,
+        p_receipt_date: receiptData.receipt_date,
+        p_amount: receiptData.amount,
+        p_payment_method: receiptData.payment_method,
+        p_reference: receiptData.reference || null,
+        p_allocations: (receiptData.allocations || []).map(a => ({
+          invoice_id: a.invoice_id,
+          amount_applied: a.amount_applied
+        })),
+        p_notes: receiptData.notes || null,
+        p_company_id: company_id
+      });
+
+      if (rpcError) throw rpcError;
+
+      const newReceiptId = (rpcData as any).id;
+      const newReceiptNumber = (rpcData as any).receipt_number;
+
+      const fullReceipt: Receipt = {
         ...receiptData,
-        id: crypto.randomUUID(),
-        receipt_number: generateDocNumber('REC', receipts.length),
+        id: newReceiptId,
+        receipt_number: newReceiptNumber,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         user_id: user.id,
       };
 
-      const stored = localStorage.getItem(`sales_receipts_${user.id}`);
-      const localData = stored ? JSON.parse(stored) : [];
-      localData.push(newReceipt);
-      localStorage.setItem(`sales_receipts_${user.id}`, JSON.stringify(localData));
+      setReceipts(prev => [fullReceipt, ...prev]);
+      
+      await auditLogger.log({
+        action: 'CREATE_RECEIPT',
+        entityType: 'receipt',
+        entityId: newReceiptId,
+        details: { receipt_number: newReceiptNumber, amount: receiptData.amount, customer_id: receiptData.customer_id }
+      });
 
-      setReceipts(prev => [...prev, newReceipt]);
-      toast({ title: 'Success', description: 'Receipt created successfully' });
-      return newReceipt;
+      toast({ title: 'Success', description: 'Receipt created and posted successfully' });
+      return fullReceipt;
     } catch (err) {
       console.error('Error creating receipt:', err);
-      toast({ title: 'Error', description: 'Failed to create receipt', variant: 'destructive' });
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to create receipt', variant: 'destructive' });
       return null;
     }
   };
@@ -445,34 +550,41 @@ export function useCustomerAging(customerId: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const stored = localStorage.getItem(`sales_invoices_${user.id}`);
-      const invoices = stored ? JSON.parse(stored) as Invoice[] : [];
-      const customerInvoices = invoices.filter(inv => 
-        inv.customer_id === customerId && 
-        inv.status !== 'paid' && 
-        inv.status !== 'cancelled'
-      );
+      try {
+        const { data: invoices, error } = await supabase
+          .from('sales_documents')
+          .select('due_date, total_amount, amount_paid')
+          .eq('customer_id', customerId)
+          .neq('status', 'paid')
+          .neq('status', 'cancelled');
 
-      const now = new Date();
-      const agingSummary: AgingSummary = { current: 0, days_30: 0, days_60: 0, days_90_plus: 0 };
+        if (error) throw error;
 
-      customerInvoices.forEach(inv => {
-        const dueDate = new Date(inv.due_date);
-        const daysOverdue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-        const amount = inv.amount_due || 0;
+        const now = new Date();
+        const agingSummary: AgingSummary = { current: 0, days_30: 0, days_60: 0, days_90_plus: 0 };
 
-        if (daysOverdue <= 0) {
-          agingSummary.current += amount;
-        } else if (daysOverdue <= 30) {
-          agingSummary.days_30 += amount;
-        } else if (daysOverdue <= 60) {
-          agingSummary.days_60 += amount;
-        } else {
-          agingSummary.days_90_plus += amount;
-        }
-      });
+        (invoices || []).forEach(inv => {
+          const amountDue = (inv.total_amount || 0) - (inv.amount_paid || 0);
+          if (amountDue <= 0) return;
 
-      setAging(agingSummary);
+          const dueDate = new Date(inv.due_date);
+          const daysOverdue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          if (daysOverdue <= 0) {
+            agingSummary.current += amountDue;
+          } else if (daysOverdue <= 30) {
+            agingSummary.days_30 += amountDue;
+          } else if (daysOverdue <= 60) {
+            agingSummary.days_60 += amountDue;
+          } else {
+            agingSummary.days_90_plus += amountDue;
+          }
+        });
+
+        setAging(agingSummary);
+      } catch (err) {
+        console.error('Error calculating customer aging:', err);
+      }
     };
 
     if (customerId) {

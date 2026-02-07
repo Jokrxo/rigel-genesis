@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useTutorial } from "@/components/Tutorial/TutorialContext";
 import { useRatingModal } from "@/components/Shared/RatingModal";
@@ -45,16 +46,38 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
     window.dispatchEvent(new CustomEvent('open-chatbot'));
   };
 
-  const handleLogoutClick = () => {
-    // Check if user has already rated
-    const hasRated = localStorage.getItem(`user_rated_${user?.id}`);
-    
-    if (hasRated === "true") {
-      // Already rated, just logout directly
+  const handleLogoutClick = async () => {
+    if (!user) {
       logout();
-    } else {
-      // Show rating modal first
-      showRatingModal();
+      return;
+    }
+
+    try {
+      // Check if user has already rated in the database
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await supabase
+        .from('user_ratings' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (error) {
+        console.error("Error checking rating status:", error);
+        // If error, just logout to be safe
+        logout();
+        return;
+      }
+
+      if (data && data.length > 0) {
+        // Already rated, just logout directly
+        logout();
+      } else {
+        // Show rating modal first
+        showRatingModal();
+      }
+    } catch (err) {
+      console.error("Unexpected error in logout flow:", err);
+      logout();
     }
   };
 

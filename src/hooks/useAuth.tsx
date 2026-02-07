@@ -23,6 +23,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   loginWithFacebook: () => Promise<void>;
   loginWithGithub: () => Promise<void>;
+  loginWithOtp: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
 }
@@ -270,6 +271,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithOtp = async (email: string) => {
+    try {
+      setLoading(true);
+      const redirectUrl = `${window.location.origin}/dashboard`;
+      
+      if (!email) {
+        throw new Error("Email is required for magic link login");
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Magic link sent",
+        description: "Check your email for the login link",
+      });
+    } catch (error: unknown) {
+      toast({
+        title: "Could not send magic link",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
@@ -335,6 +370,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loginWithGoogle,
         loginWithFacebook,
         loginWithGithub,
+        loginWithOtp,
         logout,
         sendVerificationEmail,
       }}

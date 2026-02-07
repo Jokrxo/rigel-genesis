@@ -69,6 +69,7 @@ import GeneralLedger from "./pages/GeneralLedger/GeneralLedger";
 import LedgerPosting from "./pages/GeneralLedger/LedgerPosting";
 import MonthlyReports from "./pages/MonthlyReports";
 import JournalEntries from "./pages/JournalEntries";
+import AuditLogs from "./pages/AuditLogs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -152,17 +153,18 @@ const App = () => (
                   <Route path="/payroll-management" element={<ProtectedRoute><PayrollManagement /></ProtectedRoute>} />
                   <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
                   <Route path="/transaction-processing" element={<ProtectedRoute><TransactionProcessing /></ProtectedRoute>} />
-                  <Route path="/company-profile" element={<ProtectedRoute><CompanyProfile /></ProtectedRoute>} />
+                  <Route path="/company-profile" element={<ProtectedRoute roles={['owner', 'admin']}><CompanyProfile /></ProtectedRoute>} />
+                  <Route path="/audit-logs" element={<ProtectedRoute roles={['owner', 'admin']}><AuditLogs /></ProtectedRoute>} />
                   <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
-                  <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                  <Route path="/reports" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><Reports /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                  <Route path="/tax-calculators" element={<ProtectedRoute><TaxCalculators /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute roles={['owner', 'admin']}><Settings /></ProtectedRoute>} />
+                  <Route path="/tax-calculators" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><TaxCalculators /></ProtectedRoute>} />
                   <Route path="/ai-features" element={<ProtectedRoute><AIFeatures /></ProtectedRoute>} />
-                  <Route path="/financial-analysis" element={<ProtectedRoute><FinancialAnalysis /></ProtectedRoute>} />
-                  <Route path="/tax-dashboard" element={<ProtectedRoute><TaxDashboard /></ProtectedRoute>} />
-                  <Route path="/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
-                  <Route path="/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
+                  <Route path="/financial-analysis" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><FinancialAnalysis /></ProtectedRoute>} />
+                  <Route path="/tax-dashboard" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><TaxDashboard /></ProtectedRoute>} />
+                  <Route path="/trial-balance" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><TrialBalance /></ProtectedRoute>} />
+                  <Route path="/bank-reconciliation" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><BankReconciliation /></ProtectedRoute>} />
                   <Route path="/budget-management" element={<ProtectedRoute><BudgetManagement /></ProtectedRoute>} />
                   <Route path="/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
                   <Route path="/accounting-cycle" element={<ProtectedRoute><AccountingCycle /></ProtectedRoute>} />
@@ -177,17 +179,18 @@ const App = () => (
                   <Route path="/reports/cash-flow" element={<ProtectedRoute><CashFlowStatement /></ProtectedRoute>} />
                   <Route path="/reports/cash-control" element={<ProtectedRoute><CashControlMasterfile /></ProtectedRoute>} />
                   <Route path="/reports/debtors-age-analysis" element={<ProtectedRoute><DebtorsAgeAnalysis /></ProtectedRoute>} />
-                  <Route path="/reports/equity" element={<ProtectedRoute><EquityStatement /></ProtectedRoute>} />
-                  <Route path="/reports/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
-                  <Route path="/general-ledger" element={<ProtectedRoute><GeneralLedger /></ProtectedRoute>} />
-                  <Route path="/general-ledger/posting" element={<ProtectedRoute><LedgerPosting /></ProtectedRoute>} />
-                  <Route path="/monthly-reports" element={<ProtectedRoute><MonthlyReports /></ProtectedRoute>} />
+                  <Route path="/reports/equity" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><EquityStatement /></ProtectedRoute>} />
+                  <Route path="/reports/notes" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><Notes /></ProtectedRoute>} />
+                  <Route path="/general-ledger" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><GeneralLedger /></ProtectedRoute>} />
+                  <Route path="/general-ledger/posting" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><LedgerPosting /></ProtectedRoute>} />
+                  <Route path="/monthly-reports" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><MonthlyReports /></ProtectedRoute>} />
                   <Route path="/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
                   
                   {/* Sales Module Routes */}
                   <Route path="/sales/customers" element={<ProtectedRoute><SalesCustomers /></ProtectedRoute>} />
                   <Route path="/sales/customers/:id" element={<ProtectedRoute><SalesCustomerDetail /></ProtectedRoute>} />
                   <Route path="/sales/quotations" element={<ProtectedRoute><SalesQuotations /></ProtectedRoute>} />
+                  <Route path="/sales/orders" element={<ProtectedRoute><SalesOrders /></ProtectedRoute>} />
                   <Route path="/sales/invoices" element={<ProtectedRoute><SalesInvoices /></ProtectedRoute>} />
                   <Route path="/sales/credit-notes" element={<ProtectedRoute><SalesCreditNotes /></ProtectedRoute>} />
                   <Route path="/sales/receipts" element={<ProtectedRoute><SalesReceipts /></ProtectedRoute>} />

@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSalesDocuments, useCustomers } from "@/hooks/useSalesData";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import { SalesDocumentForm } from "@/components/Sales/SalesDocumentForm";
 import { Plus, FileText, Eye, ArrowRight } from "lucide-react";
 import type { SalesDocument } from "@/types/sales";
@@ -115,10 +116,12 @@ const SalesQuotations = () => {
             <h1 className="text-3xl font-bold">Quotations</h1>
             <p className="text-muted-foreground">Create and manage sales quotations</p>
           </div>
-          <Button onClick={handleCreateQuotation}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Quotation
-          </Button>
+          <PermissionGuard action="create" resource="quotes">
+            <Button onClick={handleCreateQuotation}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Quotation
+            </Button>
+          </PermissionGuard>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -159,10 +162,12 @@ const SalesQuotations = () => {
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No quotations yet</h3>
                 <p className="text-muted-foreground mb-4">Create your first quotation to get started</p>
-                <Button onClick={handleCreateQuotation}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Quotation
-                </Button>
+                <PermissionGuard action="create" resource="quotes">
+                  <Button onClick={handleCreateQuotation}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Quotation
+                  </Button>
+                </PermissionGuard>
               </div>
             ) : (
               <Table>
@@ -196,14 +201,16 @@ const SalesQuotations = () => {
                             <Eye className="h-4 w-4" />
                           </Button>
                           {quotation.status === 'draft' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              title="Convert to Invoice"
-                              onClick={() => handleConvertToInvoice(quotation)}
-                            >
-                              <ArrowRight className="h-4 w-4" />
-                            </Button>
+                            <PermissionGuard action="create" resource="invoices">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="Convert to Invoice"
+                                onClick={() => handleConvertToInvoice(quotation)}
+                              >
+                                <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
                           )}
                         </div>
                       </TableCell>

@@ -108,22 +108,19 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const payload = {
-        entityId: user.id, // temporary: use user id as entity linkage; replace with selected entity
-        type: data.type,
-        amount: Math.abs(data.amount),
-        date: data.date.toISOString(),
-        description: data.description,
-        category: data.category,
-        reference_number: data.reference,
-        metadata: {
-          party_type: data.party_type,
-          party_id: data.party_id
-        }
-      };
+      const { error } = await supabase.rpc('create_transaction_v2', {
+        p_user_id: user.id,
+        p_date: data.date,
+        p_amount: Math.abs(data.amount),
+        p_description: data.description,
+        p_type: data.type,
+        p_category: data.category,
+        p_vat_inclusive: true
+      });
 
-      const result = await transactionsApi.create(payload);
-      toast({ title: 'Transaction recorded', description: `Journal created: Debit ${result.suggested.debit.name}, Credit ${result.suggested.credit.name}` });
+      if (error) throw error;
+
+      toast({ title: 'Transaction recorded', description: 'Transaction and journal entries created successfully' });
       form.reset();
       onSuccess();
     } catch (error) {

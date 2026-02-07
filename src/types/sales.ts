@@ -105,7 +105,7 @@ export interface Receipt {
   customer_id: string;
   customer?: Customer;
   amount: number;
-  payment_method: 'cash' | 'bank_transfer' | 'card' | 'cheque';
+  payment_method: 'cash' | 'bank_transfer' | 'card' | 'cheque' | 'other';
   reference?: string;
   allocations: ReceiptAllocation[];
   notes?: string;

@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { auditLogger } from "@/lib/audit-logger";
 
 interface Task {
   id: string;
@@ -33,6 +36,7 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [loading, setLoading] = useState(true);
   const [taskForm, setTaskForm] = useState({
     name: '',
     description: '',
@@ -45,32 +49,117 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
   });
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const fetchTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedTasks: Task[] = (data || []).map(t => ({
+        id: t.id,
+        projectId: t.project_id,
+        name: t.name,
+        description: t.description || '',
+        assignee: t.assignee || '',
+        startDate: t.start_date,
+        endDate: t.end_date,
+        status: t.status as Task['status'],
+        priority: t.priority as Task['priority'],
+        estimatedHours: Number(t.estimated_hours || 0),
+        actualHours: Number(t.actual_hours || 0),
+      }));
+
+      setTasks(mappedTasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch tasks",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, toast]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newTask: Task = {
-      id: editingTask?.id || Date.now().toString(),
-      projectId,
-      name: taskForm.name,
-      description: taskForm.description,
-      assignee: taskForm.assignee,
-      startDate: taskForm.startDate,
-      endDate: taskForm.endDate,
-      status: taskForm.status,
-      priority: taskForm.priority,
-      estimatedHours: parseFloat(taskForm.estimatedHours),
-      actualHours: editingTask?.actualHours || 0,
-    };
+    try {
+      if (editingTask) {
+        const { error } = await supabase
+          .from('project_tasks')
+          .update({
+            name: taskForm.name,
+            description: taskForm.description,
+            assignee: taskForm.assignee,
+            start_date: taskForm.startDate,
+            end_date: taskForm.endDate,
+            status: taskForm.status,
+            priority: taskForm.priority,
+            estimated_hours: parseFloat(taskForm.estimatedHours) || 0,
+          })
+          .eq('id', editingTask.id);
 
-    if (editingTask) {
-      setTasks(tasks.map(task => task.id === editingTask.id ? newTask : task));
-      toast({ title: "Task updated successfully" });
-    } else {
-      setTasks([...tasks, newTask]);
-      toast({ title: "Task created successfully" });
+        if (error) throw error;
+
+        await auditLogger.log({
+          action: 'UPDATE_TASK',
+          entityType: 'project_task',
+          entityId: editingTask.id,
+          details: { updates: taskForm }
+        });
+
+        toast({ title: "Task updated successfully" });
+      } else {
+        const { data, error } = await supabase
+          .from('project_tasks')
+          .insert([{
+            project_id: projectId,
+            name: taskForm.name,
+            description: taskForm.description,
+            assignee: taskForm.assignee,
+            start_date: taskForm.startDate,
+            end_date: taskForm.endDate,
+            status: taskForm.status,
+            priority: taskForm.priority,
+            estimated_hours: parseFloat(taskForm.estimatedHours) || 0,
+            actual_hours: 0,
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        await auditLogger.log({
+          action: 'CREATE_TASK',
+          entityType: 'project_task',
+          entityId: data.id,
+          details: { name: data.name, project_id: projectId }
+        });
+
+        toast({ title: "Task created successfully" });
+      }
+
+      fetchTasks();
+      resetForm();
+    } catch (error) {
+      console.error('Error saving task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save task",
+        variant: "destructive",
+      });
     }
-
-    resetForm();
   };
 
   const resetForm = () => {
@@ -103,16 +192,60 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
     setShowTaskForm(true);
   };
 
-  const handleDelete = (taskId: string) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
-    toast({ title: "Task deleted successfully" });
+  const handleDelete = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('project_tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'DELETE_TASK',
+        entityType: 'project_task',
+        entityId: taskId,
+        details: {}
+      });
+
+      toast({ title: "Task deleted successfully" });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleStatusChange = (taskId: string, newStatus: Task['status']) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, status: newStatus } : task
-    ));
-    toast({ title: "Task status updated" });
+  const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+    try {
+      const { error } = await supabase
+        .from('project_tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'UPDATE_TASK_STATUS',
+        entityType: 'project_task',
+        entityId: taskId,
+        details: { status: newStatus }
+      });
+
+      toast({ title: "Task status updated" });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: Task['status']) => {
@@ -273,51 +406,61 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{task.name}</div>
-                        {task.description && (
-                          <div className="text-sm text-muted-foreground">{task.description}</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{task.assignee}</TableCell>
-                    <TableCell>
-                      <Select value={task.status} onValueChange={(value: 'todo' | 'in-progress' | 'review' | 'completed') => handleStatusChange(task.id, value)}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="todo">To Do</SelectItem>
-                          <SelectItem value="in-progress">In Progress</SelectItem>
-                          <SelectItem value="review">Review</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getPriorityColor(task.priority)}>
-                        {task.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(task.startDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(task.endDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{task.estimatedHours}h</TableCell>
-                    <TableCell>{task.actualHours}h</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(task)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(task.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-4">Loading tasks...</TableCell>
                   </TableRow>
-                ))}
+                ) : tasks.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-4">No tasks found</TableCell>
+                  </TableRow>
+                ) : (
+                  tasks.map((task) => (
+                    <TableRow key={task.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{task.name}</div>
+                          {task.description && (
+                            <div className="text-sm text-muted-foreground">{task.description}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{task.assignee}</TableCell>
+                      <TableCell>
+                        <Select value={task.status} onValueChange={(value: 'todo' | 'in-progress' | 'review' | 'completed') => handleStatusChange(task.id, value)}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todo">To Do</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="review">Review</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getPriorityColor(task.priority)}>
+                          {task.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(task.startDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(task.endDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{task.estimatedHours}h</TableCell>
+                      <TableCell>{task.actualHours}h</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(task)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(task.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

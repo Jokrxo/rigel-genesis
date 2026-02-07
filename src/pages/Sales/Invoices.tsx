@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import { useSalesDocuments, useCustomers } from "@/hooks/useSalesData";
 import { SalesDocumentForm } from "@/components/Sales/SalesDocumentForm";
 import { CustomerForm } from "@/components/Sales/CustomerForm";
@@ -154,10 +155,12 @@ const SalesInvoices = () => {
             <h1 className="text-3xl font-bold">Invoices</h1>
             <p className="text-muted-foreground">Manage sales invoices and track payments</p>
           </div>
-          <Button onClick={handleCreateInvoice}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Invoice
-          </Button>
+          <PermissionGuard action="create" resource="invoices">
+            <Button onClick={handleCreateInvoice}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Invoice
+            </Button>
+          </PermissionGuard>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -210,10 +213,12 @@ const SalesInvoices = () => {
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No invoices yet</h3>
                 <p className="text-muted-foreground mb-4">Create your first invoice to get started</p>
-                <Button onClick={handleCreateInvoice}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Invoice
-                </Button>
+                <PermissionGuard action="create" resource="invoices">
+                  <Button onClick={handleCreateInvoice}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Invoice
+                  </Button>
+                </PermissionGuard>
               </div>
             ) : (
               <Table>
@@ -257,26 +262,30 @@ const SalesInvoices = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Edit Invoice"
-                            onClick={() => handleEditInvoice(invoice)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteConfirmId(invoice.id);
-                            }}
-                            title="Delete Invoice"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <PermissionGuard action="edit" resource="invoices">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Edit Invoice"
+                              onClick={() => handleEditInvoice(invoice)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard action="delete" resource="invoices">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteConfirmId(invoice.id);
+                              }}
+                              title="Delete Invoice"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
                         </div>
                       </TableCell>
                     </TableRow>

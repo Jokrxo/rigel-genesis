@@ -1,24 +1,64 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '@/integrations/supabase/client'
 
-type Role = 'admin' | 'manager' | 'viewer'
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-export function useRBAC() {
-  const [roles, setRoles] = useState<Role[]>(['viewer'])
+export type AppRole = 'owner' | 'admin' | 'accountant' | 'viewer';
+
+export const useRBAC = () => {
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      const r = (user?.user_metadata?.roles as Role[] | undefined) || ['admin']
-      setRoles(r)
-    })
-  }, [])
+    const fetchRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-  const can = (perm: 'edit_coa' | 'post_journal' | 'dispose_asset') => {
-    if (roles.includes('admin')) return true
-    if (perm === 'post_journal') return roles.includes('manager')
-    return false
-  }
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
 
-  return { roles, can }
-}
+      if (data) {
+        setRole(data.role as AppRole);
+      }
+      setLoading(false);
+    };
 
+    fetchRole();
+  }, []);
+
+  const hasRole = (requiredRole: AppRole | AppRole[]) => {
+    if (!role) return false;
+    if (Array.isArray(requiredRole)) {
+      return requiredRole.includes(role);
+    }
+    return role === requiredRole;
+  };
+
+  const can = (action: string, resource: string) => {
+    if (!role) return false;
+    
+    // Owner and Admin can do everything
+    if (role === 'owner' || role === 'admin') return true;
+
+    // Accountant permissions
+    if (role === 'accountant') {
+      const allowedResources = ['invoices', 'quotes', 'orders', 'credit_notes', 'journals', 'expenses', 'products', 'customers', 'suppliers', 'budgets', 'employees', 'inventory', 'projects', 'payroll'];
+      if (allowedResources.includes(resource)) return true;
+      if (resource === 'reports' && action === 'view') return true;
+    }
+
+    // Viewer permissions
+    if (role === 'viewer') {
+      if (action === 'view' || action === 'read') return true;
+    }
+
+    return false;
+  };
+
+  return { role, loading, hasRole, can };
+};

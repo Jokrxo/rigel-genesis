@@ -18,8 +18,8 @@ export interface TrialBalanceData {
 
 export const trialBalanceApi = {
   async get(entityId: string, view: 'pre' | 'post' = 'pre'): Promise<TrialBalanceData> {
-    const accounts = await chartOfAccountsApi.getAccounts();
-    const entries = await journalApi.getEntries();
+    const accounts = await chartOfAccountsApi.getAccounts(entityId);
+    const entries = await journalApi.getEntries(entityId);
 
     // Initialize balances map
     const balances = new Map<string, { debit: number; credit: number }>();

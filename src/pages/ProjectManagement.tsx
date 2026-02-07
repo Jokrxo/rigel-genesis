@@ -1,13 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FolderOpen, Plus, Search, Edit, Trash2, Printer, Download, BarChart, Calendar } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { FolderOpen, Plus, BarChart } from "lucide-react";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { ProjectActions } from "@/components/ProjectManagement/ProjectActions";
 import { ProjectsList } from "@/components/ProjectManagement/ProjectsList";
@@ -16,6 +13,9 @@ import { EnhancedProjectForm } from "@/components/ProjectManagement/EnhancedProj
 import { ProjectGanttChart } from "@/components/ProjectManagement/ProjectGanttChart";
 import { TaskManagement } from "@/components/ProjectManagement/TaskManagement";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { auditLogger } from "@/lib/audit-logger";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface Project {
   id: string;
@@ -36,26 +36,117 @@ const ProjectManagement = () => {
   const [useEnhancedForm, setUseEnhancedForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedProjects: Project[] = (data || []).map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description || '',
+        client: p.client || '',
+        startDate: p.start_date,
+        endDate: p.end_date,
+        budget: Number(p.budget || 0),
+        spent: Number(p.spent || 0),
+        status: p.status as Project['status'],
+        manager: p.manager || '',
+      }));
+
+      setProjects(mappedProjects);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch projects",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    setProjects([]);
-  }, []);
+    fetchProjects();
+  }, [fetchProjects]);
 
   const filteredProjects = projects;
 
-  const handleCreateProject = (projectData: Omit<Project, 'id'>) => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      ...projectData,
-    };
-    setProjects([...projects, newProject]);
-    setShowProjectForm(false);
-    setEditingProject(null);
-    toast({
-      title: "Success",
-      description: "Project created successfully",
-    });
+  const handleCreateProject = async (projectData: Omit<Project, 'id'>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('Company not found');
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert([{
+          company_id: profile.company_id,
+          name: projectData.name,
+          description: projectData.description,
+          client: projectData.client,
+          start_date: projectData.startDate,
+          end_date: projectData.endDate,
+          budget: projectData.budget,
+          spent: projectData.spent,
+          status: projectData.status,
+          manager: projectData.manager,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'CREATE_PROJECT',
+        entityType: 'project',
+        entityId: data.id,
+        details: { name: data.name, budget: data.budget }
+      });
+
+      toast({
+        title: "Success",
+        description: "Project created successfully",
+      });
+      fetchProjects();
+      setShowProjectForm(false);
+      setEditingProject(null);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create project",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditProject = (project: Project) => {
@@ -64,27 +155,80 @@ const ProjectManagement = () => {
     setShowProjectForm(true);
   };
 
-  const handleUpdateProject = (projectData: Omit<Project, 'id'>) => {
+  const handleUpdateProject = async (projectData: Omit<Project, 'id'>) => {
     if (!editingProject) return;
-    const updatedProject: Project = {
-      ...editingProject,
-      ...projectData,
-    };
-    setProjects(projects.map(p => p.id === editingProject.id ? updatedProject : p));
-    setEditingProject(null);
-    setShowProjectForm(false);
-    toast({
-      title: "Success",
-      description: "Project updated successfully",
-    });
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          name: projectData.name,
+          description: projectData.description,
+          client: projectData.client,
+          start_date: projectData.startDate,
+          end_date: projectData.endDate,
+          budget: projectData.budget,
+          spent: projectData.spent,
+          status: projectData.status,
+          manager: projectData.manager,
+        })
+        .eq('id', editingProject.id);
+
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'UPDATE_PROJECT',
+        entityType: 'project',
+        entityId: editingProject.id,
+        details: { updates: projectData }
+      });
+
+      toast({
+        title: "Success",
+        description: "Project updated successfully",
+      });
+      fetchProjects();
+      setEditingProject(null);
+      setShowProjectForm(false);
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update project",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(projects.filter(p => p.id !== projectId));
-    toast({
-      title: "Success",
-      description: "Project deleted successfully",
-    });
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'DELETE_PROJECT',
+        entityType: 'project',
+        entityId: projectId,
+        details: {}
+      });
+
+      toast({
+        title: "Success",
+        description: "Project deleted successfully",
+      });
+      fetchProjects();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete project",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFormCancel = () => {
@@ -119,10 +263,12 @@ const ProjectManagement = () => {
               onCreateNew={handleCreateNew}
               type="bulk"
             />
-            <Button variant="outline" onClick={handleCreateAdvanced}>
-              <Plus className="mr-2 h-4 w-4" />
-              Advanced Project
-            </Button>
+            <PermissionGuard action="create" resource="projects">
+              <Button variant="outline" onClick={handleCreateAdvanced}>
+                <Plus className="mr-2 h-4 w-4" />
+                Advanced Project
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 

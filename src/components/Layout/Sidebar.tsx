@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import rigelFullLogo from "@/assets/rigel-full-logo.jpg";
+import { useRBAC, AppRole } from "@/hooks/useRBAC";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ interface NavItem {
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
   children?: NavItem[];
+  roles?: AppRole[];
 }
 
 const navItems: NavItem[] = [
@@ -111,6 +113,7 @@ const navItems: NavItem[] = [
             title: "Company Profile",
             href: "/company-profile",
             icon: Building2,
+            roles: ['owner', 'admin'],
           },
         ],
       },
@@ -128,6 +131,11 @@ const navItems: NavItem[] = [
         title: "App Settings",
         href: "/settings",
         icon: Settings,
+      },
+      {
+        title: "Audit Logs",
+        href: "/audit-logs",
+        icon: Shield,
       },
     ],
   },
@@ -187,21 +195,23 @@ const navItems: NavItem[] = [
         icon: FileText,
       },
       {
-        title: "Trial Balance",
-        href: "/trial-balance",
-        icon: BarChart3,
-      },
+    title: "Trial Balance",
+    href: "/trial-balance",
+    icon: BarChart3,
+    roles: ['owner', 'admin', 'accountant'],
+  },
+  {
+    title: "General Ledger",
+    icon: BookOpen,
+    roles: ['owner', 'admin', 'accountant'],
+    children: [
       {
-        title: "General Ledger",
-        icon: BookOpen,
-        children: [
-          {
-            title: "Ledger Posting",
-            href: "/general-ledger/posting",
-            icon: FileText,
-          },
-        ],
+        title: "Ledger Posting",
+        href: "/general-ledger/posting",
+        icon: FileText,
       },
+    ],
+  },
       {
         title: "Tax Management",
         icon: Calculator,
@@ -365,6 +375,32 @@ const navItems: NavItem[] = [
 export const Sidebar = ({ isOpen }: SidebarProps) => {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const { hasRole } = useRBAC();
+
+  const filterNavItems = (items: NavItem[]): NavItem[] => {
+    return items.reduce((acc: NavItem[], item) => {
+      // Check permission for the item itself
+      if (item.title === "Audit Logs" && !hasRole(['owner', 'admin'])) {
+        return acc;
+      }
+      
+      // If it has children, filter them recursively
+      if (item.children) {
+        const filteredChildren = filterNavItems(item.children);
+        // If it's a group and all children are filtered out, don't show the group (unless it has a href itself)
+        if (filteredChildren.length === 0 && !item.href) {
+          return acc;
+        }
+        acc.push({ ...item, children: filteredChildren });
+      } else {
+        acc.push(item);
+      }
+      
+      return acc;
+    }, []);
+  };
+
+  const filteredNavItems = filterNavItems(navItems);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev => 
@@ -489,7 +525,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
           {/* Navigation */}
           <ScrollArea className="flex-1 px-3 py-4">
             <div className="space-y-1">
-              {navItems.map(item => renderNavItem(item))}
+              {filteredNavItems.map(item => renderNavItem(item))}
             </div>
           </ScrollArea>
         </div>

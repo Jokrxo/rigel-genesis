@@ -1,5 +1,6 @@
 
-import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
+import { auditLogger } from './audit-logger';
 
 export interface Budget {
   id: string;
@@ -10,67 +11,151 @@ export interface Budget {
   department: string;
   created_at?: string;
   updated_at?: string;
+  company_id?: string;
 }
 
-const STORAGE_KEY = 'rigel_budgets';
+const TABLE_NAME = 'budgets';
+
+const getCompanyId = async (userId: string) => {
+  const { data } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('user_id', userId)
+    .single();
+  return data?.company_id;
+};
 
 export const budgetApi = {
   async getBudgets(): Promise<Budget[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-        // Return default demo data if nothing stored
-        const defaultBudgets: Budget[] = [
-            { id: '1', category: 'Marketing', amount: 50000, spent: 45000, period: '2024-Q1', department: 'Sales', created_at: new Date().toISOString() },
-            { id: '2', category: 'Software Subscriptions', amount: 15000, spent: 12000, period: '2024-Q1', department: 'IT', created_at: new Date().toISOString() },
-            { id: '3', category: 'Office Supplies', amount: 5000, spent: 2000, period: '2024-Q1', department: 'Admin', created_at: new Date().toISOString() },
-            { id: '4', category: 'Travel', amount: 20000, spent: 25000, period: '2024-Q1', department: 'Operations', created_at: new Date().toISOString() },
-            { id: '5', category: 'Salaries', amount: 500000, spent: 480000, period: '2024-Q1', department: 'HR', created_at: new Date().toISOString() },
-        ];
-        // Initialize storage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultBudgets));
-        return defaultBudgets;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const companyId = await getCompanyId(user.id);
+      if (!companyId) return [];
+
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching budgets:', error);
+        return [];
+      }
+
+      return data.map((b: any) => ({
+        id: b.id,
+        category: b.category || '',
+        amount: Number(b.budgeted_amount || 0),
+        spent: Number(b.actual_amount || 0),
+        period: b.period_name || '',
+        department: b.department || '',
+        created_at: b.created_at,
+        updated_at: b.updated_at,
+        company_id: b.company_id
+      }));
+    } catch (err) {
+      console.error('Unexpected error fetching budgets:', err);
+      return [];
     }
-    return JSON.parse(stored);
   },
 
   async createBudget(budget: Omit<Budget, 'id' | 'created_at' | 'updated_at' | 'spent'>): Promise<Budget> {
-    const budgets = await this.getBudgets();
-    
-    const newBudget: Budget = {
-      ...budget,
-      id: uuidv4(),
-      spent: 0, // Initial spent is 0
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const companyId = await getCompanyId(user.id);
+    if (!companyId) throw new Error('Company not found');
+
+    const { data, error } = await supabase
+      .from(TABLE_NAME)
+      .insert([{
+        company_id: companyId,
+        category: budget.category,
+        department: budget.department,
+        period_name: budget.period,
+        budgeted_amount: budget.amount,
+        actual_amount: 0,
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await auditLogger.log({
+      action: 'CREATE_BUDGET',
+      entityType: 'budget',
+      entityId: data.id,
+      details: { category: data.category, period: data.period_name, amount: data.budgeted_amount }
+    });
+
+    return {
+      id: data.id,
+      category: data.category || '',
+      amount: Number(data.budgeted_amount || 0),
+      spent: Number(data.actual_amount || 0),
+      period: data.period_name || '',
+      department: data.department || '',
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      company_id: data.company_id
     };
-    
-    budgets.push(newBudget);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(budgets));
-    return newBudget;
   },
 
   async updateBudget(id: string, updates: Partial<Budget>): Promise<Budget> {
-    const budgets = await this.getBudgets();
-    const index = budgets.findIndex(b => b.id === id);
-    
-    if (index === -1) throw new Error('Budget not found');
-    
-    const updated = { ...budgets[index], ...updates, updated_at: new Date().toISOString() };
-    budgets[index] = updated;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(budgets));
-    return updated;
+    const toUpdate: any = {};
+    if (updates.category !== undefined) toUpdate.category = updates.category;
+    if (updates.department !== undefined) toUpdate.department = updates.department;
+    if (updates.period !== undefined) toUpdate.period_name = updates.period;
+    if (updates.amount !== undefined) toUpdate.budgeted_amount = updates.amount;
+    if (updates.spent !== undefined) toUpdate.actual_amount = updates.spent;
+
+    const { data, error } = await supabase
+      .from(TABLE_NAME)
+      .update(toUpdate)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await auditLogger.log({
+      action: 'UPDATE_BUDGET',
+      entityType: 'budget',
+      entityId: data.id,
+      details: { updates: updates }
+    });
+
+    return {
+      id: data.id,
+      category: data.category || '',
+      amount: Number(data.budgeted_amount || 0),
+      spent: Number(data.actual_amount || 0),
+      period: data.period_name || '',
+      department: data.department || '',
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      company_id: data.company_id
+    };
   },
 
   async deleteBudget(id: string): Promise<boolean> {
-    const budgets = await this.getBudgets();
-    const filtered = budgets.filter(b => b.id !== id);
-    
-    if (budgets.length === filtered.length) return false;
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    const { error } = await supabase
+      .from(TABLE_NAME)
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await auditLogger.log({
+      action: 'DELETE_BUDGET',
+      entityType: 'budget',
+      entityId: id,
+      details: {}
+    });
+
     return true;
   }
 };

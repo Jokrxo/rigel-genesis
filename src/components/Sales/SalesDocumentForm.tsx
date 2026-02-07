@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Eye, Pencil } from "lucide-react";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import type { Customer, SalesDocument, LineItem, DocumentType, TransactionType, SaleType, VAT_RATE } from "@/types/sales";
 
 const lineItemSchema = z.object({
@@ -158,6 +159,7 @@ export const SalesDocumentForm = ({
         vat_total: totals.vatTotal,
         grand_total: totals.grandTotal,
         status: 'draft',
+        converted_from: initialData?.converted_from,
       });
     } finally {
       setIsSubmitting(false);
@@ -218,34 +220,38 @@ export const SalesDocumentForm = ({
                         </Button>
                       )}
                       {onEditCustomer && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => {
-                            const customer = customers.find(c => c.id === field.value);
-                            if (customer) onEditCustomer(customer);
-                          }}
-                          title="Edit Customer"
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
+                        <PermissionGuard action="edit" resource="customers">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => {
+                              const customer = customers.find(c => c.id === field.value);
+                              if (customer) onEditCustomer(customer);
+                            }}
+                            title="Edit Customer"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </PermissionGuard>
                       )}
                       {onDeleteCustomer && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive hover:text-destructive"
-                          onClick={() => {
-                            const customer = customers.find(c => c.id === field.value);
-                            if (customer) onDeleteCustomer(customer);
-                          }}
-                          title="Delete Customer"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <PermissionGuard action="delete" resource="customers">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:text-destructive"
+                            onClick={() => {
+                              const customer = customers.find(c => c.id === field.value);
+                              if (customer) onDeleteCustomer(customer);
+                            }}
+                            title="Delete Customer"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </PermissionGuard>
                       )}
                     </div>
                   )}
@@ -325,10 +331,12 @@ export const SalesDocumentForm = ({
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold">Line Items</h3>
-            <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
+            <PermissionGuard action={action} resource={resource}>
+              <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+            </PermissionGuard>
           </div>
 
           {lineItems.length === 0 ? (
@@ -406,14 +414,16 @@ export const SalesDocumentForm = ({
                         {formatCurrency(item.line_total)}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeLineItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <PermissionGuard action={action} resource={resource}>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeLineItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </PermissionGuard>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -459,9 +469,11 @@ export const SalesDocumentForm = ({
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || lineItems.length === 0}>
-            {isSubmitting ? "Saving..." : `Save ${getDocumentTypeLabel()}`}
-          </Button>
+          <PermissionGuard action={action} resource={resource}>
+            <Button type="submit" disabled={isSubmitting || lineItems.length === 0}>
+              {isSubmitting ? "Saving..." : `Save ${getDocumentTypeLabel()}`}
+            </Button>
+          </PermissionGuard>
         </div>
       </form>
     </Form>

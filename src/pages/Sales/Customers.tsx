@@ -38,6 +38,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useCustomers, useSalesDocuments } from "@/hooks/useSalesData";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import { CustomerForm } from "@/components/Sales/CustomerForm";
 import { 
   Plus, 
@@ -165,10 +166,12 @@ const SalesCustomers = () => {
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
-            <Button onClick={handleAddCustomer}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Customer
-            </Button>
+            <PermissionGuard action="create" resource="customers">
+              <Button onClick={handleAddCustomer}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Customer
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 
@@ -260,10 +263,12 @@ const SalesCustomers = () => {
                   {searchQuery ? "Try adjusting your search criteria" : "Get started by adding your first customer"}
                 </p>
                 {!searchQuery && (
-                  <Button onClick={handleAddCustomer}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Customer
-                  </Button>
+                  <PermissionGuard action="create" resource="customers">
+                    <Button onClick={handleAddCustomer}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Customer
+                    </Button>
+                  </PermissionGuard>
                 )}
               </div>
             ) : (
@@ -308,29 +313,33 @@ const SalesCustomers = () => {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditCustomer(customer);
-                              }}
-                              title="Edit Customer"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteConfirmId(customer.id);
-                              }}
-                              title="Delete Customer"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <PermissionGuard action="edit" resource="customers">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCustomer(customer);
+                                }}
+                                title="Edit Customer"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
+                            <PermissionGuard action="delete" resource="customers">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirmId(customer.id);
+                                }}
+                                title="Delete Customer"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
                           </div>
                         </TableCell>
                       </TableRow>

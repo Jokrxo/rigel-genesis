@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { journalApi, JournalEntry, JournalLine } from "@/lib/journal-api";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 export const JournalEntryManager = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -28,8 +30,19 @@ export const JournalEntryManager = () => {
   const loadEntries = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await journalApi.getEntries();
-      setEntries(data);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile?.company_id) {
+        const data = await journalApi.getEntries(profile.company_id);
+        setEntries(data);
+      }
     } catch (error) {
       toast({ title: "Error", description: "Failed to load entries", variant: "destructive" });
     } finally {
@@ -216,9 +229,11 @@ export const JournalEntryManager = () => {
               setIsCreateOpen(open);
               if (!open) resetForm();
             }}>
-              <DialogTrigger asChild>
-                <Button><Plus className="mr-2 h-4 w-4" /> New Entry</Button>
-              </DialogTrigger>
+              <PermissionGuard action="create" resource="journals">
+                <DialogTrigger asChild>
+                  <Button><Plus className="mr-2 h-4 w-4" /> New Entry</Button>
+                </DialogTrigger>
+              </PermissionGuard>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{editingId ? "Edit Journal Entry" : "Create Journal Entry"}</DialogTitle>
@@ -408,29 +423,37 @@ export const JournalEntryManager = () => {
                         
                         {/* Approval Flow */}
                         {entry.approvalStatus === 'pending' && entry.status === 'draft' && (
-                           <>
-                             <Button variant="ghost" size="icon" onClick={() => handleApprove(entry.id)} title="Approve">
-                                <CheckCircle className="h-4 w-4 text-blue-600" />
-                             </Button>
-                             <Button variant="ghost" size="icon" onClick={() => handleReject(entry.id)} title="Reject">
-                                <XCircle className="h-4 w-4 text-red-600" />
-                             </Button>
-                           </>
+                           <PermissionGuard action="edit" resource="journals">
+                             <div className="flex gap-1">
+                               <Button variant="ghost" size="icon" onClick={() => handleApprove(entry.id)} title="Approve">
+                                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                               </Button>
+                               <Button variant="ghost" size="icon" onClick={() => handleReject(entry.id)} title="Reject">
+                                  <XCircle className="h-4 w-4 text-red-600" />
+                               </Button>
+                             </div>
+                           </PermissionGuard>
                         )}
 
                         {entry.status === 'draft' && (
                             <>
-                                <Button variant="ghost" size="icon" onClick={() => handleEdit(entry)} title="Edit">
-                                    <Edit className="h-4 w-4" />
-                                </Button>
+                                <PermissionGuard action="edit" resource="journals">
+                                  <Button variant="ghost" size="icon" onClick={() => handleEdit(entry)} title="Edit">
+                                      <Edit className="h-4 w-4" />
+                                  </Button>
+                                </PermissionGuard>
                                 {entry.approvalStatus === 'approved' && (
-                                    <Button variant="ghost" size="icon" onClick={() => handlePost(entry.id)} title="Post">
-                                        <FileText className="h-4 w-4 text-green-600" />
-                                    </Button>
+                                    <PermissionGuard action="create" resource="journals">
+                                      <Button variant="ghost" size="icon" onClick={() => handlePost(entry.id)} title="Post">
+                                          <FileText className="h-4 w-4 text-green-600" />
+                                      </Button>
+                                    </PermissionGuard>
                                 )}
-                                <Button variant="ghost" size="icon" onClick={() => handleDelete(entry.id)} title="Delete">
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+                                <PermissionGuard action="delete" resource="journals">
+                                  <Button variant="ghost" size="icon" onClick={() => handleDelete(entry.id)} title="Delete">
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </PermissionGuard>
                             </>
                         )}
                     </div>

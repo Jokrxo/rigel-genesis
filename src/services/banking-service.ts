@@ -1,5 +1,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface BankTransaction {
   id: string;
@@ -10,6 +11,7 @@ export interface BankTransaction {
   status: 'unmatched' | 'matched' | 'flagged';
   matchedId?: string;
   bankName?: string;
+  bank_account_id?: string;
 }
 
 export interface BankAccount {
@@ -22,71 +24,144 @@ export interface BankAccount {
   status: 'connected' | 'disconnected' | 'error';
 }
 
-const STORAGE_KEY_ACCOUNTS = 'rigel_bank_accounts';
-const STORAGE_KEY_TRANSACTIONS = 'rigel_bank_transactions';
-
 export const bankingService = {
   // Simulate connecting a bank account
   async connectBank(bankName: string): Promise<BankAccount> {
     await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
 
-    const newAccount: BankAccount = {
-      id: uuidv4(),
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!profile?.company_id) throw new Error("No company linked to user");
+
+    const newAccount = {
+      company_id: profile.company_id,
       name: `${bankName} Business Account`,
-      accountNumber: Math.floor(1000000000 + Math.random() * 9000000000).toString(),
-      bankName,
+      account_number: Math.floor(1000000000 + Math.random() * 9000000000).toString(),
+      bank_name: bankName,
       balance: Math.floor(50000 + Math.random() * 200000), // Random balance between 50k and 250k
-      lastSynced: new Date().toISOString(),
-      status: 'connected'
+      status: 'connected',
+      last_synced: new Date().toISOString()
     };
 
-    const accounts = await this.getConnectedAccounts();
-    accounts.push(newAccount);
-    localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .insert(newAccount)
+      .select()
+      .single();
+
+    if (error) throw error;
 
     // Generate initial transactions for this account
-    await this.generateMockTransactions(newAccount.id);
+    await this.generateMockTransactions(data.id, profile.company_id, bankName);
 
-    return newAccount;
+    return {
+      id: data.id,
+      name: data.name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      balance: data.balance,
+      lastSynced: data.last_synced,
+      status: data.status as any
+    };
   },
 
   async getConnectedAccounts(): Promise<BankAccount[]> {
-    const stored = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
-    return stored ? JSON.parse(stored) : [];
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!profile?.company_id) return [];
+
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .select('*')
+      .eq('company_id', profile.company_id);
+
+    if (error) {
+      console.error('Error fetching bank accounts:', error);
+      return [];
+    }
+
+    return data.map(acc => ({
+      id: acc.id,
+      name: acc.name,
+      accountNumber: acc.account_number,
+      bankName: acc.bank_name,
+      balance: acc.balance,
+      lastSynced: acc.last_synced,
+      status: acc.status as any
+    }));
   },
 
   async getTransactions(accountId: string): Promise<BankTransaction[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const stored = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
-    const allTransactions: BankTransaction[] = stored ? JSON.parse(stored) : [];
-    // In a real app, we'd filter by accountId, but for now we'll just return all or filter if we added accountId to tx
-    // For simplicity, let's assume we just return all for the demo
-    return allTransactions;
+    const { data, error } = await supabase
+      .from('bank_transactions')
+      .select('*, bank_accounts(bank_name)')
+      .eq('bank_account_id', accountId)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
+
+    return data.map(tx => ({
+      id: tx.id,
+      date: tx.date,
+      description: tx.description,
+      amount: tx.amount,
+      type: tx.type as 'debit' | 'credit',
+      status: tx.status as any,
+      matchedId: tx.matched_id,
+      bankName: tx.bank_accounts?.bank_name,
+      bank_account_id: tx.bank_account_id
+    }));
   },
 
-  async generateMockTransactions(accountId: string) {
+  async generateMockTransactions(accountId: string, companyId?: string, bankName?: string) {
+    if (!companyId) {
+       const { data: { user } } = await supabase.auth.getUser();
+       if (!user) return;
+       const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+       if (!profile?.company_id) return;
+       companyId = profile.company_id;
+    }
+
     const descriptions = [
       'Office Supplies', 'Client Payment', 'Service Fee', 'Monthly Rent', 
       'Internet Service', 'Software Subscription', 'Consulting Fee', 'Utility Bill'
     ];
 
-    const newTransactions: BankTransaction[] = Array.from({ length: 10 }).map(() => {
+    const newTransactions = Array.from({ length: 10 }).map(() => {
       const isCredit = Math.random() > 0.5;
       return {
-        id: uuidv4(),
+        company_id: companyId,
+        bank_account_id: accountId,
         date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         description: descriptions[Math.floor(Math.random() * descriptions.length)],
         amount: Number((Math.random() * 5000).toFixed(2)),
         type: isCredit ? 'credit' : 'debit',
         status: 'unmatched',
-        bankName: 'Simulated Bank'
       };
     });
 
-    const stored = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
-    const current = stored ? JSON.parse(stored) : [];
-    const updated = [...current, ...newTransactions];
-    localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(updated));
+    const { error } = await supabase
+      .from('bank_transactions')
+      .insert(newTransactions);
+      
+    if (error) console.error("Error generating mock transactions:", error);
   },
 
   async syncAccount(accountId: string): Promise<BankTransaction[]> {

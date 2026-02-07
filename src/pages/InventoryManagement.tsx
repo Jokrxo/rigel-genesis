@@ -15,6 +15,8 @@ import { ViewProductDialog } from "@/components/InventoryManagement/ViewProductD
 import { ProductFormDialog, ProductFormData } from "@/components/InventoryManagement/ProductFormDialog";
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { useSearchParams } from "react-router-dom";
+import { auditLogger } from "@/lib/audit-logger";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface Product {
   id: string;
@@ -55,9 +57,25 @@ const InventoryManagement = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        console.error('No company ID found');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -98,9 +116,18 @@ const InventoryManagement = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('Company not found');
+
+      const { data: newProduct, error } = await supabase
         .from('products')
         .insert([{
+          company_id: profile.company_id,
           name: data.name,
           description: data.description || null,
           sku: data.sku || null,
@@ -114,9 +141,20 @@ const InventoryManagement = () => {
           tax_rate: data.tax_rate || 0,
           type: data.type || 'inventory',
           user_id: user.id,
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      if (newProduct) {
+        await auditLogger.log({
+          action: 'CREATE_PRODUCT',
+          entityType: 'product',
+          entityId: newProduct.id,
+          details: { name: newProduct.name, sku: newProduct.sku }
+        });
+      }
 
       toast({
         title: "Success",
@@ -145,6 +183,13 @@ const InventoryManagement = () => {
 
       if (error) throw error;
 
+      await auditLogger.log({
+        action: 'UPDATE_PRODUCT',
+        entityType: 'product',
+        entityId: editingProduct.id,
+        details: { updates: data }
+      });
+
       toast({
         title: "Success",
         description: "Product updated successfully",
@@ -172,6 +217,13 @@ const InventoryManagement = () => {
         .eq('id', deletingProduct.id);
 
       if (error) throw error;
+
+      await auditLogger.log({
+        action: 'DELETE_PRODUCT',
+        entityType: 'product',
+        entityId: deletingProduct.id,
+        details: { name: deletingProduct.name, sku: deletingProduct.sku }
+      });
 
       toast({
         title: "Success",
@@ -238,10 +290,12 @@ const InventoryManagement = () => {
               <Download className="mr-2 h-4 w-4" />
               Export JSON
             </Button>
-            <Button onClick={() => setIsCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Product
-            </Button>
+            <PermissionGuard action="create" resource="inventory">
+              <Button onClick={() => setIsCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Product
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 
@@ -353,20 +407,24 @@ const InventoryManagement = () => {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEditProduct(product)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDeleteProduct(product)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <PermissionGuard action="edit" resource="inventory">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditProduct(product)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </PermissionGuard>
+                              <PermissionGuard action="delete" resource="inventory">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteProduct(product)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </PermissionGuard>
                             </div>
                           </TableCell>
                         </TableRow>

@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from "lucide-react";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface Supplier {
   id: string;
@@ -85,22 +86,26 @@ export const SupplierTable = ({ suppliers, loading, onView, onEdit, onDelete }: 
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      title="Edit"
-                      onClick={() => onEdit(supplier)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      title="Delete"
-                      onClick={() => onDelete(supplier)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <PermissionGuard action="edit" resource="suppliers">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Edit"
+                        onClick={() => onEdit(supplier)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </PermissionGuard>
+                    <PermissionGuard action="delete" resource="suppliers">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Delete"
+                        onClick={() => onDelete(supplier)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </PermissionGuard>
                   </div>
                 </TableCell>
               </TableRow>

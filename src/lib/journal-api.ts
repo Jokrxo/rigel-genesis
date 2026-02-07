@@ -1,5 +1,6 @@
 
-import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
+import { auditLogger } from '@/lib/audit-logger';
 
 export interface JournalLine {
   id: string;
@@ -20,124 +21,274 @@ export interface JournalEntry {
   lines: JournalLine[];
   created_at?: string;
   updated_at?: string;
+  company_id?: string;
 }
 
-const STORAGE_KEY = 'rigel_journal_entries';
+// Helper to get company_id
+const getCompanyId = async (userId: string) => {
+  const { data } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('user_id', userId)
+    .single();
+  return data?.company_id;
+};
 
 export const journalApi = {
-  async getEntries(): Promise<JournalEntry[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-        // Return default demo data if nothing stored
-        return [
-            {
-              id: "1",
-              date: "2024-01-15",
-              reference: "JE-2024-001",
-              description: "Monthly Rent Accrual",
-              status: "posted",
-              type: "standard",
-              approvalStatus: "approved",
-              lines: [
-                { id: "1", accountId: "6000", description: "Rent Expense", debit: 5000, credit: 0 },
-                { id: "2", accountId: "2000", description: "Accrued Expenses", debit: 0, credit: 5000 }
-              ],
-              created_at: new Date().toISOString()
-            },
-            {
-              id: "2",
-              date: "2024-12-31",
-              reference: "ADJ-2024-001",
-              description: "Year-End Depreciation",
-              status: "draft",
-              type: "adjustment",
-              approvalStatus: "pending",
-              lines: [
-                { id: "1", accountId: "6000", description: "Depreciation Expense", debit: 1200, credit: 0 },
-                { id: "2", accountId: "1500", description: "Accumulated Depreciation", debit: 0, credit: 1200 }
-              ],
-              created_at: new Date().toISOString()
-            }
-        ];
+  async getEntries(companyId?: string): Promise<JournalEntry[]> {
+    let query = supabase
+      .from('journal_entries')
+      .select(`
+        *,
+        lines:journal_entry_lines(
+          id,
+          account_id,
+          description,
+          debit,
+          credit
+        )
+      `)
+      .order('date', { ascending: false });
+
+    if (companyId) {
+      query = query.eq('company_id', companyId);
     }
-    return JSON.parse(stored);
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data || []).map((entry: any) => ({
+      id: entry.id,
+      date: entry.date,
+      reference: entry.reference,
+      description: entry.description,
+      status: entry.status,
+      type: entry.type || 'standard',
+      approvalStatus: entry.approval_status || 'pending',
+      lines: (entry.lines || []).map((line: any) => ({
+        id: line.id,
+        accountId: line.account_id,
+        description: line.description || '',
+        debit: Number(line.debit),
+        credit: Number(line.credit)
+      })),
+      created_at: entry.created_at,
+      updated_at: entry.updated_at,
+      company_id: entry.company_id
+    }));
   },
 
   async getEntryById(id: string): Promise<JournalEntry | null> {
-    const entries = await this.getEntries();
-    return entries.find(e => e.id === id) || null;
+    const { data, error } = await supabase
+      .from('journal_entries')
+      .select(`
+        *,
+        lines:journal_entry_lines(
+          id,
+          account_id,
+          description,
+          debit,
+          credit
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      date: data.date,
+      reference: data.reference,
+      description: data.description,
+      status: data.status,
+      type: data.type || 'standard',
+      approvalStatus: data.approval_status || 'pending',
+      lines: (data.lines || []).map((line: any) => ({
+        id: line.id,
+        accountId: line.account_id,
+        description: line.description || '',
+        debit: Number(line.debit),
+        credit: Number(line.credit)
+      })),
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      company_id: data.company_id
+    };
   },
 
   async createEntry(entry: Omit<JournalEntry, 'id' | 'created_at' | 'updated_at' | 'status'>): Promise<JournalEntry> {
-    const entries = await this.getEntries();
-    
-    const newEntry: JournalEntry = {
-      ...entry,
-      id: uuidv4(),
-      status: 'draft', // Always draft initially
-      type: entry.type || 'standard',
-      approvalStatus: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    entries.unshift(newEntry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const company_id = await getCompanyId(user.id);
+    if (!company_id) throw new Error('Company not found');
+
+    const linesForRpc = entry.lines.map(line => ({
+      accountId: line.accountId,
+      description: line.description,
+      debit: line.debit,
+      credit: line.credit
+    }));
+
+    const { data, error } = await supabase.rpc('create_journal_entry', {
+      p_user_id: user.id,
+      p_company_id: company_id,
+      p_date: entry.date,
+      p_reference: entry.reference,
+      p_description: entry.description,
+      p_type: entry.type || 'standard',
+      p_lines: linesForRpc,
+      p_status: 'draft'
+    });
+
+    if (error) throw error;
+
+    // Return the created entry (fetching it to be sure)
+    const newEntry = await this.getEntryById(data.id);
+    if (!newEntry) throw new Error('Failed to retrieve created entry');
+
+    await auditLogger.log({
+      action: 'CREATE_JOURNAL_ENTRY',
+      entityType: 'journal_entry',
+      entityId: newEntry.id,
+      details: { reference: newEntry.reference, description: newEntry.description }
+    });
+
     return newEntry;
   },
 
   async updateEntry(id: string, updates: Partial<JournalEntry>): Promise<JournalEntry> {
-    const entries = await this.getEntries();
-    const index = entries.findIndex(e => e.id === id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // If lines are updated, we must use the RPC or handle delete/insert manually.
+    // Since updateEntry takes Partial<JournalEntry>, checking if lines are present.
+    // If lines are present, we should probably use a full update RPC or similar logic.
+    // The current UI sends the full object usually when editing.
     
-    if (index === -1) throw new Error('Entry not found');
+    // For simplicity, if lines are present, use the update RPC.
+    // If lines are NOT present, maybe just update the header fields?
+    // But update_journal_entry RPC expects all fields.
+    // Let's fetch the existing entry first if we need to merge.
     
-    const current = entries[index];
-    if (current.status === 'posted') {
-        throw new Error('Cannot edit posted entries');
+    const existing = await this.getEntryById(id);
+    if (!existing) throw new Error('Entry not found');
+
+    if (existing.status === 'posted' && updates.status !== 'posted') { 
+        // Allow unposting? Or maybe updates are restricted.
+        // The previous code said "Cannot edit posted entries".
+        if (updates.status === undefined) {
+             throw new Error('Cannot edit posted entries');
+        }
     }
     
-    const updated = { ...current, ...updates, updated_at: new Date().toISOString() };
-    entries[index] = updated;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-    return updated;
+    // If only approval status is changing (e.g. approve/reject)
+    if (updates.approvalStatus && Object.keys(updates).length === 1) {
+        const { error } = await supabase
+            .from('journal_entries')
+            .update({ approval_status: updates.approvalStatus })
+            .eq('id', id);
+        if (error) throw error;
+
+        await auditLogger.log({
+            action: updates.approvalStatus === 'approved' ? 'APPROVE_JOURNAL_ENTRY' : 
+                   updates.approvalStatus === 'rejected' ? 'REJECT_JOURNAL_ENTRY' : 'UPDATE_JOURNAL_ENTRY',
+            entityType: 'journal_entry',
+            entityId: id,
+            details: { reference: existing.reference, status: updates.approvalStatus }
+        });
+
+        return { ...existing, approvalStatus: updates.approvalStatus };
+    }
+
+    // Full update using RPC
+    const linesForRpc = (updates.lines || existing.lines).map(line => ({
+      accountId: line.accountId,
+      description: line.description,
+      debit: line.debit,
+      credit: line.credit
+    }));
+
+    const { data, error } = await supabase.rpc('update_journal_entry', {
+      p_entry_id: id,
+      p_user_id: user.id,
+      p_date: updates.date || existing.date,
+      p_reference: updates.reference || existing.reference,
+      p_description: updates.description || existing.description,
+      p_type: updates.type || existing.type || 'standard',
+      p_lines: linesForRpc,
+      p_status: updates.status || existing.status
+    });
+
+    if (error) throw error;
+
+    const updatedEntry = await this.getEntryById(id);
+    if (!updatedEntry) throw new Error('Failed to retrieve updated entry');
+
+    await auditLogger.log({
+        action: 'UPDATE_JOURNAL_ENTRY',
+        entityType: 'journal_entry',
+        entityId: id,
+        details: { reference: updatedEntry.reference, description: updatedEntry.description }
+    });
+
+    return updatedEntry;
   },
 
   async deleteEntry(id: string): Promise<boolean> {
-    const entries = await this.getEntries();
-    const index = entries.findIndex(e => e.id === id);
-    
-    if (index === -1) throw new Error('Entry not found');
-    if (entries[index].status === 'posted') {
-        throw new Error('Cannot delete posted entries');
+    const entry = await this.getEntryById(id);
+
+    const { error } = await supabase
+      .from('journal_entries')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    if (entry) {
+        await auditLogger.log({
+            action: 'DELETE_JOURNAL_ENTRY',
+            entityType: 'journal_entry',
+            entityId: id,
+            details: { reference: entry.reference, description: entry.description }
+        });
     }
-    
-    const filtered = entries.filter(e => e.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+
     return true;
   },
   
   async postEntry(id: string): Promise<JournalEntry> {
-      const entries = await this.getEntries();
-      const index = entries.findIndex(e => e.id === id);
-      
-      if (index === -1) throw new Error('Entry not found');
-      
-      // Validate balance
-      const entry = entries[index];
-      const totalDebit = entry.lines.reduce((sum, line) => sum + Number(line.debit), 0);
-      const totalCredit = entry.lines.reduce((sum, line) => sum + Number(line.credit), 0);
-      
-      if (Math.abs(totalDebit - totalCredit) > 0.01) {
-          throw new Error('Entry is not balanced');
-      }
-      
-      const updated = { ...entry, status: 'posted' as const, updated_at: new Date().toISOString() };
-      entries[index] = updated;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-      return updated;
+    // Validate balance before posting?
+    // The RPC or backend should handle this ideally, but we can do it here or assume valid.
+    // Let's update status to 'posted'.
+    
+    // Check balance first
+    const entry = await this.getEntryById(id);
+    if (!entry) throw new Error('Entry not found');
+
+    const totalDebit = entry.lines.reduce((sum, line) => sum + line.debit, 0);
+    const totalCredit = entry.lines.reduce((sum, line) => sum + line.credit, 0);
+
+    if (Math.abs(totalDebit - totalCredit) > 0.01) {
+        throw new Error('Entry is not balanced');
+    }
+
+    const { error } = await supabase
+      .from('journal_entries')
+      .update({ status: 'posted', updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    await auditLogger.log({
+      action: 'POST_JOURNAL_ENTRY',
+      entityType: 'journal_entry',
+      entityId: id,
+      details: { reference: entry.reference }
+    });
+
+    return { ...entry, status: 'posted' };
   }
 };

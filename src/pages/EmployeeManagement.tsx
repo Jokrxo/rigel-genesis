@@ -15,6 +15,9 @@ import { Chatbot } from "@/components/Shared/Chatbot";
 import { ViewEmployeeDialog } from "@/components/EmployeeManagement/ViewEmployeeDialog";
 import { EmployeeFormDialog } from "@/components/EmployeeManagement/EmployeeFormDialog";
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { auditLogger } from "@/lib/audit-logger";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface Employee {
   id: string;
@@ -81,12 +84,99 @@ const EmployeeManagement = () => {
     fetchPayrollEntries();
   }, []);
 
-  const fetchEmployees = () => {
-    setEmployees([]);
+  const getCompanyId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+      
+    return data?.company_id;
   };
 
-  const fetchPayrollEntries = () => {
-    setPayrollEntries([]);
+  const fetchEmployees = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const companyId = await getCompanyId();
+      if (!companyId) return;
+
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedEmployees: Employee[] = (data || []).map(emp => ({
+        id: emp.id,
+        employeeNumber: emp.employee_number || `EMP-${emp.id.substring(0, 4)}`,
+        firstName: emp.first_name,
+        lastName: emp.last_name,
+        email: emp.email || '',
+        phone: emp.phone || '',
+        position: emp.position || '',
+        department: emp.department || '',
+        hireDate: emp.hire_date || '',
+        grossSalary: Number(emp.salary || 0),
+        taxNumber: emp.tax_number || '',
+        bankAccount: emp.bank_account_number || '',
+        status: emp.is_active ? 'active' : 'inactive'
+      }));
+
+      setEmployees(mappedEmployees);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch employees",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchPayrollEntries = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const companyId = await getCompanyId();
+      if (!companyId) return;
+
+      const { data, error } = await supabase
+        .from('payroll_entries')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('processed_date', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedEntries: PayrollEntry[] = (data || []).map(entry => ({
+        id: entry.id,
+        employeeId: entry.employee_id,
+        payPeriod: entry.pay_period,
+        grossSalary: Number(entry.gross_salary),
+        basicSalary: Number(entry.basic_salary),
+        allowances: Number(entry.allowances),
+        overtimePay: Number(entry.overtime_pay),
+        payeTax: Number(entry.paye_tax),
+        uif: Number(entry.uif),
+        medicalAid: Number(entry.medical_aid),
+        pensionFund: Number(entry.pension_fund),
+        netSalary: Number(entry.net_salary),
+        processedDate: entry.processed_date
+      }));
+
+      setPayrollEntries(mappedEntries);
+    } catch (error) {
+      console.error('Error fetching payroll:', error);
+      // Don't show toast on initial load if empty, to avoid noise
+    }
   };
 
   const calculateSouthAfricanTax = (grossSalary: number) => {
@@ -137,101 +227,203 @@ const EmployeeManagement = () => {
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deletingEmployee) {
-      setEmployees(employees.filter(e => e.id !== deletingEmployee.id));
-      setIsDeleteOpen(false);
-      setDeletingEmployee(null);
-      toast({
-        title: "Success",
-        description: "Employee deleted successfully",
-      });
+      try {
+        const { error } = await supabase
+          .from('employees')
+          .delete()
+          .eq('id', deletingEmployee.id);
+
+        if (error) throw error;
+
+        await auditLogger.log({
+          action: 'DELETE_EMPLOYEE',
+          entityType: 'employee',
+          entityId: deletingEmployee.id,
+          details: { name: `${deletingEmployee.firstName} ${deletingEmployee.lastName}`, employeeNumber: deletingEmployee.employeeNumber }
+        });
+
+        setEmployees(employees.filter(e => e.id !== deletingEmployee.id));
+        setIsDeleteOpen(false);
+        setDeletingEmployee(null);
+        toast({
+          title: "Success",
+          description: "Employee deleted successfully",
+        });
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete employee",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleEmployeeSubmit = (data: Omit<Employee, 'id' | 'employeeNumber' | 'status'> & { grossSalary: number | string }) => {
-    if (editingEmployee) {
-      // Update existing employee
-      const updatedEmployees = employees.map(emp => 
-        emp.id === editingEmployee.id 
-          ? { ...emp, ...data, grossSalary: Number(data.grossSalary) }
-          : emp
-      );
-      setEmployees(updatedEmployees);
-      toast({
-        title: "Success",
-        description: "Employee updated successfully",
-      });
-    } else {
-      // Create new employee
-      const newEmployee: Employee = {
-        id: Date.now().toString(),
-        employeeNumber: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
-        ...data,
-        grossSalary: Number(data.grossSalary),
-        status: "active",
+  const handleEmployeeSubmit = async (data: Omit<Employee, 'id' | 'employeeNumber' | 'status'> & { grossSalary: number | string }) => {
+    try {
+      const companyId = await getCompanyId();
+      if (!companyId) {
+        toast({
+          title: "Error",
+          description: "Company not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const employeeData = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        position: data.position,
+        department: data.department,
+        hire_date: data.hireDate,
+        salary: Number(data.grossSalary),
+        tax_number: data.taxNumber,
+        bank_account_number: data.bankAccount,
+        company_id: companyId,
+        is_active: true
       };
-      setEmployees([...employees, newEmployee]);
+
+      if (editingEmployee) {
+        const { error } = await supabase
+          .from('employees')
+          .update(employeeData)
+          .eq('id', editingEmployee.id);
+
+        if (error) throw error;
+
+        await auditLogger.log({
+          action: 'UPDATE_EMPLOYEE',
+          entityType: 'employee',
+          entityId: editingEmployee.id,
+          details: { updates: employeeData }
+        });
+
+        toast({ title: "Success", description: "Employee updated successfully" });
+      } else {
+        // Generate employee number
+        const empNum = `EMP-${String(employees.length + 1).padStart(3, '0')}`;
+        const { data: newEmployee, error } = await supabase
+          .from('employees')
+          .insert([{ ...employeeData, employee_number: empNum }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (newEmployee) {
+          await auditLogger.log({
+            action: 'CREATE_EMPLOYEE',
+            entityType: 'employee',
+            entityId: newEmployee.id,
+            details: { name: `${employeeData.first_name} ${employeeData.last_name}`, employeeNumber: empNum }
+          });
+        }
+
+        toast({ title: "Success", description: "Employee added successfully" });
+      }
+
+      fetchEmployees();
+      setShowEmployeeForm(false);
+      setEditingEmployee(null);
+    } catch (error) {
+      console.error('Error saving employee:', error);
       toast({
-        title: "Success",
-        description: "Employee added successfully",
+        title: "Error",
+        description: "Failed to save employee",
+        variant: "destructive",
       });
     }
-    
-    setShowEmployeeForm(false);
-    setEditingEmployee(null);
   };
 
-  const handlePayrollSubmit = (e: React.FormEvent) => {
+  const handlePayrollSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const employee = employees.find(emp => emp.id === payrollForm.employeeId);
-    if (!employee) return;
+    try {
+      const employee = employees.find(emp => emp.id === payrollForm.employeeId);
+      if (!employee) return;
 
-    const basicSalary = parseFloat(payrollForm.basicSalary);
-    const allowances = parseFloat(payrollForm.allowances) || 0;
-    const overtimePay = parseFloat(payrollForm.overtimePay) || 0;
-    const grossSalary = basicSalary + allowances + overtimePay;
-    
-    const payeTax = calculateSouthAfricanTax(grossSalary);
-    const uif = calculateUIF(grossSalary);
-    const medicalAid = parseFloat(payrollForm.medicalAid) || 0;
-    const pensionFund = parseFloat(payrollForm.pensionFund) || 0;
-    
-    const totalDeductions = payeTax + uif + medicalAid + pensionFund;
-    const netSalary = grossSalary - totalDeductions;
+      const companyId = await getCompanyId();
+      if (!companyId) throw new Error("Company not found");
 
-    const newPayrollEntry: PayrollEntry = {
-      id: Date.now().toString(),
-      employeeId: payrollForm.employeeId,
-      payPeriod: payrollForm.payPeriod,
-      grossSalary,
-      basicSalary,
-      allowances,
-      overtimePay,
-      payeTax,
-      uif,
-      medicalAid,
-      pensionFund,
-      netSalary,
-      processedDate: new Date().toISOString().split('T')[0],
-    };
-    
-    setPayrollEntries([...payrollEntries, newPayrollEntry]);
-    setPayrollForm({
-      employeeId: "",
-      payPeriod: "",
-      basicSalary: "",
-      allowances: "",
-      overtimePay: "",
-      medicalAid: "",
-      pensionFund: "",
-    });
-    setShowPayrollForm(false);
-    
-    toast({
-      title: "Success",
-      description: "Payroll processed successfully",
-    });
+      const basicSalary = parseFloat(payrollForm.basicSalary);
+      const allowances = parseFloat(payrollForm.allowances) || 0;
+      const overtimePay = parseFloat(payrollForm.overtimePay) || 0;
+      const grossSalary = basicSalary + allowances + overtimePay;
+      
+      const payeTax = calculateSouthAfricanTax(grossSalary);
+      const uif = calculateUIF(grossSalary);
+      const medicalAid = parseFloat(payrollForm.medicalAid) || 0;
+      const pensionFund = parseFloat(payrollForm.pensionFund) || 0;
+      
+      const totalDeductions = payeTax + uif + medicalAid + pensionFund;
+      const netSalary = grossSalary - totalDeductions;
+
+      const payrollData = {
+        company_id: companyId,
+        employee_id: payrollForm.employeeId,
+        pay_period: payrollForm.payPeriod,
+        gross_salary: grossSalary,
+        basic_salary: basicSalary,
+        allowances: allowances,
+        overtime_pay: overtimePay,
+        paye_tax: payeTax,
+        uif: uif,
+        medical_aid: medicalAid,
+        pension_fund: pensionFund,
+        net_salary: netSalary,
+        processed_date: new Date().toISOString().split('T')[0]
+      };
+
+      const { data: newPayroll, error } = await supabase
+        .from('payroll_entries')
+        .insert([payrollData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (newPayroll) {
+        await auditLogger.log({
+          action: 'PROCESS_PAYROLL',
+          entityType: 'payroll_entry',
+          entityId: newPayroll.id,
+          details: { 
+            employeeId: payrollForm.employeeId, 
+            payPeriod: payrollForm.payPeriod,
+            netSalary: netSalary
+          }
+        });
+      }
+      
+      fetchPayrollEntries();
+      setPayrollForm({
+        employeeId: "",
+        payPeriod: "",
+        basicSalary: "",
+        allowances: "",
+        overtimePay: "",
+        medicalAid: "",
+        pensionFund: "",
+      });
+      setShowPayrollForm(false);
+      
+      toast({
+        title: "Success",
+        description: "Payroll processed successfully",
+      });
+    } catch (error) {
+      console.error('Error processing payroll:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process payroll",
+        variant: "destructive",
+      });
+    }
   };
 
   const getFilteredPayroll = () => {
@@ -296,13 +488,15 @@ const EmployeeManagement = () => {
 
           <TabsContent value="employees" className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => {
-                setEditingEmployee(null);
-                setShowEmployeeForm(true);
-              }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Employee
-              </Button>
+              <PermissionGuard action="create" resource="employees">
+                <Button onClick={() => {
+                  setEditingEmployee(null);
+                  setShowEmployeeForm(true);
+                }}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Employee
+                </Button>
+              </PermissionGuard>
             </div>
 
             <EmployeeFormDialog
@@ -525,7 +719,7 @@ const EmployeeManagement = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="medicalAid">Medical Aid (R)</Label>
+                      <Label htmlFor="medicalAid">Medical Aid Deduction (R)</Label>
                       <Input
                         id="medicalAid"
                         type="number"
@@ -535,7 +729,7 @@ const EmployeeManagement = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="pensionFund">Pension Fund (R)</Label>
+                      <Label htmlFor="pensionFund">Pension Fund Deduction (R)</Label>
                       <Input
                         id="pensionFund"
                         type="number"
@@ -544,11 +738,15 @@ const EmployeeManagement = () => {
                         onChange={(e) => setPayrollForm({...payrollForm, pensionFund: e.target.value})}
                       />
                     </div>
-                    <div className="md:col-span-2 flex gap-2">
-                      <Button type="submit">Process Payroll</Button>
+                    <div className="col-span-2 flex justify-end gap-2 mt-4">
                       <Button type="button" variant="outline" onClick={() => setShowPayrollForm(false)}>
                         Cancel
                       </Button>
+                      <PermissionGuard action="create" resource="payroll">
+                        <Button type="submit">
+                          Calculate & Process
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </form>
                 </CardContent>
@@ -574,8 +772,6 @@ const EmployeeManagement = () => {
                         <TableHead>Pension</TableHead>
                         <TableHead>Net Salary</TableHead>
                         <TableHead>Processed</TableHead>
-                        {/* Quick Action: Export payslip */}
-                        <TableHead>Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -594,20 +790,6 @@ const EmployeeManagement = () => {
                             <TableCell>R{entry.pensionFund.toFixed(2)}</TableCell>
                             <TableCell className="font-medium">R{entry.netSalary.toFixed(2)}</TableCell>
                             <TableCell>{entry.processedDate}</TableCell>
-                            <TableCell>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => {
-                                  toast({
-                                    title: "Payslip Export",
-                                    description: `Exporting payslip for ${employee?.firstName} ${employee?.lastName}`,
-                                  });
-                                }}
-                              >
-                                Export Payslip
-                              </Button>
-                            </TableCell>
                           </TableRow>
                         );
                       })}

@@ -63,11 +63,25 @@ const LoanManagement = () => {
   const fetchLoans = useCallback(async () => {
     try {
       setLoading(true);
-      // Use localStorage since loans table doesn't exist in DB
-      const stored = localStorage.getItem('rigel_loans');
-      if (stored) {
-        setLoans(JSON.parse(stored));
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      const { data, error } = await supabase
+        .from('loans')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setLoans(data || []);
     } catch (error) {
       console.error('Error fetching loans:', error);
       toast({
@@ -81,15 +95,8 @@ const LoanManagement = () => {
   }, [toast]);
 
   useEffect(() => {
-    if (user) {
-      fetchLoans();
-    }
-  }, [user, fetchLoans]);
-
-  const saveLoans = (newLoans: Loan[]) => {
-    localStorage.setItem('rigel_loans', JSON.stringify(newLoans));
-    setLoans(newLoans);
-  };
+    fetchLoans();
+  }, [fetchLoans]);
 
   const calculateMonthlyPayment = (principal: number, rate: number, months: number) => {
     if (rate === 0) return principal / months;
@@ -135,42 +142,55 @@ const LoanManagement = () => {
     const monthlyPayment = calculateMonthlyPayment(principal, rate, months);
     
     try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        toast({
+          title: "Error",
+          description: "No company linked to user",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const loanData = {
+        company_id: profile.company_id,
+        borrower_name: loanForm.borrower_name,
+        lender: loanForm.lender,
+        principal_amount: principal,
+        interest_rate: rate,
+        term_months: months,
+        start_date: loanForm.start_date,
+        monthly_payment: monthlyPayment,
+        status: "active",
+        loan_number: selectedLoan ? selectedLoan.loan_number : `LOAN-${Date.now().toString().slice(-6)}`,
+        remaining_balance: selectedLoan ? selectedLoan.remaining_balance : principal // Keep logic simple
+      };
+
       if (selectedLoan) {
-        // Update existing loan in localStorage
-        const updatedLoans = loans.map(l => 
-          l.id === selectedLoan.id 
-            ? {
-                ...l,
-                borrower_name: loanForm.borrower_name,
-                lender: loanForm.lender,
-                principal_amount: principal,
-                interest_rate: rate,
-                term_months: months,
-                start_date: loanForm.start_date,
-                monthly_payment: monthlyPayment,
-              }
-            : l
-        );
-        saveLoans(updatedLoans);
+        // Update existing loan
+        const { error } = await supabase
+          .from('loans')
+          .update(loanData)
+          .eq('id', selectedLoan.id);
+
+        if (error) throw error;
         toast({ title: "Success", description: "Loan updated successfully" });
       } else {
-        // Create new loan in localStorage
-        const newLoan: Loan = {
-          id: crypto.randomUUID(),
-          loan_number: `LOAN-${Date.now().toString().slice(-6)}`,
-          borrower_name: loanForm.borrower_name,
-          lender: loanForm.lender,
-          principal_amount: principal,
-          interest_rate: rate,
-          term_months: months,
-          start_date: loanForm.start_date,
-          monthly_payment: monthlyPayment,
-          status: "active",
-          remaining_balance: principal,
-        };
-        saveLoans([newLoan, ...loans]);
+        // Create new loan
+        const { error } = await supabase
+          .from('loans')
+          .insert(loanData);
+
+        if (error) throw error;
         toast({ title: "Success", description: "Loan added successfully" });
       }
+      
+      fetchLoans();
       
       setLoanForm({
         borrower_name: "",
@@ -214,10 +234,15 @@ const LoanManagement = () => {
   const confirmDelete = async () => {
     if (loanToDelete) {
       try {
-        const filteredLoans = loans.filter(l => l.id !== loanToDelete.id);
-        saveLoans(filteredLoans);
+        const { error } = await supabase
+          .from('loans')
+          .delete()
+          .eq('id', loanToDelete.id);
+
+        if (error) throw error;
         
         toast({ title: "Success", description: "Loan deleted successfully" });
+        fetchLoans();
         
         if (selectedLoan?.id === loanToDelete.id) {
           setSelectedLoan(null);

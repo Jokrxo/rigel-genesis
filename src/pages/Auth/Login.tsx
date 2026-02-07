@@ -16,9 +16,24 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, loginWithGoogle, loginWithFacebook, loginWithGithub } = useAuth();
+  const { login, loginWithGoogle, loginWithFacebook, loginWithGithub, loginWithOtp } = useAuth();
   const { toast } = useToast();
 
+  const handleMagicLinkLogin = async () => {
+    try {
+      // Validate email before submission
+      emailSchema.parse(email);
+      await loginWithOtp(email);
+    } catch (error: unknown) {
+      if (error instanceof ZodError) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      }
+    }
+  };
   const handleGithubLogin = async () => {
     try {
       await loginWithGithub();
@@ -206,6 +221,23 @@ const Login = () => {
               disabled={isLoading}
             >
               {isLoading ? "Logging in..." : "Log in"}
+            </Button>
+            
+            <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-border"></div>
+                <span className="flex-shrink-0 mx-4 text-muted-foreground text-xs">PASSWORDLESS</span>
+                <div className="flex-grow border-t border-border"></div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleMagicLinkLogin}
+              className="w-full justify-center gap-2 py-6 border-border hover:bg-accent hover:text-accent-foreground font-medium"
+              disabled={isLoading}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <span>Email me a login link</span>
             </Button>
           </form>
 

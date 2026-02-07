@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Building2, Plus, Printer, Download } from "lucide-react";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface SupplierHeaderProps {
   suppliersCount?: number;
@@ -47,10 +48,12 @@ export const SupplierHeader = ({
           </Button>
         )}
         {handleCreate && (
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Supplier
-          </Button>
+          <PermissionGuard action="create" resource="suppliers">
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Supplier
+            </Button>
+          </PermissionGuard>
         )}
       </div>
     </div>

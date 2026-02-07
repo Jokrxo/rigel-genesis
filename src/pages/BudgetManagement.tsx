@@ -26,6 +26,8 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, AlertCircle } from "lucide-react";
 
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 export default function BudgetManagement() {
@@ -125,11 +127,13 @@ export default function BudgetManagement() {
               </SelectContent>
             </Select>
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" /> Set New Budget
-                </Button>
-              </DialogTrigger>
+              <PermissionGuard action="create" resource="budgets">
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" /> Set New Budget
+                  </Button>
+                </DialogTrigger>
+              </PermissionGuard>
               <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Create New Budget</DialogTitle>

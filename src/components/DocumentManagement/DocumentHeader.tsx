@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Printer, Download } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface DocumentHeaderProps {
   documentsCount?: number;
@@ -25,6 +26,16 @@ export const DocumentHeader = ({
   selectedDocumentType
 }: DocumentHeaderProps) => {
   const handleCreate = onCreateDocument || onNewDocument;
+
+  const getResourceName = (docType: string) => {
+    switch (docType) {
+      case 'invoice': return 'invoices';
+      case 'quotation': return 'quotes';
+      case 'credit_note': return 'credit_notes';
+      case 'receipt': return 'invoices';
+      default: return 'invoices';
+    }
+  };
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -63,10 +74,12 @@ export const DocumentHeader = ({
           </Button>
         )}
         {handleCreate && (
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Document
-          </Button>
+          <PermissionGuard action="create" resource={getResourceName(selectedDocumentType)}>
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Document
+            </Button>
+          </PermissionGuard>
         )}
       </div>
     </div>

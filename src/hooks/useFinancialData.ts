@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { journalApi, JournalEntry } from "@/lib/journal-api";
-import { fixedAssetsApi, FixedAsset } from "@/lib/fixed-assets-api";
+import { useEffect, useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { journalApi, JournalEntry } from '@/lib/journal-api';
+import { fixedAssetsApi, FixedAsset } from '@/lib/fixed-assets-api';
+import { chartOfAccountsApi } from '@/lib/chart-of-accounts-api';
 
 export interface AccountBalance {
   account_id: string;
@@ -71,8 +72,19 @@ export const useFinancialData = () => {
   const fetchFinancialData = useCallback(async () => {
     try {
       setLoading(true);
-
-      const [journalData, assetsData, balancesData] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+        
+      const companyId = profile?.company_id;
+      if (!companyId) return;
+      
+      let [journalData, assetsData, balancesData] = await Promise.all([
         supabase
           .from("journal_entries")
           .select(
@@ -85,17 +97,24 @@ export const useFinancialData = () => {
               debit,
               credit
             )
-          `
-          )
-          .order("date", { ascending: false }),
-        fixedAssetsApi.getAll(),
-        // account_balances may not exist in generated types yet
-        (supabase as any).from("account_balances").select("*"),
+          `)
+          .eq('company_id', companyId)
+          .order('date', { ascending: false }),
+        fixedAssetsApi.getAll(companyId),
+        supabase.from('account_balances').select('*').eq('company_id', companyId)
       ]);
+
+      // If no balances found, it might be a new company without seeded COA.
+      // Trigger COA seeding via API check.
+      if (!balancesData.error && (!balancesData.data || balancesData.data.length === 0)) {
+         await chartOfAccountsApi.getAccounts(companyId);
+         // Refetch balances
+         balancesData = await supabase.from('account_balances').select('*').eq('company_id', companyId);
+      }
 
       if (journalData.error) throw journalData.error;
 
-      // Map snake_case to camelCase expected by some UI code.
+      // Transform Supabase data to match JournalEntry interface
       const mappedEntries = (journalData.data || []).map((entry: any) => ({
         ...entry,
         lines: (entry.lines || []).map((line: any) => ({
@@ -138,7 +157,7 @@ export const useFinancialData = () => {
     };
   }, [fetchFinancialData]);
 
-  const getAccountType = (code: string) => {
+  const getAccountType = useCallback((code: string) => {
     const prefix = code.substring(0, 1);
     switch (prefix) {
       case "1":
@@ -156,9 +175,9 @@ export const useFinancialData = () => {
       default:
         return "other";
     }
-  };
+  }, []);
 
-  const getIncomeStatementData = (startDate: Date, endDate: Date): FinancialDataResult => {
+  const getIncomeStatementData = useCallback((startDate: Date, endDate: Date): FinancialDataResult => {
     let revenue = 0;
     let costOfSales = 0;
     let otherIncome = 0;
@@ -212,9 +231,10 @@ export const useFinancialData = () => {
       operatingProfit: revenue + otherIncome - costOfSales - expenses,
       expensesByCategory,
     };
-  };
+  }, [entries, accountBalances, getAccountType]);
 
-  const getBalanceSheetData = (_asOfDate: Date): BalanceSheetResult => {
+  const getBalanceSheetData = useCallback((asOfDate: Date): BalanceSheetResult => {
+    // Use real-time account balances for current state
     const balances = accountBalances;
 
     let ppe = 0;
@@ -280,7 +300,8 @@ export const useFinancialData = () => {
         total: ppe + inventory + tradeReceivables + cash,
       },
       equity: {
-        shareCapital,
+        shareCapital:
+          shareCapital,
         retainedEarnings: totalRetainedEarnings,
         drawings,
         total: shareCapital + totalRetainedEarnings + drawings,
@@ -299,9 +320,9 @@ export const useFinancialData = () => {
         total: longTermLiabilities + tradePayables + taxLiabilities + otherCurrentLiabilities,
       },
     };
-  };
+  }, [accountBalances]);
 
-  const getCashFlowStatementData = (startDate: Date, endDate: Date) => {
+  const getCashFlowStatementData = useCallback((startDate: Date, endDate: Date) => {
     let netProfit = 0;
     let depreciation = 0;
     let increaseInventory = 0;
@@ -350,76 +371,40 @@ export const useFinancialData = () => {
             if (netDebit > 0) loansRepaid += netDebit;
           }
         } else if (account.type === "equity") {
-          const code = Number(account.code);
-          if (code === 2000) capitalIssued += netCredit;
-          else if (code === 2200) dividendsPaid += netDebit;
+           const code = Number(account.code);
+           if (code === 2000) {
+             if (netCredit > 0) capitalIssued += netCredit;
+           } else if (code === 2200) {
+             if (netDebit > 0) dividendsPaid += netDebit;
+           }
         }
       });
     });
 
-    const cashFromOperations = netProfit + depreciation - increaseInventory - increaseReceivables + increasePayables;
-    const cashFromInvesting = -purchasePPE;
-    const cashFromFinancing = loansReceived - loansRepaid + capitalIssued - dividendsPaid;
-    const netChangeInCash = cashFromOperations + cashFromInvesting + cashFromFinancing;
-
     return {
-      operatingActivities: {
+      operating: {
         netProfit,
-        adjustments: {
-          depreciation,
-          workingCapital: {
-            increaseInventory,
-            increaseReceivables,
-            increasePayables,
-          },
-        },
-        total: cashFromOperations,
+        depreciation,
+        workingCapitalChanges: increasePayables - increaseInventory - increaseReceivables,
+        netCashFromOperating: netProfit + depreciation + (increasePayables - increaseInventory - increaseReceivables),
       },
-      investingActivities: {
+      investing: {
         purchasePPE,
-        total: cashFromInvesting,
+        netCashFromInvesting: -purchasePPE,
       },
-      financingActivities: {
+      financing: {
         loansReceived,
         loansRepaid,
         capitalIssued,
         dividendsPaid,
-        total: cashFromFinancing,
+        netCashFromFinancing: loansReceived - loansRepaid + capitalIssued - dividendsPaid,
       },
-      netChangeInCash,
+      netChangeInCash:
+        (netProfit + depreciation + (increasePayables - increaseInventory - increaseReceivables)) -
+        purchasePPE +
+        (loansReceived - loansRepaid + capitalIssued - dividendsPaid),
     };
-  };
-
-  const getBankBalance = () => {
-    // Best-effort: use current cash & equivalents from balances.
-    return getBalanceSheetData(new Date()).assets.current.cashAndEquivalents;
-  };
-
-  const getDepreciationExpense = (startDate: Date, endDate: Date) => {
-    const accountMap = new Map(accountBalances.map((b) => [b.account_id, b]));
-    let depreciation = 0;
-
-    entries.forEach((entry) => {
-      if (entry.status !== "posted") return;
-
-      const entryDate = new Date(entry.date);
-      if (entryDate < startDate || entryDate > endDate) return;
-
-      entry.lines.forEach((line: any) => {
-        const account = accountMap.get(line.accountId);
-        if (!account) return;
-
-        const isDepreciation =
-          account.subtype === "depreciation" || account.name.toLowerCase().includes("depreciation");
-
-        if (!isDepreciation) return;
-
-        depreciation += Number(line.debit) - Number(line.credit);
-      });
-    });
-
-    return depreciation;
-  };
+  }, [entries, accountBalances]);
 
   return {
     entries,
@@ -427,12 +412,9 @@ export const useFinancialData = () => {
     assets,
     loading,
     error,
+    fetchFinancialData,
     getIncomeStatementData,
     getBalanceSheetData,
     getCashFlowStatementData,
-    getBankBalance,
-    getDepreciationExpense,
-    refresh: fetchFinancialData,
   };
 };
-

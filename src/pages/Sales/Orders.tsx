@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import { useSalesDocuments, useCustomers } from "@/hooks/useSalesData";
 import { SalesDocumentForm } from "@/components/Sales/SalesDocumentForm";
 import { Plus, FileText, Eye, ArrowRight } from "lucide-react";
@@ -95,10 +96,12 @@ const SalesOrders = () => {
             <h1 className="text-3xl font-bold">Sales Orders</h1>
             <p className="text-muted-foreground">Manage received orders and convert to invoices</p>
           </div>
-          <Button onClick={handleCreateOrder}>
-            <Plus className="h-4 w-4 mr-2" />
-            Receive Order
-          </Button>
+          <PermissionGuard action="create" resource="orders">
+            <Button onClick={handleCreateOrder}>
+              <Plus className="h-4 w-4 mr-2" />
+              Receive Order
+            </Button>
+          </PermissionGuard>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -139,10 +142,12 @@ const SalesOrders = () => {
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
                 <p className="text-muted-foreground mb-4">Receive your first order to get started</p>
-                <Button onClick={handleCreateOrder}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Receive Order
-                </Button>
+                <PermissionGuard action="create" resource="orders">
+                  <Button onClick={handleCreateOrder}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Receive Order
+                  </Button>
+                </PermissionGuard>
               </div>
             ) : (
               <Table>
@@ -176,14 +181,16 @@ const SalesOrders = () => {
                             <Eye className="h-4 w-4" />
                           </Button>
                           {order.status === 'draft' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              title="Convert to Invoice"
-                              onClick={() => handleConvertToInvoice(order)}
-                            >
-                              <ArrowRight className="h-4 w-4" />
-                            </Button>
+                            <PermissionGuard action="create" resource="invoices">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="Convert to Invoice"
+                                onClick={() => handleConvertToInvoice(order)}
+                              >
+                                <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
                           )}
                         </div>
                       </TableCell>

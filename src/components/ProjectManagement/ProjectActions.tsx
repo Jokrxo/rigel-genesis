@@ -19,6 +19,7 @@ import {
   Plus
 } from "lucide-react";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface Project {
   id: string;
@@ -105,10 +106,12 @@ export const ProjectActions = ({
           Export JSON
         </Button>
         {onCreateNew && (
-          <Button onClick={onCreateNew}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Project
-          </Button>
+          <PermissionGuard action="create" resource="projects">
+            <Button onClick={onCreateNew}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+          </PermissionGuard>
         )}
       </div>
     );
@@ -133,10 +136,12 @@ export const ProjectActions = ({
           </DropdownMenuItem>
         )}
         {onEdit && (
-          <DropdownMenuItem onClick={() => onEdit(project)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Project
-          </DropdownMenuItem>
+          <PermissionGuard action="edit" resource="projects">
+            <DropdownMenuItem onClick={() => onEdit(project)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Project
+            </DropdownMenuItem>
+          </PermissionGuard>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem>
@@ -153,13 +158,15 @@ export const ProjectActions = ({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {onDelete && (
-          <DropdownMenuItem 
-            onClick={() => onDelete(project.id)}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete Project
-          </DropdownMenuItem>
+          <PermissionGuard action="delete" resource="projects">
+            <DropdownMenuItem 
+              onClick={() => onDelete(project.id)}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Project
+            </DropdownMenuItem>
+          </PermissionGuard>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

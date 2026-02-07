@@ -35,7 +35,7 @@ const receiptSchema = z.object({
   receipt_date: z.string().min(1, "Date is required"),
   customer_id: z.string().min(1, "Customer is required"),
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
-  payment_method: z.enum(['cash', 'bank_transfer', 'card', 'cheque']),
+  payment_method: z.enum(['cash', 'bank_transfer', 'card', 'cheque', 'other']),
   reference: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -102,10 +102,6 @@ export const ReceiptForm = ({ customers, invoices = [], onSubmit, onCancel }: Re
       delete newAllocations[invoiceId];
     }
     setAllocations(newAllocations);
-    
-    // Optional: Update total amount to match sum of allocations?
-    // Let's NOT do that automatically to allow "Credit on Account", 
-    // but maybe show a warning or hint.
   };
 
   const totalAllocated = Object.values(allocations).reduce((sum, val) => sum + val, 0);
@@ -116,14 +112,25 @@ export const ReceiptForm = ({ customers, invoices = [], onSubmit, onCancel }: Re
   }, [selectedCustomerId]);
 
   const handleSubmit = async (formData: z.infer<typeof receiptSchema>) => {
+    if (totalAllocated > formData.amount) {
+      form.setError("amount", { 
+        type: "manual", 
+        message: "Allocated amount cannot exceed receipt amount" 
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Convert allocations map to array
-      const allocationArray = Object.entries(allocations).map(([invoice_id, amount]) => ({
-        invoice_id,
-        invoice_number: "",
-        amount_applied: amount,
-      }));
+      // Convert allocations map to array matching ReceiptAllocation interface
+      const allocationArray = Object.entries(allocations).map(([invoice_id, amount]) => {
+        const invoice = outstandingInvoices.find(inv => inv.id === invoice_id);
+        return {
+          invoice_id,
+          invoice_number: invoice?.document_number || '',
+          amount_applied: amount
+        };
+      });
 
       await onSubmit({
         receipt_date: formData.receipt_date,
@@ -213,6 +220,7 @@ export const ReceiptForm = ({ customers, invoices = [], onSubmit, onCancel }: Re
                     <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
                     <SelectItem value="card">Card</SelectItem>
                     <SelectItem value="cheque">Cheque</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

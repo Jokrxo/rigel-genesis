@@ -84,11 +84,6 @@ const RatingModalContent = ({ isOpen, onOpenChange }: RatingModalContentProps) =
         console.warn("Could not save rating to backend:", error);
       }
 
-      // Mark as rated locally
-      if (user?.id) {
-        localStorage.setItem(`user_rated_${user.id}`, "true");
-      }
-      
       toast({ title: "Thank you!", description: "We appreciate your feedback." });
       onOpenChange(false);
       

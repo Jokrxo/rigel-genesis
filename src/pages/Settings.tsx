@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings as SettingsIcon, Bell, Shield, Palette, Globe, Sun, Moon, Monitor } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Shield, Palette, Globe, Sun, Moon, Monitor, Loader2 } from "lucide-react";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -15,12 +16,79 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage, Language } from "@/hooks/useLanguage";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import globe from "@/assets/globe.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { UserManagement } from "@/components/Settings/UserManagement";
+import { Users } from "lucide-react";
 
 const Settings = () => {
   const { mode, setMode } = useTheme();
   const { language, setLanguage } = useLanguage();
   const [timezone, setTimezone] = useLocalStorage<string>('app-timezone', 'africa/johannesburg');
   const [currency, setCurrency] = useLocalStorage<string>('app-currency', 'zar');
+  const { toast } = useToast();
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all password fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setUpdatingPassword(true);
+      
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Password updated successfully",
+      });
+      
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
 
   return (
     <MainLayout>
@@ -33,7 +101,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <SettingsIcon className="h-4 w-4" />
               General
@@ -41,6 +109,10 @@ const Settings = () => {
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
               Notifications
+            </TabsTrigger>
+            <TabsTrigger value="team" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Team
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -157,6 +229,10 @@ const Settings = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="team">
+            <UserManagement />
+          </TabsContent>
+
           <TabsContent value="security">
             <Card>
               <CardHeader>
@@ -168,18 +244,39 @@ const Settings = () => {
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <Input id="current-password" type="password" />
+                    <Label htmlFor="current-password">Current Password (Optional)</Label>
+                    <Input 
+                      id="current-password" 
+                      type="password" 
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password"
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="new-password">New Password</Label>
-                    <Input id="new-password" type="password" />
+                    <Input 
+                      id="new-password" 
+                      type="password" 
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="confirm-password">Confirm New Password</Label>
-                    <Input id="confirm-password" type="password" />
+                    <Input 
+                      id="confirm-password" 
+                      type="password" 
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                    />
                   </div>
-                  <Button>Update Password</Button>
+                  <Button onClick={handleUpdatePassword} disabled={updatingPassword}>
+                    {updatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {updatingPassword ? "Updating..." : "Update Password"}
+                  </Button>
                 </div>
                 <div className="space-y-4 pt-4 border-t">
                   <div className="flex items-center justify-between">

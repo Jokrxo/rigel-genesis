@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { supabase } from "@/integrations/supabase/client";
+import { auditLogger } from "@/lib/audit-logger";
 
 interface Employee {
   id: string;
@@ -80,15 +82,104 @@ const PayrollManagement = () => {
   });
   const { toast } = useToast();
 
-  const fetchEmployees = useCallback(() => {
-    // This would be replaced with actual API call
-    setEmployees([]);
-  }, []);
+  const getCompanyId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+      
+    return data?.company_id;
+  };
 
-  const fetchPayrollEntries = useCallback(() => {
-    // This would be replaced with actual API call
-    setPayrollEntries([]);
-  }, []);
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const companyId = await getCompanyId();
+      if (!companyId) return;
+
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedEmployees: Employee[] = (data || []).map(emp => ({
+        id: emp.id,
+        employeeNumber: emp.employee_number || `EMP-${emp.id.substring(0, 4)}`,
+        firstName: emp.first_name,
+        lastName: emp.last_name,
+        email: emp.email || '',
+        phone: emp.phone || '',
+        position: emp.position || '',
+        department: emp.department || '',
+        hireDate: emp.hire_date || '',
+        grossSalary: Number(emp.salary || 0),
+        taxNumber: emp.tax_number || '',
+        bankAccount: emp.bank_account_number || '',
+        status: emp.is_active ? 'active' : 'inactive'
+      }));
+
+      setEmployees(mappedEmployees);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch employees",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  const fetchPayrollEntries = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const companyId = await getCompanyId();
+      if (!companyId) return;
+
+      const { data, error } = await supabase
+        .from('payroll_entries')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('processed_date', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedEntries: PayrollEntry[] = (data || []).map(entry => ({
+        id: entry.id,
+        employeeId: entry.employee_id,
+        payPeriod: entry.pay_period,
+        grossSalary: Number(entry.gross_salary),
+        basicSalary: Number(entry.basic_salary),
+        allowances: Number(entry.allowances),
+        overtimePay: Number(entry.overtime_pay),
+        payeTax: Number(entry.paye_tax),
+        uif: Number(entry.uif),
+        medicalAid: Number(entry.medical_aid),
+        pensionFund: Number(entry.pension_fund),
+        netSalary: Number(entry.net_salary),
+        processedDate: entry.processed_date
+      }));
+
+      setPayrollEntries(mappedEntries);
+    } catch (error) {
+      console.error('Error fetching payroll:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch payroll entries",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   const generatePayslips = useCallback(() => {
     // Generate payslips from payroll entries
@@ -153,57 +244,89 @@ const PayrollManagement = () => {
     return Math.min(grossSalary * 0.01, 177.12);
   };
 
-  const handlePayrollSubmit = (e: React.FormEvent) => {
+  const handlePayrollSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const employee = employees.find(emp => emp.id === payrollForm.employeeId);
-    if (!employee) return;
+    try {
+      const employee = employees.find(emp => emp.id === payrollForm.employeeId);
+      if (!employee) return;
 
-    const basicSalary = parseFloat(payrollForm.basicSalary);
-    const allowances = parseFloat(payrollForm.allowances) || 0;
-    const overtimePay = parseFloat(payrollForm.overtimePay) || 0;
-    const grossSalary = basicSalary + allowances + overtimePay;
-    
-    const payeTax = calculateSouthAfricanTax(grossSalary);
-    const uif = calculateUIF(grossSalary);
-    const medicalAid = parseFloat(payrollForm.medicalAid) || 0;
-    const pensionFund = parseFloat(payrollForm.pensionFund) || 0;
-    
-    const totalDeductions = payeTax + uif + medicalAid + pensionFund;
-    const netSalary = grossSalary - totalDeductions;
+      const companyId = await getCompanyId();
+      if (!companyId) throw new Error("Company not found");
 
-    const newPayrollEntry: PayrollEntry = {
-      id: Date.now().toString(),
-      employeeId: payrollForm.employeeId,
-      payPeriod: payrollForm.payPeriod,
-      grossSalary,
-      basicSalary,
-      allowances,
-      overtimePay,
-      payeTax,
-      uif,
-      medicalAid,
-      pensionFund,
-      netSalary,
-      processedDate: new Date().toISOString().split('T')[0],
-    };
-    
-    setPayrollEntries([...payrollEntries, newPayrollEntry]);
-    setPayrollForm({
-      employeeId: "",
-      payPeriod: "",
-      basicSalary: "",
-      allowances: "",
-      overtimePay: "",
-      medicalAid: "",
-      pensionFund: "",
-    });
-    setShowPayrollForm(false);
-    generatePayslips();
-    
-    toast({
-      title: "Success",
-      description: "Payroll processed successfully",
-    });
+      const basicSalary = parseFloat(payrollForm.basicSalary);
+      const allowances = parseFloat(payrollForm.allowances) || 0;
+      const overtimePay = parseFloat(payrollForm.overtimePay) || 0;
+      const grossSalary = basicSalary + allowances + overtimePay;
+      
+      const payeTax = calculateSouthAfricanTax(grossSalary);
+      const uif = calculateUIF(grossSalary);
+      const medicalAid = parseFloat(payrollForm.medicalAid) || 0;
+      const pensionFund = parseFloat(payrollForm.pensionFund) || 0;
+      
+      const totalDeductions = payeTax + uif + medicalAid + pensionFund;
+      const netSalary = grossSalary - totalDeductions;
+
+      const payrollData = {
+        company_id: companyId,
+        employee_id: payrollForm.employeeId,
+        pay_period: payrollForm.payPeriod,
+        gross_salary: grossSalary,
+        basic_salary: basicSalary,
+        allowances: allowances,
+        overtime_pay: overtimePay,
+        paye_tax: payeTax,
+        uif: uif,
+        medical_aid: medicalAid,
+        pension_fund: pensionFund,
+        net_salary: netSalary,
+        processed_date: new Date().toISOString().split('T')[0]
+      };
+
+      const { data: newPayroll, error } = await supabase
+        .from('payroll_entries')
+        .insert([payrollData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (newPayroll) {
+        await auditLogger.log({
+          action: 'PROCESS_PAYROLL',
+          entityType: 'payroll_entry',
+          entityId: newPayroll.id,
+          details: { 
+            employeeId: payrollForm.employeeId, 
+            payPeriod: payrollForm.payPeriod,
+            netSalary: netSalary
+          }
+        });
+      }
+      
+      fetchPayrollEntries();
+      setPayrollForm({
+        employeeId: "",
+        payPeriod: "",
+        basicSalary: "",
+        allowances: "",
+        overtimePay: "",
+        medicalAid: "",
+        pensionFund: "",
+      });
+      setShowPayrollForm(false);
+      
+      toast({
+        title: "Success",
+        description: "Payroll processed successfully",
+      });
+    } catch (error) {
+      console.error('Error processing payroll:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process payroll",
+        variant: "destructive",
+      });
+    }
   };
 
   const getFilteredPayroll = () => {

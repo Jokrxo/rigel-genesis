@@ -33,7 +33,13 @@ export const FinancialOverview = () => {
     operatingExpenses: 0,
     bankBalance: 0,
     netProfit: 0,
-    totalRevenue: 0
+    totalRevenue: 0,
+    changes: {
+      assets: 0,
+      liabilities: 0,
+      equity: 0,
+      expenses: 0
+    }
   });
 
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -44,10 +50,23 @@ export const FinancialOverview = () => {
     const fetchData = async () => {
       const today = new Date();
       const startOfYear = new Date(today.getFullYear(), 0, 1);
+      const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      const startOfLastYear = new Date(today.getFullYear() - 1, 0, 1);
+      const endOfLastYearSamePeriod = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
       
       const balanceSheet = getBalanceSheetData(today);
+      const previousBalanceSheet = getBalanceSheetData(lastMonthDate);
+      
       const incomeStatement = getIncomeStatementData(startOfYear, today);
+      const previousIncomeStatement = getIncomeStatementData(startOfLastYear, endOfLastYearSamePeriod);
+      
       const currentBankBalance = getBankBalance();
+
+      // Calculate percentage changes
+      const calculateChange = (current: number, previous: number) => {
+        if (previous === 0) return current === 0 ? 0 : 100;
+        return ((current - previous) / previous) * 100;
+      };
 
       setFinancialMetrics({
         totalAssets: balanceSheet.assets.total,
@@ -56,7 +75,13 @@ export const FinancialOverview = () => {
         operatingExpenses: incomeStatement.expenses,
         bankBalance: currentBankBalance,
         netProfit: incomeStatement.netProfit,
-        totalRevenue: incomeStatement.revenue
+        totalRevenue: incomeStatement.revenue,
+        changes: {
+          assets: calculateChange(balanceSheet.assets.total, previousBalanceSheet.assets.total),
+          liabilities: calculateChange(balanceSheet.liabilities.total, previousBalanceSheet.liabilities.total),
+          equity: calculateChange(balanceSheet.equity.total, previousBalanceSheet.equity.total),
+          expenses: calculateChange(incomeStatement.expenses, previousIncomeStatement.expenses)
+        }
       });
 
       // Generate Monthly Data (Last 6 months)
@@ -77,18 +102,28 @@ export const FinancialOverview = () => {
       }
       setMonthlyData(months);
       
-      // Placeholder breakdown data (In a real app, this would be fetched from GL categories)
-      setExpenseBreakdown([
-          { name: "Rent", value: incomeStatement.expenses * 0.3, color: "#0088FE" },
-          { name: "Salaries", value: incomeStatement.expenses * 0.4, color: "#00C49F" },
-          { name: "Utilities", value: incomeStatement.expenses * 0.1, color: "#FFBB28" },
-          { name: "Marketing", value: incomeStatement.expenses * 0.1, color: "#FF8042" },
-          { name: "Other", value: incomeStatement.expenses * 0.1, color: "#8884d8" },
+      // Use real expense breakdown from financial data
+      const expensesData = Object.entries(incomeStatement.expensesByCategory).map(([name, value], index) => {
+        const colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d", "#ffc658", "#8dd1e1"];
+        return {
+          name,
+          value,
+          color: colors[index % colors.length]
+        };
+      }).sort((a, b) => b.value - a.value); // Sort by highest expense
+
+      setExpenseBreakdown(expensesData.length > 0 ? expensesData : [
+        { name: "No Data", value: 1, color: "#e5e7eb" }
       ]);
       
-      setIncomeBreakdown([
-          { name: "Sales", value: incomeStatement.revenue * 0.8, color: "#8884d8" },
-          { name: "Services", value: incomeStatement.revenue * 0.2, color: "#82ca9d" },
+      // Use real income breakdown
+      const incomeData = [
+        { name: "Sales Revenue", value: incomeStatement.revenue, color: "#8884d8" },
+        { name: "Other Income", value: incomeStatement.otherIncome, color: "#82ca9d" },
+      ].filter(item => item.value > 0);
+
+      setIncomeBreakdown(incomeData.length > 0 ? incomeData : [
+        { name: "No Data", value: 1, color: "#e5e7eb" }
       ]);
     };
 
@@ -167,25 +202,25 @@ export const FinancialOverview = () => {
         <StatCard
           title="Total Assets"
           value={`R ${financialMetrics.totalAssets.toLocaleString()}`}
-          change={0}
+          change={financialMetrics.changes.assets}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
           title="Total Liabilities"
           value={`R ${financialMetrics.totalLiabilities.toLocaleString()}`}
-          change={0}
+          change={financialMetrics.changes.liabilities}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
           title="Total Equity"
           value={`R ${financialMetrics.totalEquity.toLocaleString()}`}
-          change={0}
+          change={financialMetrics.changes.equity}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
         <StatCard
           title="Operating Expenses"
           value={`R ${financialMetrics.operatingExpenses.toLocaleString()}`}
-          change={0}
+          change={financialMetrics.changes.expenses}
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
          <StatCard

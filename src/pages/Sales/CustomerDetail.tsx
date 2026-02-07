@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useCustomers, useCustomerAging, useSalesDocuments, useReceipts } from "@/hooks/useSalesData";
+import { CustomerStatement } from "@/components/Sales/CustomerStatement";
 import { 
   ArrowLeft, 
   FileText, 
@@ -97,6 +99,24 @@ const CustomerDetail = () => {
               <Receipt className="h-4 w-4 mr-2" />
               Record Payment
             </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Statement
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                {customer && (
+                  <CustomerStatement 
+                    customerId={customer.id} 
+                    customerName={customer.name}
+                    customerCode={customer.customer_code}
+                    address={`${customer.billing_address.street}, ${customer.billing_address.city}`}
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierFormFields } from "./SupplierFormFields";
+import { auditLogger } from "@/lib/audit-logger";
 
 const supplierSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -129,6 +130,18 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      const company_id = profile?.company_id;
+
+      if (!company_id) {
+        throw new Error("Company ID not found for user");
+      }
+
       if (editingSupplier) {
         const { error } = await (supabase
           .from("suppliers") as any)
@@ -139,12 +152,20 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
           .eq('id', editingSupplier.id);
 
         if (error) throw error;
+
+        await auditLogger.log({
+          action: 'UPDATE_SUPPLIER',
+          entityType: 'supplier',
+          entityId: editingSupplier.id,
+          details: { updates: data }
+        });
+
         toast({
           title: "Success",
           description: "Supplier updated successfully",
         });
       } else {
-        const { error } = await (supabase
+        const { data: newSupplier, error } = await (supabase
           .from("suppliers") as any)
           .insert([{
             name: data.name,
@@ -163,9 +184,22 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
             status: data.status || "active",
             notes: data.notes || null,
             user_id: user.id,
-          }]);
+            company_id: company_id
+          }])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        if (newSupplier) {
+          await auditLogger.log({
+            action: 'CREATE_SUPPLIER',
+            entityType: 'supplier',
+            entityId: newSupplier.id,
+            details: { name: newSupplier.name, company: newSupplier.company }
+          });
+        }
+
         toast({
           title: "Success",
           description: "Supplier created successfully",

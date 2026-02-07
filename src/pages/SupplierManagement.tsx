@@ -12,6 +12,7 @@ import { SupplierHeader } from "@/components/SupplierManagement/SupplierHeader";
 import { SupplierSearch } from "@/components/SupplierManagement/SupplierSearch";
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { Chatbot } from "@/components/Shared/Chatbot";
+import { auditLogger } from "@/lib/audit-logger";
 
 // Define the Supplier type matching the one used in other components
 interface LocalSupplier {
@@ -57,9 +58,24 @@ const SupplierManagement = () => {
   const fetchSuppliers = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await (supabase
-        .from('suppliers') as any)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+         .from('profiles')
+         .select('company_id')
+         .eq('user_id', user.id)
+         .single();
+
+      if (!profile?.company_id) {
+        console.error('No company ID found for user');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('suppliers')
         .select('*')
+        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -138,6 +154,13 @@ const SupplierManagement = () => {
         .eq('id', deletingSupplier.id);
 
       if (error) throw error;
+
+      await auditLogger.log({
+        action: 'DELETE_SUPPLIER',
+        entityType: 'supplier',
+        entityId: deletingSupplier.id,
+        details: { name: deletingSupplier.name, company: deletingSupplier.company }
+      });
 
       setSuppliers(prev => prev.filter(s => s.id !== deletingSupplier.id));
       
