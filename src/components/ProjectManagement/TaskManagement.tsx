@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { auditLogger } from "@/lib/audit-logger";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface Task {
   id: string;
@@ -274,10 +275,12 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
           <h3 className="text-lg font-semibold">Tasks for {projectName}</h3>
           <p className="text-sm text-muted-foreground">{tasks.length} tasks</p>
         </div>
-        <Button onClick={() => setShowTaskForm(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Task
-        </Button>
+        <PermissionGuard action="create" resource="projects">
+          <Button onClick={() => setShowTaskForm(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Task
+          </Button>
+        </PermissionGuard>
       </div>
 
       {showTaskForm && (
@@ -450,12 +453,16 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
                       <TableCell>{task.actualHours}h</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(task)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(task.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <PermissionGuard action="edit" resource="projects">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(task)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard action="delete" resource="projects">
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(task.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
                         </div>
                       </TableCell>
                     </TableRow>

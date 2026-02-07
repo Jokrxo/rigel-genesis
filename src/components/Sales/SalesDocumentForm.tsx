@@ -180,6 +180,18 @@ export const SalesDocumentForm = ({
     }
   };
 
+  const resource = useMemo(() => {
+    switch (documentType) {
+      case 'quotation': return 'quotes';
+      case 'sales_order': return 'orders';
+      case 'invoice': return 'invoices';
+      case 'credit_note': return 'credit_notes';
+      default: return 'invoices';
+    }
+  }, [documentType]);
+
+  const action = initialData ? 'edit' : 'create';
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
