@@ -16,14 +16,15 @@ export const useRBAC = () => {
         return;
       }
 
-      const { data } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
         .from('profiles')
         .select('role')
         .eq('user_id', user.id)
         .single();
 
       if (data) {
-        setRole(data.role as AppRole);
+        setRole((data.role || 'viewer') as AppRole);
       }
       setLoading(false);
     };

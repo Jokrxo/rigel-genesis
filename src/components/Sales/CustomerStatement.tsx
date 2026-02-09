@@ -6,6 +6,9 @@ import { getCompanyId } from "@/lib/company-auth";
 import { format } from "date-fns";
 import { Loader2, Printer } from "lucide-react";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
 interface StatementTransaction {
   id: string;
   date: string;
@@ -33,10 +36,6 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
   );
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
-    fetchStatementData();
-  }, [fetchStatementData]);
-
   const fetchStatementData = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,18 +43,18 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
       if (!companyId) return;
 
       // Fetch Invoices
-      const { data: invoices } = await supabase
+      const { data: invoices } = await db
         .from('sales_documents')
         .select('*')
         .eq('company_id', companyId)
         .eq('customer_id', customerId)
         .eq('document_type', 'invoice')
-        .eq('status', 'posted') // Only posted invoices
-        .gte('document_date', startDate)
-        .lte('document_date', endDate);
+        .eq('status', 'posted')
+        .gte('issue_date', startDate)
+        .lte('issue_date', endDate);
 
       // Fetch Receipts
-      const { data: receipts } = await supabase
+      const { data: receipts } = await db
         .from('receipts')
         .select('*')
         .eq('company_id', companyId)
@@ -64,34 +63,36 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
         .lte('receipt_date', endDate);
         
       // Fetch Credit Notes
-      const { data: creditNotes } = await supabase
+      const { data: creditNotes } = await db
         .from('sales_documents')
         .select('*')
         .eq('company_id', companyId)
         .eq('customer_id', customerId)
         .eq('document_type', 'credit_note')
         .eq('status', 'posted')
-        .gte('document_date', startDate)
-        .lte('document_date', endDate);
+        .gte('issue_date', startDate)
+        .lte('issue_date', endDate);
 
       const combinedTransactions: StatementTransaction[] = [];
 
       // Add Invoices
-      (invoices || []).forEach(inv => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invoices || []).forEach((inv: any) => {
         combinedTransactions.push({
           id: inv.id,
-          date: inv.document_date,
+          date: inv.issue_date,
           type: 'invoice',
           reference: inv.document_number,
           description: `Invoice #${inv.document_number}`,
-          debit: inv.grand_total,
+          debit: inv.total_amount || 0,
           credit: 0,
           balance: 0
         });
       });
 
       // Add Receipts
-      (receipts || []).forEach(rec => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (receipts || []).forEach((rec: any) => {
         combinedTransactions.push({
           id: rec.id,
           date: rec.receipt_date,
@@ -105,15 +106,16 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
       });
       
       // Add Credit Notes
-      (creditNotes || []).forEach(cn => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (creditNotes || []).forEach((cn: any) => {
         combinedTransactions.push({
           id: cn.id,
-          date: cn.document_date,
+          date: cn.issue_date,
           type: 'credit_note',
           reference: cn.document_number,
           description: `Credit Note #${cn.document_number}`,
           debit: 0,
-          credit: cn.grand_total,
+          credit: cn.total_amount || 0,
           balance: 0
         });
       });
@@ -121,52 +123,46 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
       // Sort by date
       combinedTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      // Calculate running balance
-      // Get opening balance (this is a simplified version, ideally we'd fetch balance before start date)
-      // For now, we assume 0 opening balance or we should fetch it.
-      // To be accurate, we should fetch "opening balance" from previous transactions.
-      
-      // Fetch opening balance logic (simplified: sum of all previous transactions)
-      // This is expensive, so for this iteration, let's just calculate balance within the period + fetch previous balance if possible.
-      // Or just start from 0 for the view if no date filter is "all time".
-      
-      // Let's implement a quick opening balance fetch
-      const { data: prevInvoices } = await supabase
+      // Fetch opening balance
+      const { data: prevInvoices } = await db
         .from('sales_documents')
-        .select('grand_total')
+        .select('total_amount')
         .eq('company_id', companyId)
         .eq('customer_id', customerId)
         .eq('document_type', 'invoice')
         .eq('status', 'posted')
-        .lt('document_date', startDate);
+        .lt('issue_date', startDate);
         
-      const { data: prevReceipts } = await supabase
+      const { data: prevReceipts } = await db
         .from('receipts')
         .select('amount')
         .eq('company_id', companyId)
         .eq('customer_id', customerId)
         .lt('receipt_date', startDate);
         
-      const { data: prevCN } = await supabase
+      const { data: prevCN } = await db
         .from('sales_documents')
-        .select('grand_total')
+        .select('total_amount')
         .eq('company_id', companyId)
         .eq('customer_id', customerId)
         .eq('document_type', 'credit_note')
         .eq('status', 'posted')
-        .lt('document_date', startDate);
+        .lt('issue_date', startDate);
         
-      const prevDebit = (prevInvoices || []).reduce((sum, i) => sum + i.grand_total, 0);
-      const prevCredit = (prevReceipts || []).reduce((sum, r) => sum + r.amount, 0) + (prevCN || []).reduce((sum, c) => sum + c.grand_total, 0);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prevDebit = (prevInvoices || []).reduce((sum: number, i: any) => sum + (i.total_amount || 0), 0);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prevCredit = (prevReceipts || []).reduce((sum: number, r: any) => sum + (r.amount || 0), 0) + 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (prevCN || []).reduce((sum: number, c: any) => sum + (c.total_amount || 0), 0);
       
       let runningBalance = prevDebit - prevCredit;
       
-      // Add opening balance row
       const finalTransactions = [
         {
           id: 'opening',
           date: startDate,
-          type: 'invoice' as const, // dummy type
+          type: 'invoice' as const,
           reference: '-',
           description: 'Opening Balance',
           debit: runningBalance > 0 ? runningBalance : 0,
@@ -186,6 +182,10 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
       setLoading(false);
     }
   }, [customerId, startDate, endDate]);
+
+  useEffect(() => {
+    fetchStatementData();
+  }, [fetchStatementData]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
@@ -238,7 +238,6 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
               </div>
             </div>
             <div className="text-right">
-              {/* Company details would typically come from a context or props */}
               <h3 className="font-semibold text-lg mb-2">From:</h3>
               <div className="text-sm space-y-1">
                 <p className="font-medium">My Company Name</p>
@@ -263,13 +262,13 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
                     <th className="px-4 py-3 text-right">Debit</th>
                     <th className="px-4 py-3 text-right">Credit</th>
                     <th className="px-4 py-3 text-right rounded-r-lg">Balance</th>
-                  ,</tr>
+                  </tr>
                 </thead>
                 <tbody>
                   {transactions.map((t) => (
                     <tr key={t.id} className="border-b hover:bg-muted/50">
                       <td className="px-4 py-3 font-medium">
-                        {t.id === 'opening' ? format(new Date(t.date), 'dd MMM yyyy') : format(new Date(t.date), 'dd MMM yyyy')}
+                        {format(new Date(t.date), 'dd MMM yyyy')}
                       </td>
                       <td className="px-4 py-3">{t.reference}</td>
                       <td className="px-4 py-3">{t.description}</td>
@@ -286,9 +285,7 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
                   ))}
                   <tr className="bg-muted/20 font-bold">
                     <td colSpan={3} className="px-4 py-3 text-right">Total Outstanding</td>
-                    <td className="px-4 py-3 text-right">
-                      {/* Only showing balance */}
-                    </td>
+                    <td className="px-4 py-3 text-right"></td>
                     <td className="px-4 py-3 text-right"></td>
                     <td className="px-4 py-3 text-right text-lg">
                       {transactions.length > 0 ? formatCurrency(transactions[transactions.length - 1].balance) : formatCurrency(0)}

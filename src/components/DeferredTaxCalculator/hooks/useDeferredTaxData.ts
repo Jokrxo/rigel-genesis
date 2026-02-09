@@ -25,7 +25,7 @@ export const useDeferredTaxData = () => {
       return;
     }
 
-    setCountries(data || []);
+    setCountries((data || []) as unknown as Country[]);
   }, [toast]);
 
   const fetchProjects = useCallback(async () => {
@@ -47,7 +47,7 @@ export const useDeferredTaxData = () => {
       return;
     }
 
-    setProjects((data || []) as DeferredTaxProject[]);
+    setProjects((data || []) as unknown as DeferredTaxProject[]);
   }, [toast]);
 
   const createProject = async (projectData: Omit<DeferredTaxProject, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
@@ -89,7 +89,7 @@ export const useDeferredTaxData = () => {
     });
 
     await fetchProjects();
-    return data as DeferredTaxProject;
+    return data as unknown as DeferredTaxProject;
   };
 
   const updateProject = async (id: string, updates: Partial<DeferredTaxProject>) => {

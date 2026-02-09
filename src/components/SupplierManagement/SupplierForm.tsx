@@ -130,7 +130,8 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('company_id')
         .eq('user_id', user.id)

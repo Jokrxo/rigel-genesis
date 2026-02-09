@@ -1,6 +1,8 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useCallback } from "react";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase: any = supabaseClient;
 import { useToast } from "@/hooks/use-toast";
 import { useRBAC } from "@/hooks/useRBAC";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, UserPlus, Shield, Mail } from "lucide-react";
-import { AppRole } from "@/types/rbac";
+
+type AppRole = 'admin' | 'manager' | 'accountant' | 'viewer';
 
 interface UserProfile {
   id: string;
@@ -33,7 +36,8 @@ export const UserManagement = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: currentUserProfile } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: currentUserProfile } = await (supabase as any)
         .from('profiles')
         .select('company_id')
         .eq('user_id', user.id)
@@ -41,15 +45,8 @@ export const UserManagement = () => {
 
       if (!currentUserProfile?.company_id) return;
 
-      // We need to fetch profiles and ideally emails.
-      // Since we can't directly join auth.users easily in all setups,
-      // we'll try to fetch profiles first. 
-      // If your project syncs emails to profiles, use that. 
-      // Otherwise we might only show names.
-      // For this implementation, we'll try to select user data if relation exists, 
-      // or just show profile data.
-      
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from('profiles')
         .select('*')
         .eq('company_id', currentUserProfile.company_id)
@@ -57,10 +54,7 @@ export const UserManagement = () => {
 
       if (error) throw error;
 
-      // For now, we'll just use the profile data. 
-      // In a real production app with Supabase, you'd typically have a Secure View for users 
-      // or a trigger that copies email to public.profiles.
-      setUsers(data as UserProfile[]);
+      setUsers((data || []) as unknown as UserProfile[]);
 
     } catch (error) {
       console.error('Error fetching users:', error);

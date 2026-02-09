@@ -2,7 +2,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { THEMES, ThemeName, ThemeMode, ThemePalette } from '@/constants/theme';
+import { THEMES } from '@/constants/theme';
+import type { ThemeName, ThemeMode, ThemePalette } from '@/constants/theme';
+
+// Re-export for consumers
+export { THEMES };
+export type { ThemeName, ThemeMode, ThemePalette };
 
 interface ThemeContextType {
   theme: ThemeName;
