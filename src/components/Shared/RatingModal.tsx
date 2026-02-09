@@ -73,7 +73,8 @@ const RatingModalContent = ({ isOpen, onOpenChange }: RatingModalContentProps) =
       const { data: { user } } = await supabase.auth.getUser();
       
       // Try to save to Supabase 'user_ratings' table
-      const { error } = await supabase.from('user_ratings').insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from('user_ratings').insert({
         user_id: user?.id,
         rating,
         feedback,

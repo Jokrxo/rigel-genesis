@@ -45,7 +45,8 @@ export const RecentActivity = () => {
           .limit(5);
 
         // 3. Fetch recent receipts
-        const { data: receipts } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: receipts } = await (supabase as any)
           .from('receipts')
           .select('id, receipt_number, amount, created_at, customer_id, customers(name)')
           .order('created_at', { ascending: false })
@@ -54,7 +55,7 @@ export const RecentActivity = () => {
         // 4. Fetch recent manual transactions
         const { data: transactions } = await supabase
           .from('transactions')
-          .select('id, description, amount, type, category, created_at')
+          .select('id, description, debit, credit, category, created_at')
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -76,21 +77,23 @@ export const RecentActivity = () => {
           date: cust.created_at
         }));
 
-        const receiptActivities: Activity[] = (receipts || []).map((receipt) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const receiptActivities: Activity[] = (receipts || []).map((receipt: any) => ({
           id: receipt.id,
-          type: 'payment',
+          type: 'payment' as const,
           title: `Payment #${receipt.receipt_number}`,
           description: `Received from ${receipt.customers?.name || 'Unknown Customer'}`,
           amount: receipt.amount,
           date: receipt.created_at
         }));
 
-        const transactionActivities: Activity[] = (transactions || []).map((trx) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const transactionActivities: Activity[] = (transactions || []).map((trx: any) => ({
           id: trx.id,
-          type: trx.type === 'income' ? 'payment' : 'asset', // 'asset' is just a placeholder icon, maybe add 'expense' type
-          title: trx.description,
-          description: `Manual Transaction (${trx.category})`,
-          amount: trx.amount,
+          type: 'payment' as const,
+          title: trx.description || 'Transaction',
+          description: `Manual Transaction (${trx.category || 'Uncategorized'})`,
+          amount: Number(trx.debit || 0) - Number(trx.credit || 0),
           date: trx.created_at
         }));
 

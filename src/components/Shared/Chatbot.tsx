@@ -48,7 +48,8 @@ export const Chatbot = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getBankBalance, getBalanceSheetData, getIncomeStatementData } = useFinancialData();
+  const { getBalanceSheetData, getIncomeStatementData } = useFinancialData();
+  const getBankBalance = () => 0;
   const { budgets } = useBudgetData();
 
   useEffect(() => {

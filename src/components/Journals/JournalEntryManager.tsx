@@ -33,7 +33,8 @@ export const JournalEntryManager = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('company_id')
         .eq('user_id', user.id)

@@ -38,6 +38,7 @@ interface Product {
   unit_of_measure?: string;
   is_active?: boolean;
   tax_rate?: number;
+  type?: string;
   created_at: string;
 }
 
@@ -103,7 +104,7 @@ export const ProductFormDialog = ({
         unit_of_measure: editingProduct.unit_of_measure || "units",
         is_active: editingProduct.is_active ?? true,
         tax_rate: editingProduct.tax_rate ?? 15,
-        type: editingProduct.type || "inventory",
+        type: (editingProduct.type || "inventory") as "inventory" | "service",
       });
     } else {
       form.reset({

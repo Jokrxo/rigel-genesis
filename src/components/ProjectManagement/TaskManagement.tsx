@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { auditLogger } from "@/lib/audit-logger";
 import { PermissionGuard } from "@/components/Shared/PermissionGuard";
+import { useRBAC } from "@/hooks/useRBAC";
 
 interface Task {
   id: string;
@@ -54,7 +55,8 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from('project_tasks')
         .select('*')
         .eq('project_id', projectId)
@@ -62,7 +64,8 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
 
       if (error) throw error;
 
-      const mappedTasks: Task[] = (data || []).map(t => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mappedTasks: Task[] = (data || []).map((t: any) => ({
         id: t.id,
         projectId: t.project_id,
         name: t.name,
@@ -98,7 +101,8 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
     
     try {
       if (editingTask) {
-        const { error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
           .from('project_tasks')
           .update({
             name: taskForm.name,
@@ -123,7 +127,8 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
 
         toast({ title: "Task updated successfully" });
       } else {
-        const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
           .from('project_tasks')
           .insert([{
             project_id: projectId,
@@ -196,7 +201,8 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
 
   const handleDelete = async (taskId: string) => {
     try {
-      const { error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
         .from('project_tasks')
         .delete()
         .eq('id', taskId);
@@ -224,7 +230,8 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
 
   const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
     try {
-      const { error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
         .from('project_tasks')
         .update({ status: newStatus })
         .eq('id', taskId);

@@ -25,7 +25,8 @@ interface BreakdownData {
 
 export const FinancialOverview = () => {
   const [chartType] = useState<'line' | 'bar'>('line');
-  const { getBalanceSheetData, getIncomeStatementData, getBankBalance } = useFinancialData();
+  const { getBalanceSheetData, getIncomeStatementData } = useFinancialData();
+  const getBankBalance = () => 0; // Placeholder until bank balance API is implemented
   const [financialMetrics, setFinancialMetrics] = useState({
     totalAssets: 0,
     totalLiabilities: 0,

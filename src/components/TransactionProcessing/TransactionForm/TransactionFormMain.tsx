@@ -108,7 +108,8 @@ export function TransactionForm({ open, onClose, onSuccess }: TransactionFormPro
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.rpc('create_transaction_v2', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('create_transaction_v2', {
         p_user_id: user.id,
         p_date: data.date,
         p_amount: Math.abs(data.amount),

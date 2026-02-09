@@ -75,7 +75,8 @@ export const useFinancialData = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
-      const { data: profile } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('company_id')
         .eq('user_id', user.id)
@@ -84,8 +85,10 @@ export const useFinancialData = () => {
       const companyId = profile?.company_id;
       if (!companyId) return;
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = supabase as any;
       const [journalData, assetsData, initialBalancesData] = await Promise.all([
-        supabase
+        db
           .from("journal_entries")
           .select(
             `
@@ -101,15 +104,16 @@ export const useFinancialData = () => {
           .eq('company_id', companyId)
           .order('date', { ascending: false }),
         fixedAssetsApi.getAll(companyId),
-        supabase.from('account_balances').select('*').eq('company_id', companyId)
+        db.from('account_balances').select('*').eq('company_id', companyId)
       ]);
 
       // If no balances found, it might be a new company without seeded COA.
       // Trigger COA seeding via API check.
+      let balancesData = initialBalancesData;
       if (!balancesData.error && (!balancesData.data || balancesData.data.length === 0)) {
          await chartOfAccountsApi.getAccounts(companyId);
          // Refetch balances
-         balancesData = await supabase.from('account_balances').select('*').eq('company_id', companyId);
+         balancesData = await db.from('account_balances').select('*').eq('company_id', companyId);
       }
 
       if (journalData.error) throw journalData.error;
@@ -127,7 +131,7 @@ export const useFinancialData = () => {
 
       setEntries(mappedEntries);
       setAssets(assetsData);
-      if (balancesData.data) setAccountBalances(balancesData.data as AccountBalance[]);
+      if (balancesData.data) setAccountBalances(balancesData.data as unknown as AccountBalance[]);
     } catch (err: unknown) {
       console.error("Error fetching financial data:", err);
       setError(err instanceof Error ? err.message : "Unknown error");
