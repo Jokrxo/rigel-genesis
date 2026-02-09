@@ -35,6 +35,26 @@ export const useBudgetData = () => {
     }
   };
 
+  const updateBudget = async (id: string, updates: Partial<Budget>) => {
+    try {
+      await budgetApi.updateBudget(id, updates);
+      await fetchBudgets();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    }
+  };
+
+  const deleteBudget = async (id: string) => {
+    try {
+      await budgetApi.deleteBudget(id);
+      await fetchBudgets();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    }
+  };
+
   const getBudgetByCategory = (category: string) => {
     return budgets.find(b => b.category.toLowerCase().includes(category.toLowerCase()));
   };
@@ -48,6 +68,8 @@ export const useBudgetData = () => {
     loading,
     error,
     addBudget,
+    updateBudget,
+    deleteBudget,
     refresh: fetchBudgets,
     getBudgetByCategory,
     getDepartmentBudgets

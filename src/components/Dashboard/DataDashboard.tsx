@@ -62,32 +62,32 @@ export const DataDashboard = () => {
     setLoading(true);
     try {
       // Fetch customers count
-      const { count: customersCount } = await (supabase
-        .from('customers') as any)
+      const { count: customersCount } = await supabase
+        .from('customers')
         .select('*', { count: 'exact', head: true });
 
       // Fetch products count
-      const { count: productsCount } = await (supabase
-        .from('products') as any)
+      const { count: productsCount } = await supabase
+        .from('products')
         .select('*', { count: 'exact', head: true });
 
       // Fetch documents count and revenue
-      const { data: documents, count: documentsCount } = await (supabase
-        .from('sales_documents') as any)
+      const { data: documents, count: documentsCount } = await supabase
+        .from('sales_documents')
         .select('*', { count: 'exact' });
 
       // Fetch suppliers count
-      const { count: suppliersCount } = await (supabase
-        .from('suppliers') as any)
+      const { count: suppliersCount } = await supabase
+        .from('suppliers')
         .select('*', { count: 'exact', head: true });
 
       // Calculate revenue and pending invoices
       const totalRevenue = (documents || [])
-        .filter((d: any) => d.status === 'paid')
-        .reduce((sum: number, d: any) => sum + (d.total_amount || 0), 0);
+        .filter((d) => d.status === 'paid')
+        .reduce((sum, d) => sum + (d.total_amount || 0), 0);
 
       const pendingInvoices = (documents || [])
-        .filter((d: any) => d.document_type === 'invoice' && d.status === 'sent')
+        .filter((d) => d.document_type === 'invoice' && d.status === 'sent')
         .length;
 
       setStats({
@@ -100,8 +100,8 @@ export const DataDashboard = () => {
       });
 
       // Fetch recent documents
-      const { data: recentDocs } = await (supabase
-        .from('sales_documents') as any)
+      const { data: recentDocs } = await supabase
+        .from('sales_documents')
         .select(`
           id, document_number, document_type, total_amount, status, created_at,
           customers (name)
@@ -109,14 +109,14 @@ export const DataDashboard = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      setRecentDocuments((recentDocs || []).map((doc: any) => ({
+      setRecentDocuments((recentDocs || []).map((doc) => ({
         ...doc,
         customer_name: doc.customers?.name || 'Unknown'
       })));
 
       // Fetch recent customers
-      const { data: recentCusts } = await (supabase
-        .from('customers') as any)
+      const { data: recentCusts } = await supabase
+        .from('customers')
         .select('id, name, company, email, created_at')
         .order('created_at', { ascending: false })
         .limit(5);

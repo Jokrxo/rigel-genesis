@@ -10,8 +10,8 @@ export const useDeferredTaxData = () => {
   const { toast } = useToast();
 
   const fetchCountries = useCallback(async () => {
-    const { data, error } = await (supabase
-      .from('countries') as any)
+    const { data, error } = await supabase
+      .from('countries')
       .select('*')
       .order('name');
 
@@ -29,8 +29,8 @@ export const useDeferredTaxData = () => {
   }, [toast]);
 
   const fetchProjects = useCallback(async () => {
-    const { data, error } = await (supabase
-      .from('deferred_tax_projects') as any)
+    const { data, error } = await supabase
+      .from('deferred_tax_projects')
       .select(`
         *,
         country:countries(*)
@@ -61,8 +61,8 @@ export const useDeferredTaxData = () => {
       return null;
     }
 
-    const { data, error } = await (supabase
-      .from('deferred_tax_projects') as any)
+    const { data, error } = await supabase
+      .from('deferred_tax_projects')
       .insert({
         ...projectData,
         user_id: user.id,
@@ -93,8 +93,8 @@ export const useDeferredTaxData = () => {
   };
 
   const updateProject = async (id: string, updates: Partial<DeferredTaxProject>) => {
-    const { error } = await (supabase
-      .from('deferred_tax_projects') as any)
+    const { error } = await supabase
+      .from('deferred_tax_projects')
       .update(updates)
       .eq('id', id);
 
@@ -118,8 +118,8 @@ export const useDeferredTaxData = () => {
   };
 
   const deleteProject = async (id: string) => {
-    const { error } = await (supabase
-      .from('deferred_tax_projects') as any)
+    const { error } = await supabase
+      .from('deferred_tax_projects')
       .delete()
       .eq('id', id);
 

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { auditLogger } from "@/lib/audit-logger";
 
 interface Customer {
   id: string;
@@ -41,7 +42,7 @@ interface LineItem {
   line_total: number;
 }
 
-interface Document {
+export interface FormDocument {
   id: string;
   customer_id: string;
   issue_date: string;
@@ -58,7 +59,7 @@ interface DocumentFormProps {
   onOpenChange: (open: boolean) => void;
   documentType: "invoice" | "quotation";
   onSuccess: () => void;
-  editingDocument?: Document | null;
+  editingDocument?: FormDocument | null;
 }
 
 export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, editingDocument }: DocumentFormProps) => {
@@ -108,9 +109,21 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
 
   const fetchCustomers = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
       const { data, error } = await supabase
         .from('customers')
         .select('id, name, company, email, address_line1, city, province, postal_code')
+        .eq('company_id', profile.company_id)
         .order('name');
 
       if (error) throw error;
@@ -122,10 +135,22 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
 
   const fetchProducts = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
       const { data, error } = await supabase
         .from('products')
         .select('id, name, unit_price, tax_rate')
         .eq('is_active', true)
+        .eq('company_id', profile.company_id)
         .order('name');
 
       if (error) throw error;
@@ -221,10 +246,22 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('Company not found');
+
       const totals = calculateTotals();
       const documentNumber = editingDocument?.document_number || generateDocumentNumber();
 
       const documentData = {
+        company_id: profile.company_id,
         document_type: documentType,
         document_number: documentNumber,
         customer_id: formData.customer_id,
@@ -236,7 +273,7 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
         total_amount: totals.total,
         terms_and_conditions: formData.terms_and_conditions,
         notes: formData.notes,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: user.id,
       };
 
       let documentId;
@@ -245,10 +282,18 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
         const { error } = await supabase
           .from('sales_documents')
           .update(documentData)
-          .eq('id', editingDocument.id);
+          .eq('id', editingDocument.id)
+          .eq('company_id', profile.company_id);
 
         if (error) throw error;
         documentId = editingDocument.id;
+
+        await auditLogger.log({
+          action: `UPDATE_${documentType.toUpperCase()}`,
+          entityType: 'sales_document',
+          entityId: documentId,
+          details: { updates: documentData }
+        });
 
         // Delete existing line items
         await supabase
@@ -264,6 +309,13 @@ export const DocumentForm = ({ open, onOpenChange, documentType, onSuccess, edit
 
         if (error) throw error;
         documentId = data.id;
+
+        await auditLogger.log({
+          action: `CREATE_${documentType.toUpperCase()}`,
+          entityType: 'sales_document',
+          entityId: documentId,
+          details: { document_number: documentNumber, total_amount: totals.total }
+        });
       }
 
       // Insert line items

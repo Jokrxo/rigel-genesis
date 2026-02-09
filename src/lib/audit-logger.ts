@@ -5,6 +5,7 @@ export interface AuditLogEntry {
   action: string;
   entityType: string;
   entityId?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: Record<string, any>;
 }
 

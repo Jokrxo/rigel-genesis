@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { journalApi, JournalEntry } from "@/lib/journal-api";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LedgerEntry {
   id: string;
@@ -34,32 +35,25 @@ export const GeneralLedgerTable = () => {
   const [accountFilter, setAccountFilter] = useState("all");
   const [accountMap, setAccountMap] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadLedgerData();
-  }, []);
-
-  useEffect(() => {
-    chartOfAccountsApi.getAccounts().then(accs => {
-      const map: Record<string, string> = {};
-      accs.forEach(a => { map[a.code] = a.name; });
-      setAccountMap(map);
-    }).catch(() => setAccountMap({
-      '1000': 'Cash',
-      '1100': 'Accounts Receivable',
-      '2000': 'Accounts Payable',
-      '4000': 'Sales Revenue',
-      '6000': 'Expenses',
-    }));
-  }, []);
-
-  const getAccountName = (accountCode: string): string => {
+  const getAccountName = useCallback((accountCode: string): string => {
     return accountMap[accountCode] || 'Unknown Account';
-  };
+  }, [accountMap]);
 
-  const loadLedgerData = async () => {
+  const loadLedgerData = useCallback(async () => {
     try {
       setLoading(true);
-      const journalEntries = await journalApi.getEntries();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      const companyId = profile?.company_id;
+      
+      const journalEntries = await journalApi.getEntries(companyId);
       
       const flattened: LedgerEntry[] = [];
       
@@ -90,7 +84,33 @@ export const GeneralLedgerTable = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAccountName]);
+
+  useEffect(() => {
+    loadLedgerData();
+  }, [loadLedgerData]);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+        const companyId = profile?.company_id;
+        
+        if (companyId) {
+           const accs = await chartOfAccountsApi.getAccounts(companyId);
+           const map: Record<string, string> = {};
+           accs.forEach(a => { map[a.code] = a.name; });
+           setAccountMap(map);
+        }
+      } catch (e) {
+         console.error("Failed to load accounts", e);
+      }
+    };
+    fetchAccounts();
+  }, []);
 
 
   const filteredEntries = entries.filter((entry) => {
@@ -170,7 +190,7 @@ export const GeneralLedgerTable = () => {
                     <TableCell>{entry.date}</TableCell>
                     <TableCell className="font-mono">{entry.reference}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{entry.account_code}</Badge> {entry.account_name}
+                      <Badge variant="outline">{entry.account_code}</Badge> {accountMap[entry.account_code] || 'Unknown Account'}
                     </TableCell>
                     <TableCell>{entry.description}</TableCell>
                     <TableCell className="text-right font-mono">

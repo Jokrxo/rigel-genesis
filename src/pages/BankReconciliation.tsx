@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,20 +16,12 @@ import { journalApi } from "@/lib/journal-api";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { bankingService, BankTransaction } from "@/services/banking-service";
 
-// Mock data types (removed BankTransaction as it is imported)
-interface SystemTransaction {
-  id: string;
-  date: string;
-  description: string;
-  amount: number;
-  type: 'debit' | 'credit';
-  status: 'unmatched' | 'matched';
-  matchedId?: string;
-}
-
 export default function BankReconciliation() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("match");
+  
+  // Account Selection
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   
   // Selection for manual match
   const [selectedBankTxId, setSelectedBankTxId] = useState<string | null>(null);
@@ -52,25 +44,29 @@ export default function BankReconciliation() {
   // Mock data state
   const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
 
+  const loadTransactions = useCallback(async () => {
+      try {
+        const accounts = await bankingService.getConnectedAccounts();
+        
+        if (accounts.length === 0) {
+            setBankTransactions([]);
+            return;
+        }
+
+        const accountId = selectedAccountId || accounts[0].id;
+        if (!selectedAccountId) setSelectedAccountId(accountId);
+
+        const txs = await bankingService.getTransactions(accountId);
+        setBankTransactions(txs);
+      } catch (error) {
+        console.error("Failed to load transactions", error);
+        toast({ title: "Error", description: "Failed to load bank transactions", variant: "destructive" });
+      }
+  }, [selectedAccountId, toast]);
+
   useEffect(() => {
     loadTransactions();
-  }, []);
-
-  const loadTransactions = async () => {
-      const txs = await bankingService.getTransactions('default');
-      if (txs.length > 0) {
-          setBankTransactions(txs);
-      } else {
-          // Fallback to initial demo data if empty
-          setBankTransactions([
-            { id: 'bt1', date: '2024-03-01', description: 'SERVICE FEES', amount: 50.00, type: 'debit', status: 'unmatched' },
-            { id: 'bt2', date: '2024-03-02', description: 'CLIENT PAYMENT REF 1001', amount: 1500.00, type: 'credit', status: 'unmatched' },
-            { id: 'bt3', date: '2024-03-05', description: 'OFFICE SUPPLIES', amount: 230.50, type: 'debit', status: 'unmatched' },
-            { id: 'bt4', date: '2024-03-10', description: 'UNKNOWN TRANSFER', amount: 5000.00, type: 'credit', status: 'flagged' },
-            { id: 'bt5', date: '2024-03-12', description: 'INTEREST', amount: 12.45, type: 'credit', status: 'unmatched' },
-          ]);
-      }
-  };
+  }, [loadTransactions]);
 
   const handleConnectBank = async (bankName: string = "Demo Bank") => {
       setIsConnecting(true);
@@ -122,10 +118,12 @@ export default function BankReconciliation() {
     }
   };
 
-  const autoMatch = () => {
+  const autoMatch = async () => {
     let matchedCount = 0;
     const newBankTx = [...bankTransactions];
     const newSystemTx = [...systemTransactions];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const matchesToPersist: Promise<any>[] = [];
 
     newBankTx.forEach(bt => {
       if (bt.status !== 'unmatched') return;
@@ -141,24 +139,33 @@ export default function BankReconciliation() {
 
       if (matchIndex >= 0) {
         // Match found
+        const sysTxId = newSystemTx[matchIndex].id;
         bt.status = 'matched';
-        bt.matchedId = newSystemTx[matchIndex].id;
+        bt.matchedId = sysTxId;
         newSystemTx[matchIndex].status = 'matched';
         newSystemTx[matchIndex].matchedId = bt.id;
+        
+        matchesToPersist.push(bankingService.matchTransaction(bt.id, sysTxId));
         matchedCount++;
       }
     });
 
-    setBankTransactions(newBankTx);
-    setSystemTransactions(newSystemTx);
+    try {
+        await Promise.all(matchesToPersist);
+        setBankTransactions(newBankTx);
+        setSystemTransactions(newSystemTx);
 
-    toast({
-      title: "Auto-Match Complete",
-      description: `Matched ${matchedCount} transactions successfully.`,
-    });
+        toast({
+          title: "Auto-Match Complete",
+          description: `Matched ${matchedCount} transactions successfully.`,
+        });
+    } catch (error) {
+        console.error("Auto-match persistence failed", error);
+        toast({ title: "Error", description: "Failed to save some matches.", variant: "destructive" });
+    }
   };
 
-  const handleManualMatch = () => {
+  const handleManualMatch = async () => {
       if (!selectedBankTxId || !selectedSystemTxId) {
           toast({ title: "Selection Incomplete", description: "Please select one transaction from each side to match.", variant: "destructive" });
           return;
@@ -178,15 +185,22 @@ export default function BankReconciliation() {
           }
       }
 
-      const newBankTx = bankTransactions.map(t => t.id === selectedBankTxId ? { ...t, status: 'matched' as const, matchedId: selectedSystemTxId } : t);
-      const newSystemTx = systemTransactions.map(t => t.id === selectedSystemTxId ? { ...t, status: 'matched' as const, matchedId: selectedBankTxId } : t);
+      try {
+        await bankingService.matchTransaction(selectedBankTxId, selectedSystemTxId);
 
-      setBankTransactions(newBankTx);
-      setSystemTransactions(newSystemTx);
-      setSelectedBankTxId(null);
-      setSelectedSystemTxId(null);
-      
-      toast({ title: "Matched", description: "Transactions manually matched." });
+        const newBankTx = bankTransactions.map(t => t.id === selectedBankTxId ? { ...t, status: 'matched' as const, matchedId: selectedSystemTxId } : t);
+        const newSystemTx = systemTransactions.map(t => t.id === selectedSystemTxId ? { ...t, status: 'matched' as const, matchedId: selectedBankTxId } : t);
+
+        setBankTransactions(newBankTx);
+        setSystemTransactions(newSystemTx);
+        setSelectedBankTxId(null);
+        setSelectedSystemTxId(null);
+        
+        toast({ title: "Matched", description: "Transactions manually matched." });
+      } catch (error) {
+        console.error("Manual match failed", error);
+        toast({ title: "Error", description: "Failed to match transactions", variant: "destructive" });
+      }
   };
 
   const flagTransaction = (id: string) => {
@@ -210,7 +224,7 @@ export default function BankReconciliation() {
           
           const isBankDebit = adjustmentTx.type === 'debit';
           
-          await journalApi.createEntry({
+          const createdEntry = await journalApi.createEntry({
               date: adjustmentTx.date,
               reference: `ADJ-${adjustmentTx.id}`,
               description: `Adj: ${adjustmentTx.description}`,
@@ -234,8 +248,10 @@ export default function BankReconciliation() {
               ]
           });
           
-          // Mark as matched/resolved
-           setBankTransactions(bankTransactions.map(t => t.id === adjustmentTx.id ? { ...t, status: 'matched' as const } : t));
+          // Mark as matched/resolved and persist
+          await bankingService.matchTransaction(adjustmentTx.id, createdEntry.id);
+
+           setBankTransactions(bankTransactions.map(t => t.id === adjustmentTx.id ? { ...t, status: 'matched' as const, matchedId: createdEntry.id } : t));
            
            setIsAdjustmentOpen(false);
            setAdjustmentTx(null);

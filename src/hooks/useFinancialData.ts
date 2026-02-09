@@ -84,7 +84,7 @@ export const useFinancialData = () => {
       const companyId = profile?.company_id;
       if (!companyId) return;
       
-      let [journalData, assetsData, balancesData] = await Promise.all([
+      const [journalData, assetsData, initialBalancesData] = await Promise.all([
         supabase
           .from("journal_entries")
           .select(
@@ -115,8 +115,10 @@ export const useFinancialData = () => {
       if (journalData.error) throw journalData.error;
 
       // Transform Supabase data to match JournalEntry interface
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mappedEntries = (journalData.data || []).map((entry: any) => ({
         ...entry,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         lines: (entry.lines || []).map((line: any) => ({
           ...line,
           accountId: line.account_id,
@@ -193,6 +195,7 @@ export const useFinancialData = () => {
       const entryDate = new Date(entry.date);
       if (entryDate < startDate || entryDate > endDate) return;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       entry.lines.forEach((line: any) => {
         const account = accountMap.get(line.accountId);
         if (!account) return;
@@ -341,6 +344,7 @@ export const useFinancialData = () => {
       const entryDate = new Date(entry.date);
       if (entryDate < startDate || entryDate > endDate) return;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       entry.lines.forEach((line: any) => {
         const account = accountMap.get(line.accountId);
         if (!account) return;

@@ -8,7 +8,7 @@ import type { Database } from "./types";
  */
 function pickEnv(...keys: string[]): string {
   for (const key of keys) {
-    const value = (import.meta as any).env?.[key];
+    const value = (import.meta as unknown as { env: Record<string, string> }).env?.[key];
     if (typeof value === "string" && value.trim().length > 0) return value;
   }
   return "";

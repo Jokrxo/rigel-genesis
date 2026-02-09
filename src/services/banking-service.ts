@@ -1,6 +1,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from "@/integrations/supabase/client";
+import { auditLogger } from "@/lib/audit-logger";
 
 export interface BankTransaction {
   id: string;
@@ -58,6 +59,13 @@ export const bankingService = {
 
     if (error) throw error;
 
+    await auditLogger.log({
+      action: 'CONNECT_BANK',
+      entityType: 'bank_account',
+      entityId: data.id,
+      details: { bank_name: bankName, account_number: newAccount.account_number }
+    });
+
     // Generate initial transactions for this account
     await this.generateMockTransactions(data.id, profile.company_id, bankName);
 
@@ -68,7 +76,7 @@ export const bankingService = {
       bankName: data.bank_name,
       balance: data.balance,
       lastSynced: data.last_synced,
-      status: data.status as any
+      status: data.status as BankAccount['status']
     };
   },
 
@@ -101,7 +109,7 @@ export const bankingService = {
       bankName: acc.bank_name,
       balance: acc.balance,
       lastSynced: acc.last_synced,
-      status: acc.status as any
+      status: acc.status as BankAccount['status']
     }));
   },
 
@@ -123,7 +131,7 @@ export const bankingService = {
       description: tx.description,
       amount: tx.amount,
       type: tx.type as 'debit' | 'credit',
-      status: tx.status as any,
+      status: tx.status as BankTransaction['status'],
       matchedId: tx.matched_id,
       bankName: tx.bank_accounts?.bank_name,
       bank_account_id: tx.bank_account_id
@@ -169,6 +177,31 @@ export const bankingService = {
     await new Promise(resolve => setTimeout(resolve, 2000));
     await this.generateMockTransactions(accountId);
     return this.getTransactions(accountId);
+  },
+
+  async matchTransaction(bankTxId: string, systemTxId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('bank_transactions')
+        .update({ status: 'matched', matched_id: systemTxId })
+        .eq('id', bankTxId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'MATCH_TRANSACTION',
+        entityType: 'bank_transaction',
+        entityId: bankTxId,
+        details: { matched_system_tx_id: systemTxId }
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error matching transaction:', error);
+      throw error;
+    }
   }
 };
 

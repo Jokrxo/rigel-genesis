@@ -54,8 +54,8 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
 
     try {
       // Check if user has already rated in the database
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from('user_ratings' as any)
         .select('id')
         .eq('user_id', user.id)

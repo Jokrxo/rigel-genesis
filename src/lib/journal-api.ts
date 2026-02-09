@@ -58,6 +58,7 @@ export const journalApi = {
 
     if (error) throw error;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data || []).map((entry: any) => ({
       id: entry.id,
       date: entry.date,
@@ -66,6 +67,7 @@ export const journalApi = {
       status: entry.status,
       type: entry.type || 'standard',
       approvalStatus: entry.approval_status || 'pending',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       lines: (entry.lines || []).map((line: any) => ({
         id: line.id,
         accountId: line.account_id,
@@ -105,6 +107,7 @@ export const journalApi = {
       status: data.status,
       type: data.type || 'standard',
       approvalStatus: data.approval_status || 'pending',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       lines: (data.lines || []).map((line: any) => ({
         id: line.id,
         accountId: line.account_id,
@@ -163,22 +166,23 @@ export const journalApi = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // If lines are updated, we must use the RPC or handle delete/insert manually.
-    // Since updateEntry takes Partial<JournalEntry>, checking if lines are present.
-    // If lines are present, we should probably use a full update RPC or similar logic.
-    // The current UI sends the full object usually when editing.
+    const company_id = await getCompanyId(user.id);
+    if (!company_id) throw new Error('Company not found');
     
-    // For simplicity, if lines are present, use the update RPC.
-    // If lines are NOT present, maybe just update the header fields?
-    // But update_journal_entry RPC expects all fields.
-    // Let's fetch the existing entry first if we need to merge.
-    
+    // Check if entry exists and belongs to company
+    const { data: existingCheck, error: checkError } = await supabase
+        .from('journal_entries')
+        .select('id, status, lines:journal_entry_lines(*)')
+        .eq('id', id)
+        .eq('company_id', company_id)
+        .single();
+        
+    if (checkError || !existingCheck) throw new Error('Entry not found');
+
     const existing = await this.getEntryById(id);
     if (!existing) throw new Error('Entry not found');
 
     if (existing.status === 'posted' && updates.status !== 'posted') { 
-        // Allow unposting? Or maybe updates are restricted.
-        // The previous code said "Cannot edit posted entries".
         if (updates.status === undefined) {
              throw new Error('Cannot edit posted entries');
         }
@@ -189,7 +193,9 @@ export const journalApi = {
         const { error } = await supabase
             .from('journal_entries')
             .update({ approval_status: updates.approvalStatus })
-            .eq('id', id);
+            .eq('id', id)
+            .eq('company_id', company_id);
+
         if (error) throw error;
 
         await auditLogger.log({
@@ -238,12 +244,19 @@ export const journalApi = {
   },
 
   async deleteEntry(id: string): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const company_id = await getCompanyId(user.id);
+    if (!company_id) throw new Error('Company not found');
+
     const entry = await this.getEntryById(id);
 
     const { error } = await supabase
       .from('journal_entries')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('company_id', company_id);
 
     if (error) throw error;
 
@@ -260,10 +273,12 @@ export const journalApi = {
   },
   
   async postEntry(id: string): Promise<JournalEntry> {
-    // Validate balance before posting?
-    // The RPC or backend should handle this ideally, but we can do it here or assume valid.
-    // Let's update status to 'posted'.
-    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const company_id = await getCompanyId(user.id);
+    if (!company_id) throw new Error('Company not found');
+
     // Check balance first
     const entry = await this.getEntryById(id);
     if (!entry) throw new Error('Entry not found');
@@ -278,7 +293,8 @@ export const journalApi = {
     const { error } = await supabase
       .from('journal_entries')
       .update({ status: 'posted', updated_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('company_id', company_id);
 
     if (error) throw error;
     

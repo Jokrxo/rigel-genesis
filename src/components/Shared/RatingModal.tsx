@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, createContext, useContext, ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -72,8 +73,7 @@ const RatingModalContent = ({ isOpen, onOpenChange }: RatingModalContentProps) =
       const { data: { user } } = await supabase.auth.getUser();
       
       // Try to save to Supabase 'user_ratings' table
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('user_ratings' as any).insert({
+      const { error } = await supabase.from('user_ratings').insert({
         user_id: user?.id,
         rating,
         feedback,

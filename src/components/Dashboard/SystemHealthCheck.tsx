@@ -108,7 +108,7 @@ export const SystemHealthCheck = () => {
     // Check Supabase Connection
     setTimeout(async () => {
       try {
-        const { data, error } = await (supabase.from('profiles') as any).select('id').limit(1);
+        const { data, error } = await supabase.from('profiles').select('id').limit(1);
         
         checkItems[3] = {
           ...checkItems[3],

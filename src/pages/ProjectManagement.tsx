@@ -159,6 +159,17 @@ const ProjectManagement = () => {
     if (!editingProject) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('Company not found');
+
       const { error } = await supabase
         .from('projects')
         .update({
@@ -172,7 +183,8 @@ const ProjectManagement = () => {
           status: projectData.status,
           manager: projectData.manager,
         })
-        .eq('id', editingProject.id);
+        .eq('id', editingProject.id)
+        .eq('company_id', profile.company_id);
 
       if (error) throw error;
 
@@ -202,10 +214,22 @@ const ProjectManagement = () => {
 
   const handleDeleteProject = async (projectId: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('Company not found');
+
       const { error } = await supabase
         .from('projects')
         .delete()
-        .eq('id', projectId);
+        .eq('id', projectId)
+        .eq('company_id', profile.company_id);
 
       if (error) throw error;
 

@@ -30,8 +30,8 @@ export const DataIssuesView = () => {
 
   const fetchIssues = useCallback(async () => {
     setIsLoading(true);
-    const { data, error } = await (supabase
-      .from('data_issues') as any)
+    const { data, error } = await supabase
+      .from('data_issues')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -69,8 +69,8 @@ export const DataIssuesView = () => {
 
   const updateIssueStatus = async (issueId: string, status: string, _notes?: string) => {
     const isResolved = status === 'resolved';
-    const { error } = await (supabase
-      .from('data_issues') as any)
+    const { error } = await supabase
+      .from('data_issues')
       .update({
         is_resolved: isResolved,
         resolved_at: isResolved ? new Date().toISOString() : null

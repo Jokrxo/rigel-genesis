@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { 
   PieChart as RechartsPieChart, 
   Pie, 
@@ -24,50 +25,116 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Plus, AlertCircle } from "lucide-react";
-
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, AlertCircle, Pencil, Trash2 } from "lucide-react";
 import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 export default function BudgetManagement() {
   const { toast } = useToast();
-  const { budgets, addBudget, loading } = useBudgetData();
+  const { budgets, addBudget, updateBudget, deleteBudget, loading } = useBudgetData();
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newBudget, setNewBudget] = useState({ category: '', amount: '', period: '2024-Q1', department: '' });
   const [selectedPeriod, setSelectedPeriod] = useState<string>('2024-Q1');
+  
+  // Edit/Delete State
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Form State (Shared for Create/Edit)
+  const [formData, setFormData] = useState({ 
+    category: '', 
+    amount: '', 
+    period: '2024-Q1', 
+    department: '' 
+  });
 
   // Filter budgets based on selected period
   const filteredBudgets = budgets.filter(b => b.period === selectedPeriod);
 
-  const handleAddBudget = async () => {
-    if (!newBudget.category || !newBudget.amount) return;
+  const handleOpenAdd = () => {
+    setFormData({ category: '', amount: '', period: selectedPeriod, department: '' });
+    setEditingBudget(null);
+    setIsAddOpen(true);
+  };
+
+  const handleOpenEdit = (budget: Budget) => {
+    setFormData({ 
+      category: budget.category, 
+      amount: budget.amount.toString(), 
+      period: budget.period, 
+      department: budget.department 
+    });
+    setEditingBudget(budget);
+    setIsEditOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.category || !formData.amount) return;
 
     try {
-        await addBudget({
-          category: newBudget.category,
-          amount: Number(newBudget.amount),
-          period: newBudget.period,
-          department: newBudget.department || 'General'
-        });
-
-        setIsAddOpen(false);
-        setNewBudget({ category: '', amount: '', period: '2024-Q1', department: '' });
-        toast({
-          title: "Budget Created",
-          description: `Budget for ${newBudget.category} added successfully.`,
-        });
+        if (editingBudget) {
+          await updateBudget(editingBudget.id, {
+            category: formData.category,
+            amount: Number(formData.amount),
+            period: formData.period,
+            department: formData.department || 'General'
+          });
+          setIsEditOpen(false);
+          toast({ title: "Budget Updated", description: "Budget updated successfully." });
+        } else {
+          await addBudget({
+            category: formData.category,
+            amount: Number(formData.amount),
+            period: formData.period,
+            department: formData.department || 'General'
+          });
+          setIsAddOpen(false);
+          toast({ title: "Budget Created", description: "Budget created successfully." });
+        }
+        setEditingBudget(null);
     } catch (error) {
         toast({
             title: "Error",
-            description: "Failed to create budget.",
+            description: "Failed to save budget.",
             variant: "destructive"
         });
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirmId) {
+      try {
+        await deleteBudget(deleteConfirmId);
+        toast({ title: "Success", description: "Budget deleted successfully" });
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to delete budget", variant: "destructive" });
+      } finally {
+        setDeleteConfirmId(null);
+      }
+    }
+  };
+
   const getVarianceColor = (budget: Budget) => {
-    const percentage = (budget.spent / budget.amount) * 100;
+    const percentage = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0;
     if (percentage > 100) return "text-red-600";
     if (percentage > 90) return "text-amber-500";
     return "text-green-600";
@@ -95,6 +162,56 @@ export default function BudgetManagement() {
     }
     return acc;
   }, [] as { name: string, value: number }[]);
+
+  const renderFormContent = () => (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="category" className="text-right">Category</Label>
+        <Input 
+          id="category" 
+          value={formData.category} 
+          onChange={e => setFormData({...formData, category: e.target.value})} 
+          className="col-span-3" 
+          placeholder="e.g. Marketing" 
+        />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="amount" className="text-right">Amount</Label>
+        <Input 
+          id="amount" 
+          type="number" 
+          value={formData.amount} 
+          onChange={e => setFormData({...formData, amount: e.target.value})} 
+          className="col-span-3" 
+          placeholder="0.00" 
+        />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="period" className="text-right">Period</Label>
+        <Select value={formData.period} onValueChange={v => setFormData({...formData, period: v})}>
+          <SelectTrigger className="col-span-3">
+            <SelectValue placeholder="Select period" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="2024-Q1">2024 Q1</SelectItem>
+            <SelectItem value="2024-Q2">2024 Q2</SelectItem>
+            <SelectItem value="2024-Q3">2024 Q3</SelectItem>
+            <SelectItem value="2024-Q4">2024 Q4</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+       <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="dept" className="text-right">Department</Label>
+        <Input 
+          id="dept" 
+          value={formData.department} 
+          onChange={e => setFormData({...formData, department: e.target.value})} 
+          className="col-span-3" 
+          placeholder="Optional" 
+        />
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -126,50 +243,37 @@ export default function BudgetManagement() {
                 <SelectItem value="2024-Q4">2024 Q4</SelectItem>
               </SelectContent>
             </Select>
+            
+            <PermissionGuard action="create" resource="budgets">
+              <Button onClick={handleOpenAdd}>
+                <Plus className="mr-2 h-4 w-4" /> Set New Budget
+              </Button>
+            </PermissionGuard>
+
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <PermissionGuard action="create" resource="budgets">
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Set New Budget
-                  </Button>
-                </DialogTrigger>
-              </PermissionGuard>
               <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Create New Budget</DialogTitle>
                     <DialogDescription>Set a spending limit for a specific category and period.</DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="category" className="text-right">Category</Label>
-                      <Input id="category" value={newBudget.category} onChange={e => setNewBudget({...newBudget, category: e.target.value})} className="col-span-3" placeholder="e.g. Marketing" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="amount" className="text-right">Amount</Label>
-                      <Input id="amount" type="number" value={newBudget.amount} onChange={e => setNewBudget({...newBudget, amount: e.target.value})} className="col-span-3" placeholder="0.00" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="period" className="text-right">Period</Label>
-                      <Select value={newBudget.period} onValueChange={v => setNewBudget({...newBudget, period: v})}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select period" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="2024-Q1">2024 Q1</SelectItem>
-                          <SelectItem value="2024-Q2">2024 Q2</SelectItem>
-                          <SelectItem value="2024-Q3">2024 Q3</SelectItem>
-                          <SelectItem value="2024-Q4">2024 Q4</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="dept" className="text-right">Department</Label>
-                      <Input id="dept" value={newBudget.department} onChange={e => setNewBudget({...newBudget, department: e.target.value})} className="col-span-3" placeholder="Optional" />
-                    </div>
-                  </div>
+                  {renderFormContent()}
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddBudget}>Save Budget</Button>
+                    <Button onClick={handleSubmit}>Save Budget</Button>
+                  </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+              <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Budget</DialogTitle>
+                    <DialogDescription>Update spending limit or category details.</DialogDescription>
+                  </DialogHeader>
+                  {renderFormContent()}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSubmit}>Update Budget</Button>
                   </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -266,6 +370,83 @@ export default function BudgetManagement() {
                 </CardContent>
             </Card>
         </div>
+
+        {/* Budgets List Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Budget Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead className="text-right">Budgeted</TableHead>
+                  <TableHead className="text-right">Spent</TableHead>
+                  <TableHead className="text-right">Variance</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredBudgets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                      No budgets set for this period
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredBudgets.map((budget) => {
+                    const variance = budget.amount - budget.spent;
+                    return (
+                      <TableRow key={budget.id}>
+                        <TableCell className="font-medium">{budget.category}</TableCell>
+                        <TableCell>{budget.department}</TableCell>
+                        <TableCell className="text-right">R {budget.amount.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">R {budget.spent.toLocaleString()}</TableCell>
+                        <TableCell className={`text-right ${getVarianceColor(budget)}`}>
+                          R {variance.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <PermissionGuard action="edit" resource="budgets">
+                              <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(budget)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
+                            <PermissionGuard action="delete" resource="budgets">
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirmId(budget.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Budget?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete this budget entry.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </div>
     </MainLayout>
   );

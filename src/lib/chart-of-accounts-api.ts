@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { auditLogger } from "@/utils/auditLogger";
+import { auditLogger } from "@/lib/audit-logger";
 
 export interface Account {
   id: string;
@@ -297,6 +297,7 @@ export const chartOfAccountsApi = {
         .select('code')
         .eq('company_id', companyId);
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const existingCodes = new Set(existing?.map((a: any) => a.code) || []);
       
       const toInsert = SA_CHART_OF_ACCOUNTS

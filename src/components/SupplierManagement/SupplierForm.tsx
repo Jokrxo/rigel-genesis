@@ -143,9 +143,8 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
       }
 
       if (editingSupplier) {
-        const { error } = await (supabase
-          .from("suppliers") as any)
-          .update({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from("suppliers") as any).update({
             ...data,
             updated_at: new Date().toISOString(),
           })
@@ -165,9 +164,7 @@ export const SupplierForm = ({ open, onClose, onSuccess, editingSupplier }: Supp
           description: "Supplier updated successfully",
         });
       } else {
-        const { data: newSupplier, error } = await (supabase
-          .from("suppliers") as any)
-          .insert([{
+        const { data: newSupplier, error } = await supabase.from("suppliers").insert([{
             name: data.name,
             email: data.email || null,
             phone: data.phone || null,

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import { useCustomers, useCustomerAging, useSalesDocuments, useReceipts } from "@/hooks/useSalesData";
 import { CustomerStatement } from "@/components/Sales/CustomerStatement";
 import { 
@@ -87,18 +88,24 @@ const CustomerDetail = () => {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => navigate(`/sales/quotations?customer=${id}`)}>
-              <FilePlus className="h-4 w-4 mr-2" />
-              New Quotation
-            </Button>
-            <Button variant="outline" onClick={() => navigate(`/sales/invoices?customer=${id}`)}>
-              <FileText className="h-4 w-4 mr-2" />
-              New Invoice
-            </Button>
-            <Button onClick={() => navigate(`/sales/receipts?customer=${id}`)}>
-              <Receipt className="h-4 w-4 mr-2" />
-              Record Payment
-            </Button>
+            <PermissionGuard action="create" resource="quotes">
+              <Button variant="outline" onClick={() => navigate(`/sales/quotations?customer=${id}`)}>
+                <FilePlus className="h-4 w-4 mr-2" />
+                New Quotation
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard action="create" resource="invoices">
+              <Button variant="outline" onClick={() => navigate(`/sales/invoices?customer=${id}`)}>
+                <FileText className="h-4 w-4 mr-2" />
+                New Invoice
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard action="create" resource="receipts">
+              <Button onClick={() => navigate(`/sales/receipts?customer=${id}`)}>
+                <Receipt className="h-4 w-4 mr-2" />
+                Record Payment
+              </Button>
+            </PermissionGuard>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">

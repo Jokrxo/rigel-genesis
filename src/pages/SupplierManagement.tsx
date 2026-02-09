@@ -234,10 +234,14 @@ const SupplierManagement = () => {
             />
             
             <SupplierTable 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               suppliers={filteredSuppliers as any}
               loading={loading}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onView={handleViewSupplier as any}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onEdit={handleEditSupplier as any}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onDelete={handleDeleteSupplier as any}
             />
           </CardContent>
@@ -247,12 +251,14 @@ const SupplierManagement = () => {
           open={isFormOpen} 
           onClose={() => setIsFormOpen(false)} 
           onSuccess={handleFormSuccess}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           editingSupplier={editingSupplier as any}
         />
 
         <ViewSupplierDialog 
           open={isViewOpen}
           onClose={() => setIsViewOpen(false)}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           supplier={viewingSupplier as any}
         />
 

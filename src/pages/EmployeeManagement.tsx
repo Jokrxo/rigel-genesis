@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,7 @@ const EmployeeManagement = () => {
   useEffect(() => {
     fetchEmployees();
     fetchPayrollEntries();
-  }, []);
+  }, [fetchEmployees, fetchPayrollEntries]);
 
   const getCompanyId = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -97,7 +97,7 @@ const EmployeeManagement = () => {
     return data?.company_id;
   };
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -138,13 +138,10 @@ const EmployeeManagement = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const fetchPayrollEntries = async () => {
+  const fetchPayrollEntries = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
       const companyId = await getCompanyId();
       if (!companyId) return;
 
@@ -177,7 +174,7 @@ const EmployeeManagement = () => {
       console.error('Error fetching payroll:', error);
       // Don't show toast on initial load if empty, to avoid noise
     }
-  };
+  }, []);
 
   const calculateSouthAfricanTax = (grossSalary: number) => {
     // Simplified PAYE tax calculation for South Africa (2024 tax year)
@@ -572,20 +569,24 @@ const EmployeeManagement = () => {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEditEmployee(employee)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDeleteEmployee(employee.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <PermissionGuard action="edit" resource="employees">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditEmployee(employee)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </PermissionGuard>
+                              <PermissionGuard action="delete" resource="employees">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteEmployee(employee.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </PermissionGuard>
                             </div>
                           </TableCell>
                         </TableRow>

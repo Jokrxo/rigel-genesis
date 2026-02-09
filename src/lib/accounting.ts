@@ -8,10 +8,19 @@ export const postInvoice = async (document: SalesDocument) => {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error("User not authenticated");
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('user_id', user.user.id)
+    .single();
+
+  if (!profile?.company_id) throw new Error("Company not found");
+
   // 2. Create Journal Entry Header
-  const { data: entry, error: entryError } = await (supabase
-    .from('journal_entries') as any)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: entry, error: entryError } = await (supabase.from('journal_entries') as any)
     .insert({
+      company_id: profile.company_id,
       user_id: user.user.id,
       reference: document.document_number,
       entry_date: document.document_date,
@@ -58,9 +67,8 @@ export const postInvoice = async (document: SalesDocument) => {
     });
   }
 
-  const { error: linesError } = await (supabase
-    .from('journal_entry_lines') as any)
-    .insert(lines);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: linesError } = await (supabase.from('journal_entry_lines') as any).insert(lines);
 
   if (linesError) {
     // Rollback header? Supabase doesn't support transactions easily in client client-side.

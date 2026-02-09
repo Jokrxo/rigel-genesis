@@ -103,7 +103,7 @@ export const ProductFormDialog = ({
         unit_of_measure: editingProduct.unit_of_measure || "units",
         is_active: editingProduct.is_active ?? true,
         tax_rate: editingProduct.tax_rate ?? 15,
-        type: (editingProduct as any).type || "inventory",
+        type: editingProduct.type || "inventory",
       });
     } else {
       form.reset({

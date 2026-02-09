@@ -97,8 +97,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
     setLoading(true);
     try {
       // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await (supabase
-        .from('deferred_tax_categories') as any)
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('deferred_tax_categories')
         .select('*')
         .eq('project_id', project.id)
         .order('created_at');
@@ -106,8 +106,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (categoriesError) throw categoriesError;
 
       // Fetch tax losses
-      const { data: lossesData, error: lossesError } = await (supabase
-        .from('tax_loss_carry_forwards') as any)
+      const { data: lossesData, error: lossesError } = await supabase
+        .from('tax_loss_carry_forwards')
         .select('*')
         .eq('project_id', project.id)
         .order('created_at');
@@ -115,8 +115,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (lossesError) throw lossesError;
       
       // Fetch movements
-      const { data: movementsData, error: movementsError } = await (supabase
-        .from('deferred_tax_movements') as any)
+      const { data: movementsData, error: movementsError } = await supabase
+        .from('deferred_tax_movements')
         .select('*')
         .eq('project_id', project.id)
         .order('movement_date', { ascending: false });
@@ -150,8 +150,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
   const handleAddCategory = async (data: Omit<DeferredTaxCategory, 'id' | 'created_at' | 'updated_at' | 'project_id'>) => {
     try {
       // Insert category
-      const { data: newCategory, error } = await (supabase
-        .from('deferred_tax_categories') as any)
+      const { data: newCategory, error } = await supabase
+        .from('deferred_tax_categories')
         .insert({
           name: data.description,
           category_type: data.category_type,
@@ -169,8 +169,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (error) throw error;
 
       // Create movement record
-      const { error: movementError } = await (supabase
-        .from('deferred_tax_movements') as any)
+      const { error: movementError } = await supabase
+        .from('deferred_tax_movements')
         .insert({
           project_id: project.id,
           category_id: newCategory?.id,
@@ -200,8 +200,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
   const handleAddTaxLoss = async (data: Omit<TaxLossCarryForward, 'id' | 'created_at' | 'updated_at' | 'project_id'>) => {
     try {
       // Insert tax loss
-      const { data: newLoss, error } = await (supabase
-        .from('tax_loss_carry_forwards') as any)
+      const { data: newLoss, error } = await supabase
+        .from('tax_loss_carry_forwards')
         .insert({
           loss_year: data.origination_year || new Date().getFullYear(),
           original_amount: data.loss_amount || 0,
@@ -217,8 +217,8 @@ export const DeferredTaxDashboard: React.FC<DeferredTaxDashboardProps> = ({
       if (error) throw error;
 
       // Create movement record
-      const { error: movementError } = await (supabase
-        .from('deferred_tax_movements') as any)
+      const { error: movementError } = await supabase
+        .from('deferred_tax_movements')
         .insert({
           project_id: project.id,
           loss_id: newLoss?.id,

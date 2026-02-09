@@ -14,23 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Download, Edit2, Trash2, FolderTree, Upload, History } from "lucide-react";
 import { chartOfAccountsApi, Account, SA_CHART_OF_ACCOUNTS } from "@/lib/chart-of-accounts-api";
 
-interface AuditLog {
-  id: string;
-  action: string;
-  details: string;
-  user: string;
-  timestamp: Date;
-}
-
-const initialAuditLogs: AuditLog[] = [
-  { id: '1', action: 'Create Account', details: 'Created account 1000 - Main Bank Account', user: 'Admin', timestamp: new Date(Date.now() - 86400000) },
-  { id: '2', action: 'Update Account', details: 'Updated account 2000 - Accounts Payable', user: 'Admin', timestamp: new Date(Date.now() - 43200000) },
-];
+import { auditLogger } from "@/lib/audit-logger";
 
 export default function ChartOfAccounts() {
   const { toast } = useToast();
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(initialAuditLogs);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newAccount, setNewAccount] = useState<Partial<Account>>({ isActive: true });

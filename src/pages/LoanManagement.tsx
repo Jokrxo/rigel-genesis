@@ -16,6 +16,7 @@ import { Chatbot } from "@/components/Shared/Chatbot";
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { auditLogger } from "@/lib/audit-logger";
 
 interface Loan {
   id: string;
@@ -179,14 +180,42 @@ const LoanManagement = () => {
           .eq('id', selectedLoan.id);
 
         if (error) throw error;
+
+        await auditLogger.log({
+          action: 'UPDATE_LOAN',
+          entityType: 'loan',
+          entityId: selectedLoan.id,
+          details: { 
+            loan_number: loanData.loan_number, 
+            borrower: loanData.borrower_name,
+            amount: loanData.principal_amount
+          }
+        });
+
         toast({ title: "Success", description: "Loan updated successfully" });
       } else {
         // Create new loan
-        const { error } = await supabase
+        const { data: newLoan, error } = await supabase
           .from('loans')
-          .insert(loanData);
+          .insert(loanData)
+          .select()
+          .single();
 
         if (error) throw error;
+
+        if (newLoan) {
+          await auditLogger.log({
+            action: 'CREATE_LOAN',
+            entityType: 'loan',
+            entityId: newLoan.id,
+            details: { 
+              loan_number: loanData.loan_number, 
+              borrower: loanData.borrower_name,
+              amount: loanData.principal_amount
+            }
+          });
+        }
+
         toast({ title: "Success", description: "Loan added successfully" });
       }
       
@@ -241,6 +270,16 @@ const LoanManagement = () => {
 
         if (error) throw error;
         
+        await auditLogger.log({
+          action: 'DELETE_LOAN',
+          entityType: 'loan',
+          entityId: loanToDelete.id,
+          details: { 
+            loan_number: loanToDelete.loan_number, 
+            borrower: loanToDelete.borrower_name 
+          }
+        });
+
         toast({ title: "Success", description: "Loan deleted successfully" });
         fetchLoans();
         

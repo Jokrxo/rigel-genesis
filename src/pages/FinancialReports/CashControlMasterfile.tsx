@@ -28,10 +28,21 @@ export default function CashControlMasterfile() {
   const transactions = useMemo(() => {
     if (!entries) return [];
     
-    let relevantEntries = entries.filter(e => e.status === 'posted');
+    const relevantEntries = entries.filter(e => e.status === 'posted');
     
     // Flatten to line items level for display
-    const flatLines: any[] = [];
+    interface CashTransaction {
+      id: string;
+      date: string;
+      description: string;
+      accountName: string;
+      reference: string;
+      debit: number;
+      credit: number;
+      type: 'debit' | 'credit';
+    }
+
+    const flatLines: CashTransaction[] = [];
     
     relevantEntries.forEach(entry => {
       entry.lines.forEach(line => {

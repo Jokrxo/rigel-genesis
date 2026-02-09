@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
 
 export default function TrialBalance() {
   const { toast } = useToast()
@@ -17,11 +18,24 @@ export default function TrialBalance() {
   const [totals, setTotals] = useState<{ debit: number, credit: number }>({ debit: 0, credit: 0 })
   const [view, setView] = useState<'pre' | 'post'>('pre')
   const [searchQuery, setSearchQuery] = useState("")
+  const [companyId, setCompanyId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchCompany = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
+        if (data) setCompanyId(data.company_id)
+      }
+    }
+    fetchCompany()
+  }, [])
 
   useEffect(() => {
     const load = async () => {
+      if (!companyId) return
       try {
-        const d = await trialBalanceApi.get('demo', view)
+        const d = await trialBalanceApi.get(companyId, view)
         setRows(d.rows || [])
         setTotals(d.totals || { debit: 0, credit: 0 })
       } catch (error) {
@@ -29,7 +43,7 @@ export default function TrialBalance() {
       }
     }
     load()
-  }, [view, toast])
+  }, [view, toast, companyId])
 
   const filteredRows = rows.filter(r => 
       r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -61,7 +75,8 @@ export default function TrialBalance() {
                     <Printer className="mr-2 h-4 w-4" /> Print
                  </Button>
                  <Button variant="outline" onClick={async () => {
-                    const blob = await trialBalanceApi.exportPdf('demo')
+                    if (!companyId) return
+                    const blob = await trialBalanceApi.exportPdf(companyId)
                     const url = URL.createObjectURL(blob)
                     const a = document.createElement('a')
                     a.href = url

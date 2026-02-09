@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,7 +19,7 @@ interface AuditLog {
   action: string;
   entity_type: string;
   entity_id: string;
-  details: any;
+  details: Record<string, unknown> | null;
   created_at: string;
   user_id: string;
   ip_address: string;
@@ -36,11 +36,7 @@ const AuditLogs = () => {
   const { toast } = useToast();
   const { hasRole } = useRBAC();
 
-  useEffect(() => {
-    fetchLogs();
-  }, []);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -68,7 +64,7 @@ const AuditLogs = () => {
 
       if (error) throw error;
 
-      setLogs(data as any);
+      setLogs((data || []) as unknown as AuditLog[]);
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       toast({
@@ -79,7 +75,11 @@ const AuditLogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch = 

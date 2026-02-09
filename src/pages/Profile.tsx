@@ -12,6 +12,15 @@ import rigelLogo from "@/assets/rigel-logo.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Database } from "@/integrations/supabase/types";
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+
+interface ExtendedProfileRow extends ProfileRow {
+  phone_number?: string | null;
+  job_title?: string | null;
+  bio?: string | null;
+}
 
 const Profile = () => {
   const { user } = useAuth();
@@ -52,14 +61,15 @@ const Profile = () => {
         }
 
         if (data) {
-          const names = (data.full_name || "").split(' ');
+          const profile = data as ExtendedProfileRow;
+          const names = (profile.full_name || "").split(' ');
           setFirstName(names[0] || "");
           setLastName(names.slice(1).join(' ') || "");
-          setCompany(data.company_name || "");
-          // Use type assertion for new fields until types are updated
-          setPhone((data as any).phone_number || "");
-          setJobTitle((data as any).job_title || "");
-          setBio((data as any).bio || "");
+          setCompany(profile.company_name || "");
+          
+          setPhone(profile.phone_number || "");
+          setJobTitle(profile.job_title || "");
+          setBio(profile.bio || "");
         }
 
         // Fetch stats

@@ -79,10 +79,18 @@ const suggestAccountMapping = (description: string, amount: number, accounts: Ac
   }
 };
 
+interface CSVTransaction {
+  id: number;
+  date: string;
+  description: string;
+  amount: number;
+  suggestedAccountId: string | undefined;
+}
+
 export const CSVImport = () => {
   const [file, setFile] = useState<File | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [previewData, setPreviewData] = useState<CSVTransaction[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { auditLogger } from "@/lib/audit-logger";
 
 const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -130,9 +131,19 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        throw new Error("No company ID found");
+      }
+
       if (editingCustomer) {
-        const { error } = await (supabase
-          .from('customers') as any)
+        const { error } = await supabase
+          .from('customers')
           .update({
             ...data,
             updated_at: new Date().toISOString(),
@@ -140,13 +151,21 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
           .eq('id', editingCustomer.id);
 
         if (error) throw error;
+
+        await auditLogger.log({
+          action: 'UPDATE_CUSTOMER',
+          entityType: 'customer',
+          entityId: editingCustomer.id,
+          details: { name: data.name, company: data.company }
+        });
+
         toast({
           title: "Success",
           description: "Customer updated successfully",
         });
       } else {
-        const { error } = await (supabase
-          .from('customers') as any)
+        const { data: newCustomer, error } = await supabase
+          .from('customers')
           .insert([{
             name: data.name,
             email: data.email || null,
@@ -163,9 +182,22 @@ export const CustomerForm = ({ open, onClose, onSuccess, editingCustomer }: Cust
             credit_limit: data.credit_limit,
             notes: data.notes || null,
             user_id: user.id,
-          }]);
+            company_id: profile.company_id,
+          }])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        if (newCustomer) {
+          await auditLogger.log({
+            action: 'CREATE_CUSTOMER',
+            entityType: 'customer',
+            entityId: newCustomer.id,
+            details: { name: data.name, company: data.company }
+          });
+        }
+
         toast({
           title: "Success",
           description: "Customer created successfully",

@@ -48,8 +48,8 @@ export function useCustomers() {
       if (!company_id) throw new Error('Company not found');
 
       // Try Supabase first with resilient select
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.from('customers' as any) as any)
+      const { data, error } = await supabase
+        .from('customers')
         .select('*')
         .eq('company_id', company_id);
       
@@ -130,8 +130,7 @@ export function useCustomers() {
       };
 
       // Try Supabase first
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('customers' as any).insert(newCustomer);
+      const { error } = await supabase.from('customers').insert(newCustomer);
       
       if (error) {
          throw error;
@@ -162,8 +161,7 @@ export function useCustomers() {
 
       const updatedData = { ...updates, updated_at: new Date().toISOString() };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('customers' as any).update(updatedData).eq('id', id);
+      const { error } = await supabase.from('customers').update(updatedData).eq('id', id);
       
       if (error) {
         throw error;
@@ -184,8 +182,7 @@ export function useCustomers() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('customers' as any).delete().eq('id', id);
+      const { error } = await supabase.from('customers').delete().eq('id', id);
       
       if (error) {
         throw error;
@@ -247,8 +244,8 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       if (!user) return;
 
       // Try Supabase first with resilient select
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.from('sales_documents' as any) as any)
+      const { data, error } = await supabase
+        .from('sales_documents')
         .select('*')
         .eq('company_id', await getCompanyId(user.id));
 
@@ -263,7 +260,7 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
     } finally {
       setLoading(false);
     }
-  }, [storageKey, documentType]);
+  }, [documentType]);
 
   const createDocument = async (docData: Omit<SalesDocument, 'id' | 'document_number' | 'created_at' | 'updated_at' | 'user_id'>): Promise<SalesDocument | null> => {
     try {
@@ -289,7 +286,7 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
         p_document_type: docData.document_type,
         p_document_number: document_number,
         p_issue_date: docData.document_date,
-        p_due_date: (docData as any).due_date || null,
+        p_due_date: (docData as Invoice).due_date || null,
         p_items: itemsForRpc,
         p_notes: docData.notes,
         p_status: docData.status,
@@ -302,7 +299,7 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       // Construct full document object for state update
       // Note: We might want to fetch the fresh document to be 100% sure, but for now we construct it to save a round trip
       // We need the ID returned by RPC
-      const newDocId = (rpcData as any).id;
+      const newDocId = (rpcData as { id: string }).id;
       
       const fullDoc: SalesDocument = {
         ...docData,
@@ -311,6 +308,7 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
         created_at: new Date().toISOString(), // Approximation
         updated_at: new Date().toISOString(),
         user_id: user.id,
+        company_id: company_id,
         // Recalculate totals or trust inputs? Trust inputs for now as they matched RPC logic
       };
 
@@ -356,7 +354,7 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
             p_user_id: user.id,
             p_customer_id: updates.customer_id,
             p_issue_date: updates.document_date,
-            p_due_date: (updates as any).due_date || updates.document_date,
+            p_due_date: (updates as Partial<Invoice>).due_date || updates.document_date,
             p_items: itemsForRpc,
             p_notes: updates.notes,
             p_status: updates.status,
@@ -366,8 +364,7 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
          if (error) throw error;
       } else {
          // Just header update (e.g. status change)
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         const { error } = await supabase.from('sales_documents' as any).update({
+         const { error } = await supabase.from('sales_documents').update({
             ...updates,
             updated_at: new Date().toISOString()
          }).eq('id', id);
@@ -398,8 +395,7 @@ export function useSalesDocuments(documentType?: 'quotation' | 'invoice' | 'cred
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('sales_documents' as any).delete().eq('id', id);
+      const { error } = await supabase.from('sales_documents').delete().eq('id', id);
       
       if (error) throw error;
 
@@ -495,8 +491,8 @@ export function useReceipts() {
 
       if (rpcError) throw rpcError;
 
-      const newReceiptId = (rpcData as any).id;
-      const newReceiptNumber = (rpcData as any).receipt_number;
+      const newReceiptId = (rpcData as { id: string }).id;
+      const newReceiptNumber = (rpcData as { receipt_number: string }).receipt_number;
 
       const fullReceipt: Receipt = {
         ...receiptData,

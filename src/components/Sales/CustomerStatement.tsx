@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,9 +35,9 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
 
   useEffect(() => {
     fetchStatementData();
-  }, [customerId, startDate, endDate]);
+  }, [fetchStatementData]);
 
-  const fetchStatementData = async () => {
+  const fetchStatementData = useCallback(async () => {
     try {
       setLoading(true);
       const companyId = await getCompanyId();
@@ -122,7 +122,6 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
       combinedTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       // Calculate running balance
-      let balance = 0;
       // Get opening balance (this is a simplified version, ideally we'd fetch balance before start date)
       // For now, we assume 0 opening balance or we should fetch it.
       // To be accurate, we should fetch "opening balance" from previous transactions.
@@ -186,7 +185,7 @@ export const CustomerStatement = ({ customerId, customerName, customerCode, addr
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId, startDate, endDate]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);

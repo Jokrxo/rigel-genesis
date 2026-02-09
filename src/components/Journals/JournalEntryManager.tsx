@@ -435,24 +435,22 @@ export const JournalEntryManager = () => {
                            </PermissionGuard>
                         )}
 
-                        {entry.status === 'draft' && (
+                        {(!entry.status || entry.status === 'draft') && (
                             <>
                                 <PermissionGuard action="edit" resource="journals">
-                                  <Button variant="ghost" size="icon" onClick={() => handleEdit(entry)} title="Edit">
-                                      <Edit className="h-4 w-4" />
-                                  </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(entry)} title="Edit">
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
                                 </PermissionGuard>
-                                {entry.approvalStatus === 'approved' && (
-                                    <PermissionGuard action="create" resource="journals">
-                                      <Button variant="ghost" size="icon" onClick={() => handlePost(entry.id)} title="Post">
-                                          <FileText className="h-4 w-4 text-green-600" />
-                                      </Button>
-                                    </PermissionGuard>
-                                )}
                                 <PermissionGuard action="delete" resource="journals">
-                                  <Button variant="ghost" size="icon" onClick={() => handleDelete(entry.id)} title="Delete">
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(entry.id)} title="Delete">
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </PermissionGuard>
+                                <PermissionGuard action="create" resource="journals">
+                                    <Button variant="ghost" size="icon" onClick={() => handlePost(entry.id)} title="Post">
+                                        <FileText className="h-4 w-4 text-green-600" />
+                                    </Button>
                                 </PermissionGuard>
                             </>
                         )}

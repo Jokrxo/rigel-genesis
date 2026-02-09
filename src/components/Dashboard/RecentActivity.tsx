@@ -59,7 +59,7 @@ export const RecentActivity = () => {
           .limit(5);
 
         // 5. Transform and merge
-        const docActivities: Activity[] = (documents || []).map((doc: any) => ({
+        const docActivities: Activity[] = (documents || []).map((doc) => ({
           id: doc.id,
           type: doc.document_type === 'invoice' ? 'invoice' : 'quote',
           title: `${doc.document_type === 'invoice' ? 'Invoice' : 'Quote'} #${doc.document_number}`,
@@ -68,7 +68,7 @@ export const RecentActivity = () => {
           date: doc.created_at
         }));
 
-        const custActivities: Activity[] = (customers || []).map((cust: any) => ({
+        const custActivities: Activity[] = (customers || []).map((cust) => ({
           id: cust.id,
           type: 'customer',
           title: 'New Customer',
@@ -76,7 +76,7 @@ export const RecentActivity = () => {
           date: cust.created_at
         }));
 
-        const receiptActivities: Activity[] = (receipts || []).map((receipt: any) => ({
+        const receiptActivities: Activity[] = (receipts || []).map((receipt) => ({
           id: receipt.id,
           type: 'payment',
           title: `Payment #${receipt.receipt_number}`,
@@ -85,7 +85,7 @@ export const RecentActivity = () => {
           date: receipt.created_at
         }));
 
-        const transactionActivities: Activity[] = (transactions || []).map((trx: any) => ({
+        const transactionActivities: Activity[] = (transactions || []).map((trx) => ({
           id: trx.id,
           type: trx.type === 'income' ? 'payment' : 'asset', // 'asset' is just a placeholder icon, maybe add 'expense' type
           title: trx.description,

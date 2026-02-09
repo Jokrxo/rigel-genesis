@@ -16,6 +16,8 @@ import { ViewCustomerDialog } from "@/components/CustomerManagement/ViewCustomer
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { Chatbot } from "@/components/Shared/Chatbot";
 
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
+
 interface Customer {
   id: string;
   name: string;
@@ -47,9 +49,24 @@ const CustomerManagement = () => {
 
   const fetchCustomers = useCallback(async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        console.error('No company ID found');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -100,6 +117,13 @@ const CustomerManagement = () => {
         .eq('id', deletingCustomer.id);
 
       if (error) throw error;
+
+      await auditLogger.log({
+        action: 'DELETE_CUSTOMER',
+        entityType: 'customer',
+        entityId: deletingCustomer.id,
+        details: { name: deletingCustomer.name }
+      });
 
       setCustomers(prev => prev.filter(customer => customer.id !== deletingCustomer.id));
       toast({
@@ -180,10 +204,12 @@ const CustomerManagement = () => {
               <Download className="mr-2 h-4 w-4" />
               Export JSON
             </Button>
-            <Button onClick={handleCreateCustomer}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Customer
-            </Button>
+            <PermissionGuard action="create" resource="customers">
+              <Button onClick={handleCreateCustomer}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Customer
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 
@@ -331,20 +357,24 @@ const CustomerManagement = () => {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditCustomer(customer)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteCustomer(customer)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <PermissionGuard action="edit" resource="customers">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditCustomer(customer)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
+                            <PermissionGuard action="delete" resource="customers">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteCustomer(customer)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </PermissionGuard>
                           </div>
                         </TableCell>
                       </TableRow>

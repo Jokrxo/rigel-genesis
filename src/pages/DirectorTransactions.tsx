@@ -16,6 +16,7 @@ import { supabase as supabaseClient } from "@/integrations/supabase/client";
 
 // This module references optional tables (e.g. directors) that may not exist in all deployments.
 // Casting prevents generated DB types from failing the entire build.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabase: any = supabaseClient;
 import { DeleteConfirmationDialog } from "@/components/Shared/DeleteConfirmationDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -774,7 +775,7 @@ const DirectorTransactions = () => {
                       <Label htmlFor="type">Transaction Type</Label>
                       <Select 
                         value={transactionForm.type} 
-                        onValueChange={(val) => setTransactionForm({ ...transactionForm, type: val as any })}
+                        onValueChange={(val) => setTransactionForm({ ...transactionForm, type: val as DirectorTransaction['type'] })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -840,7 +841,7 @@ const DirectorTransactions = () => {
                       <Label htmlFor="edit-type">Transaction Type</Label>
                       <Select 
                         value={transactionForm.type} 
-                        onValueChange={(val) => setTransactionForm({ ...transactionForm, type: val as any })}
+                        onValueChange={(val) => setTransactionForm({ ...transactionForm, type: val as DirectorTransaction['type'] })}
                       >
                         <SelectTrigger>
                           <SelectValue />

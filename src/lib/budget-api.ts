@@ -45,6 +45,7 @@ export const budgetApi = {
         return [];
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data.map((b: any) => ({
         id: b.id,
         category: b.category || '',
@@ -105,6 +106,13 @@ export const budgetApi = {
   },
 
   async updateBudget(id: string, updates: Partial<Budget>): Promise<Budget> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const companyId = await getCompanyId(user.id);
+    if (!companyId) throw new Error('Company not found');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const toUpdate: any = {};
     if (updates.category !== undefined) toUpdate.category = updates.category;
     if (updates.department !== undefined) toUpdate.department = updates.department;
@@ -116,6 +124,7 @@ export const budgetApi = {
       .from(TABLE_NAME)
       .update(toUpdate)
       .eq('id', id)
+      .eq('company_id', companyId)
       .select()
       .single();
 
@@ -142,10 +151,17 @@ export const budgetApi = {
   },
 
   async deleteBudget(id: string): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const companyId = await getCompanyId(user.id);
+    if (!companyId) throw new Error('Company not found');
+
     const { error } = await supabase
       .from(TABLE_NAME)
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('company_id', companyId);
 
     if (error) throw error;
 

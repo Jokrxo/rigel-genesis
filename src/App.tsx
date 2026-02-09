@@ -140,18 +140,18 @@ const App = () => (
                   {/* Protected routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   <Route path="/import-statement" element={<ProtectedRoute><ImportStatement /></ProtectedRoute>} />
-                  <Route path="/asset-management" element={<ProtectedRoute><AssetManagement /></ProtectedRoute>} />
-                  <Route path="/documents" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
-                  <Route path="/customers" element={<ProtectedRoute><CustomerManagement /></ProtectedRoute>} />
-                  <Route path="/inventory" element={<ProtectedRoute><InventoryManagement /></ProtectedRoute>} />
-                  <Route path="/suppliers" element={<ProtectedRoute><SupplierManagement /></ProtectedRoute>} />
-                  <Route path="/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
-                  <Route path="/bank-movements" element={<ProtectedRoute><BankBalanceMovements /></ProtectedRoute>} />
-                  <Route path="/director-transactions" element={<ProtectedRoute><DirectorTransactions /></ProtectedRoute>} />
-                  <Route path="/loan-management" element={<ProtectedRoute><LoanManagement /></ProtectedRoute>} />
-                  <Route path="/employee-management" element={<ProtectedRoute><EmployeeManagement /></ProtectedRoute>} />
-                  <Route path="/payroll-management" element={<ProtectedRoute><PayrollManagement /></ProtectedRoute>} />
-                  <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
+                  <Route path="/asset-management" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><AssetManagement /></ProtectedRoute>} />
+                  <Route path="/documents" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><DocumentManagement /></ProtectedRoute>} />
+                  <Route path="/customers" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><CustomerManagement /></ProtectedRoute>} />
+                  <Route path="/inventory" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><InventoryManagement /></ProtectedRoute>} />
+                  <Route path="/suppliers" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SupplierManagement /></ProtectedRoute>} />
+                  <Route path="/projects" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><ProjectManagement /></ProtectedRoute>} />
+                  <Route path="/bank-movements" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><BankBalanceMovements /></ProtectedRoute>} />
+                  <Route path="/director-transactions" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><DirectorTransactions /></ProtectedRoute>} />
+                  <Route path="/loan-management" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><LoanManagement /></ProtectedRoute>} />
+                  <Route path="/employee-management" element={<ProtectedRoute roles={['owner', 'admin']}><EmployeeManagement /></ProtectedRoute>} />
+                  <Route path="/payroll-management" element={<ProtectedRoute roles={['owner', 'admin']}><PayrollManagement /></ProtectedRoute>} />
+                  <Route path="/investments" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><Investments /></ProtectedRoute>} />
                   <Route path="/transaction-processing" element={<ProtectedRoute><TransactionProcessing /></ProtectedRoute>} />
                   <Route path="/company-profile" element={<ProtectedRoute roles={['owner', 'admin']}><CompanyProfile /></ProtectedRoute>} />
                   <Route path="/audit-logs" element={<ProtectedRoute roles={['owner', 'admin']}><AuditLogs /></ProtectedRoute>} />
@@ -165,9 +165,9 @@ const App = () => (
                   <Route path="/tax-dashboard" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><TaxDashboard /></ProtectedRoute>} />
                   <Route path="/trial-balance" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><TrialBalance /></ProtectedRoute>} />
                   <Route path="/bank-reconciliation" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><BankReconciliation /></ProtectedRoute>} />
-                  <Route path="/budget-management" element={<ProtectedRoute><BudgetManagement /></ProtectedRoute>} />
-                  <Route path="/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
-                  <Route path="/accounting-cycle" element={<ProtectedRoute><AccountingCycle /></ProtectedRoute>} />
+                  <Route path="/budget-management" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><BudgetManagement /></ProtectedRoute>} />
+                  <Route path="/chart-of-accounts" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><ChartOfAccounts /></ProtectedRoute>} />
+                  <Route path="/accounting-cycle" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><AccountingCycle /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
                   <Route path="/impairment" element={<ProtectedRoute><ImpairmentModule /></ProtectedRoute>} />
                   <Route path="/reports/payroll" element={<ProtectedRoute><PayrollReports /></ProtectedRoute>} />
@@ -184,16 +184,16 @@ const App = () => (
                   <Route path="/general-ledger" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><GeneralLedger /></ProtectedRoute>} />
                   <Route path="/general-ledger/posting" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><LedgerPosting /></ProtectedRoute>} />
                   <Route path="/monthly-reports" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><MonthlyReports /></ProtectedRoute>} />
-                  <Route path="/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
+                  <Route path="/journal-entries" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><JournalEntries /></ProtectedRoute>} />
                   
                   {/* Sales Module Routes */}
-                  <Route path="/sales/customers" element={<ProtectedRoute><SalesCustomers /></ProtectedRoute>} />
-                  <Route path="/sales/customers/:id" element={<ProtectedRoute><SalesCustomerDetail /></ProtectedRoute>} />
-                  <Route path="/sales/quotations" element={<ProtectedRoute><SalesQuotations /></ProtectedRoute>} />
-                  <Route path="/sales/orders" element={<ProtectedRoute><SalesOrders /></ProtectedRoute>} />
-                  <Route path="/sales/invoices" element={<ProtectedRoute><SalesInvoices /></ProtectedRoute>} />
-                  <Route path="/sales/credit-notes" element={<ProtectedRoute><SalesCreditNotes /></ProtectedRoute>} />
-                  <Route path="/sales/receipts" element={<ProtectedRoute><SalesReceipts /></ProtectedRoute>} />
+                  <Route path="/sales/customers" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SalesCustomers /></ProtectedRoute>} />
+                  <Route path="/sales/customers/:id" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SalesCustomerDetail /></ProtectedRoute>} />
+                  <Route path="/sales/quotations" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SalesQuotations /></ProtectedRoute>} />
+                  <Route path="/sales/orders" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SalesOrders /></ProtectedRoute>} />
+                  <Route path="/sales/invoices" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SalesInvoices /></ProtectedRoute>} />
+                  <Route path="/sales/credit-notes" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SalesCreditNotes /></ProtectedRoute>} />
+                  <Route path="/sales/receipts" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><SalesReceipts /></ProtectedRoute>} />
                   
                   {/* 404 route */}
                   <Route path="*" element={<NotFound />} />

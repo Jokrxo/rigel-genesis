@@ -131,11 +131,13 @@ const navItems: NavItem[] = [
         title: "App Settings",
         href: "/settings",
         icon: Settings,
+        roles: ['owner', 'admin'],
       },
       {
         title: "Audit Logs",
         href: "/audit-logs",
         icon: Shield,
+        roles: ['owner', 'admin'],
       },
     ],
   },
@@ -338,6 +340,7 @@ const navItems: NavItem[] = [
     title: "Journal Entries",
     href: "/journal-entries",
     icon: BookOpen,
+    roles: ['owner', 'admin', 'accountant'],
   },
   {
     title: "Tools & Support",
@@ -380,7 +383,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
   const filterNavItems = (items: NavItem[]): NavItem[] => {
     return items.reduce((acc: NavItem[], item) => {
       // Check permission for the item itself
-      if (item.title === "Audit Logs" && !hasRole(['owner', 'admin'])) {
+      if (item.roles && !hasRole(item.roles)) {
         return acc;
       }
       

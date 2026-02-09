@@ -27,7 +27,7 @@ export const UserManagement = () => {
   const { toast } = useToast();
   const { role: currentUserRole, can } = useRBAC();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -72,7 +72,7 @@ export const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const updateUserRole = async (userId: string, newRole: AppRole) => {
     try {
@@ -101,7 +101,7 @@ export const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -182,6 +182,7 @@ export const UserManagement = () => {
                       </div>
                     </TableCell>
                     <TableCell>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <Badge variant={getRoleBadgeColor(user.role) as any}>
                         {user.role}
                       </Badge>

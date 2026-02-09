@@ -47,6 +47,7 @@ export const fixedAssetsApi = {
 
       // supabase-js v2 no longer supports passing a single generic to `from<T>()`.
       // We keep runtime behavior the same and cast the result.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from(TABLE_NAME)
         .select('*')
@@ -72,6 +73,7 @@ export const fixedAssetsApi = {
 
       const company_id = await getCompanyId(user.id);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from(TABLE_NAME)
         .insert([{ ...asset, user_id: user.id, company_id }])
@@ -99,6 +101,7 @@ export const fixedAssetsApi = {
 
   async update(id: string, updates: Partial<FixedAsset>) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from(TABLE_NAME)
         .update(updates)
@@ -127,6 +130,7 @@ export const fixedAssetsApi = {
 
   async delete(id: string) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any)
         .from(TABLE_NAME)
         .delete()

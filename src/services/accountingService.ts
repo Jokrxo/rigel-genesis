@@ -3,6 +3,7 @@ import { Invoice } from '@/types/sales';
 
 // Some deployments may not include all optional accounting tables in generated types.
 // Cast to avoid TypeScript failing the entire build.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabase: any = supabaseClient;
 
 // Constants matching the seeded Chart of Accounts

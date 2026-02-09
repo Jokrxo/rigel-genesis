@@ -17,18 +17,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import { useSalesDocuments, useCustomers } from "@/hooks/useSalesData";
 import { SalesDocumentForm } from "@/components/Sales/SalesDocumentForm";
-import { Plus, FileText, Eye, ArrowRight } from "lucide-react";
+import { Plus, FileText, Eye, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import type { SalesDocument } from "@/types/sales";
 
 const SalesOrders = () => {
-  const { documents: orders, loading, createDocument, updateDocument } = useSalesDocuments('sales_order' as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { documents: orders, loading, createDocument, updateDocument, deleteDocument } = useSalesDocuments('sales_order' as any);
   const { createDocument: createInvoice } = useSalesDocuments('invoice');
   const { customers } = useCustomers();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SalesDocument | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<'sales_order' | 'invoice'>('sales_order');
 
   const formatCurrency = (amount: number) => {
@@ -44,6 +56,19 @@ const SalesOrders = () => {
     setEditingDoc(null);
     setFormMode('sales_order');
     setIsFormOpen(true);
+  };
+
+  const handleEditOrder = (order: SalesDocument) => {
+    setEditingDoc(order);
+    setFormMode('sales_order');
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirmId) {
+      await deleteDocument(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
   };
 
   const handleConvertToInvoice = (order: SalesDocument) => {
@@ -177,9 +202,32 @@ const SalesOrders = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditOrder(order)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          <PermissionGuard action="edit" resource="orders">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditOrder(order)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard action="delete" resource="orders">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setDeleteConfirmId(order.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
                           {order.status === 'draft' && (
                             <PermissionGuard action="create" resource="invoices">
                               <Button 
@@ -201,6 +249,23 @@ const SalesOrders = () => {
             )}
           </CardContent>
         </Card>
+
+        <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Order?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the sales order.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

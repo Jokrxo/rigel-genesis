@@ -49,6 +49,7 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
     estimatedHours: '',
   });
   const { toast } = useToast();
+  const { can } = useRBAC();
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -430,7 +431,11 @@ export const TaskManagement = ({ projectId, projectName }: TaskManagementProps) 
                       </TableCell>
                       <TableCell>{task.assignee}</TableCell>
                       <TableCell>
-                        <Select value={task.status} onValueChange={(value: 'todo' | 'in-progress' | 'review' | 'completed') => handleStatusChange(task.id, value)}>
+                        <Select 
+                          value={task.status} 
+                          onValueChange={(value: 'todo' | 'in-progress' | 'review' | 'completed') => handleStatusChange(task.id, value)}
+                          disabled={!can('edit', 'projects')}
+                        >
                           <SelectTrigger className="w-32">
                             <SelectValue />
                           </SelectTrigger>

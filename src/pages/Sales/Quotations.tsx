@@ -17,19 +17,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSalesDocuments, useCustomers } from "@/hooks/useSalesData";
 import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 import { SalesDocumentForm } from "@/components/Sales/SalesDocumentForm";
-import { Plus, FileText, Eye, ArrowRight } from "lucide-react";
+import { Plus, FileText, Eye, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import type { SalesDocument } from "@/types/sales";
 
 const SalesQuotations = () => {
-  const { documents: quotations, loading, createDocument, updateDocument } = useSalesDocuments('quotation');
+  const { documents: quotations, loading, createDocument, updateDocument, deleteDocument } = useSalesDocuments('quotation');
   const { createDocument: createInvoice } = useSalesDocuments('invoice');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { createDocument: createOrder } = useSalesDocuments('sales_order' as any);
   const { customers } = useCustomers();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SalesDocument | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
@@ -46,6 +58,19 @@ const SalesQuotations = () => {
     setEditingDoc(null);
     setFormMode('quotation');
     setIsFormOpen(true);
+  };
+
+  const handleEditQuotation = (quotation: SalesDocument) => {
+    setEditingDoc(quotation);
+    setFormMode('quotation');
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirmId) {
+      await deleteDocument(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
   };
 
   const handleConvertToOrder = (quotation: SalesDocument) => {
@@ -197,9 +222,32 @@ const SalesQuotations = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditQuotation(quotation)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          <PermissionGuard action="edit" resource="quotes">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditQuotation(quotation)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
+                          <PermissionGuard action="delete" resource="quotes">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setDeleteConfirmId(quotation.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </PermissionGuard>
                           {quotation.status === 'draft' && (
                             <PermissionGuard action="create" resource="invoices">
                               <Button 
@@ -221,6 +269,23 @@ const SalesQuotations = () => {
             )}
           </CardContent>
         </Card>
+
+        <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Quotation?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the quotation.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

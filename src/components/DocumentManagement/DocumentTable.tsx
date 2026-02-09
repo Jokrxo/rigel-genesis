@@ -6,7 +6,7 @@ import { Eye, Edit, Trash2, Send } from "lucide-react";
 
 import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
-interface Document {
+export interface TableDocument {
   id: string;
   document_number: string;
   document_type: string;
@@ -17,11 +17,11 @@ interface Document {
 }
 
 interface DocumentTableProps {
-  documents: Document[];
+  documents: TableDocument[];
   loading: boolean;
-  onEdit: (document: Document) => void;
+  onEdit: (document: TableDocument) => void;
   onDelete: (id: string) => void;
-  onPost?: (document: Document) => void;
+  onPost?: (document: TableDocument) => void;
 }
 
 export const DocumentTable = ({ documents, loading, onEdit, onDelete, onPost }: DocumentTableProps) => {

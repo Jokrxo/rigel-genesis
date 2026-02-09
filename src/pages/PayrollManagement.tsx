@@ -14,6 +14,7 @@ import { printTable, exportToCSV, exportToJSON } from "@/utils/printExportUtils"
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { supabase } from "@/integrations/supabase/client";
 import { auditLogger } from "@/lib/audit-logger";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
 
 interface Employee {
   id: string;
@@ -458,10 +459,12 @@ const PayrollManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={() => setShowPayrollForm(true)} className="self-end">
-                <Plus className="mr-2 h-4 w-4" />
-                Process Payroll
-              </Button>
+              <PermissionGuard action="create" resource="payroll">
+                <Button onClick={() => setShowPayrollForm(true)} className="self-end">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Process Payroll
+                </Button>
+              </PermissionGuard>
             </div>
 
             {showPayrollForm && (

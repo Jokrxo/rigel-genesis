@@ -2,15 +2,18 @@ import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { DocumentTable } from "@/components/DocumentManagement/DocumentTable";
+import { DocumentTable, TableDocument } from "@/components/DocumentManagement/DocumentTable";
 import { DocumentHeader } from "@/components/DocumentManagement/DocumentHeader";
 import { DocumentSearch } from "@/components/DocumentManagement/DocumentSearch";
 import { DocumentForm } from "@/components/DocumentManagement/DocumentForm";
 import { Chatbot } from "@/components/Shared/Chatbot";
 import { postInvoice } from "@/lib/accounting";
+import { auditLogger } from "@/lib/audit-logger";
+import { PermissionGuard } from "@/components/Shared/PermissionGuard";
+import { SalesDocument } from "@/types/sales";
 
 // Local document interface matching the database schema
-interface LocalDocument {
+interface LocalDocument extends TableDocument {
   id: string;
   document_number: string;
   document_type: 'invoice' | 'quotation' | 'credit_note';
@@ -45,20 +48,31 @@ const DocumentManagement = () => {
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
       
-      const { data, error } = await (supabase
-        .from('sales_documents') as any)
+      const { data, error } = await supabase
+        .from('sales_documents')
         .select(`
           *,
           customers (
             name
           )
         `)
+        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const formattedDocuments: LocalDocument[] = ((data || []) as any[]).map((doc: any) => ({
+      const formattedDocuments: LocalDocument[] = (data || []).map((doc) => ({
         ...doc,
         document_type: doc.document_type as "invoice" | "quotation" | "credit_note",
         status: doc.status,
@@ -113,14 +127,41 @@ const DocumentManagement = () => {
     setIsFormOpen(true);
   };
 
-  const handleEditDocument = (document: LocalDocument) => {
-    setEditingDocument(document);
-    setSelectedDocumentType(document.document_type as "invoice" | "quotation");
+  const handleEditDocument = (document: TableDocument) => {
+    const localDoc = document as LocalDocument;
+    setEditingDocument(localDoc);
+    setSelectedDocumentType(localDoc.document_type as "invoice" | "quotation");
     setIsFormOpen(true);
   };
 
   const handleDeleteDocument = async (id: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      const { error } = await supabase
+        .from('sales_documents')
+        .delete()
+        .eq('id', id)
+        .eq('company_id', profile.company_id);
+
+      if (error) throw error;
+
+      await auditLogger.log({
+        action: 'DELETE_DOCUMENT',
+        entityType: 'document',
+        entityId: id,
+        details: {}
+      });
+
       setDocuments(prev => prev.filter(doc => doc.id !== id));
       
       toast({
@@ -137,28 +178,31 @@ const DocumentManagement = () => {
     }
   };
 
-  const handlePostDocument = async (document: any) => {
-    if (document.status !== 'draft') return;
+  const handlePostDocument = async (document: TableDocument) => {
+    const localDoc = document as LocalDocument;
+    if (localDoc.status !== 'draft') return;
     
     // Convert to the format expected by postInvoice
-    const salesDoc = {
-      id: document.id,
-      user_id: document.user_id,
-      customer_id: document.customer_id,
-      document_type: document.document_type,
-      document_number: document.document_number,
-      document_date: document.issue_date,
+    const salesDoc: SalesDocument = {
+      id: localDoc.id,
+      user_id: localDoc.user_id,
+      customer_id: localDoc.customer_id || '',
+      document_type: localDoc.document_type,
+      document_number: localDoc.document_number,
+      document_date: localDoc.issue_date,
       line_items: [],
-      subtotal: document.subtotal || 0,
-      vat_total: document.tax_amount || 0,
-      grand_total: document.total_amount || 0,
-      status: document.status,
-      created_at: document.created_at,
-      updated_at: document.updated_at
+      transaction_type: 'service', // Default or derived
+      sale_type: 'credit', // Default or derived
+      subtotal: localDoc.subtotal || 0,
+      vat_total: localDoc.tax_amount || 0,
+      grand_total: localDoc.total_amount || 0,
+      status: localDoc.status as SalesDocument['status'],
+      created_at: localDoc.created_at,
+      updated_at: localDoc.updated_at
     };
 
     try {
-      await postInvoice(salesDoc as any);
+      await postInvoice(salesDoc);
       
       toast({
         title: "Success",
@@ -201,9 +245,9 @@ const DocumentManagement = () => {
         />
 
         <DocumentTable
-          documents={filteredDocuments as any}
+          documents={filteredDocuments}
           loading={loading}
-          onEdit={handleEditDocument as any}
+          onEdit={handleEditDocument}
           onDelete={handleDeleteDocument}
           onPost={handlePostDocument}
         />
@@ -212,7 +256,7 @@ const DocumentManagement = () => {
           open={isFormOpen}
           onOpenChange={setIsFormOpen}
           onSuccess={handleFormSuccess}
-          editingDocument={editingDocument as any}
+          editingDocument={editingDocument}
           documentType={selectedDocumentType}
         />
       </div>
