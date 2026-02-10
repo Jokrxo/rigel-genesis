@@ -62,6 +62,12 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: "Practice Dashboard",
+    href: "/bookkeeper",
+    icon: Briefcase,
+    roles: ['accountant'],
+  },
+  {
     title: "Sales",
     icon: DollarSign,
     children: [

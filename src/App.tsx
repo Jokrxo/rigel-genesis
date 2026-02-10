@@ -70,6 +70,7 @@ import LedgerPosting from "./pages/GeneralLedger/LedgerPosting";
 import MonthlyReports from "./pages/MonthlyReports";
 import JournalEntries from "./pages/JournalEntries";
 import AuditLogs from "./pages/AuditLogs";
+import BookkeeperDashboard from "./pages/BookkeeperDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -155,6 +156,7 @@ const App = () => (
                   <Route path="/transaction-processing" element={<ProtectedRoute><TransactionProcessing /></ProtectedRoute>} />
                   <Route path="/company-profile" element={<ProtectedRoute roles={['owner', 'admin']}><CompanyProfile /></ProtectedRoute>} />
                   <Route path="/audit-logs" element={<ProtectedRoute roles={['owner', 'admin']}><AuditLogs /></ProtectedRoute>} />
+                  <Route path="/bookkeeper" element={<ProtectedRoute><BookkeeperDashboard /></ProtectedRoute>} />
                   <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
                   <Route path="/reports" element={<ProtectedRoute roles={['owner', 'admin', 'accountant']}><Reports /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
